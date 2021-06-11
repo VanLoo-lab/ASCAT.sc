@@ -1,0 +1,100 @@
+\name{getTrackForAll.10XBAM}
+\alias{getTrackForAll.10XBAM}
+%- Also NEED an '\alias' for EACH other topic documented here.
+\title{
+  Get smoothed coverage track for all chromosomes, starts and ends from bamfile
+}
+\description{
+%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+}
+\usage{
+getTrackForAll.10XBAM(bamfile, window, lSe=NULL, lGCT=NULL,
+                      allchr=1:22,
+                      CHRSTRING,
+                      sdNormalise=0, segmentation_alpha=0.01, isDuplicate=F,
+                      isSecondaryAlignment=F, isNotPassingQualityControls=NA,
+                      isUnmappedQuery=NA, mapqFilter=0, barcodes=NULL)
+}
+%- maybe also 'usage' for other objects documented here.
+\arguments{
+  \item{bamfile}{
+%%     ~~Describe \code{logr} here~~
+}
+  \item{window}{
+%%     ~~Describe \code{CHRS} here~~
+}
+  \item{lSe}{
+%%     ~~Describe \code{STARTS} here~~
+}
+  \item{lGCT}{
+%%     ~~Describe \code{ENDS} here~~
+}
+  \item{allchr}{
+%%     ~~Describe \code{allchr} here~~
+}
+  \item{CHRSTRING}{
+%%     ~~Describe \code{allchr} here~~
+}
+  \item{sdNormalise}{
+  %%     ~~Describe \code{allchr} here~~
+}
+  \item{segmentation_alpha}{
+  %%     ~~Describe \code{allchr} here~~
+}
+  \item{isDuplicate}{
+  %%     ~~Describe \code{allchr} here~~
+}
+  \item{isSecondaryAlignment}{
+  %%     ~~Describe \code{allchr} here~~
+}
+  \item{isNotPassingQualityControl}{
+  %%     ~~Describe \code{allchr} here~~
+}
+  \item{isUnmappedQuery}{
+  %%     ~~Describe \code{allchr} here~~
+}
+  \item{mapqFilter}{
+  %%     ~~Describe \code{allchr} here~~
+}
+  \item{barcodes}{
+%%     ~~Describe \code{allchr} here~~
+}
+
+}
+\details{
+%%  ~~ If necessary, more details than the description above ~~
+}
+\value{
+%%  ~Describe the value returned
+%%  If it is a LIST, use
+%%  \item{comp1 }{Description of 'comp1'}
+%%  \item{comp2 }{Description of 'comp2'}
+%% ...
+}
+\references{
+%% ~put references to the literature/web site here ~
+}
+\author{
+%%  ~~who you are~~
+}
+\note{
+%%  ~~further notes~~
+}
+
+%% ~Make other sections like Warning with \section{Warning }{....} ~
+
+\seealso{
+%% ~~objects to See Also as \code{\link{help}}, ~~~
+}
+\examples{
+##---- Should be DIRECTLY executable !! ----
+##-- ==>  Define data, use random,
+##--	or do  help(data=index)  for the standard data sets.
+
+## The function is currently defined as
+
+}
+% Add one or more standard keywords, see file 'KEYWORDS' in the
+% R documentation directory.
+\keyword{ ~kwd1 }% use one of  RShowDoc("KEYWORDS")
+\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line

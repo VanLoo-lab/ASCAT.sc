@@ -1,0 +1,286 @@
+---
+title: "single-cell-data"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Single-cell-data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+## ##################################################
+library(ASCAT.sc)
+## ##################################################
+```
+
+In this vignette, we use ASCAT.sc to analyse a single cell dataset and derive copy number profiles for each cell. The pipeline is very similar to [Ginkgo](https://www.nature.com/articles/nmeth.3578). The main difference remains in the fitting of the states to integers, which follows [ASCAT](https://www.pnas.org/content/107/39/16910)'s rationale and uses the same equations.
+
+## An example dataset: sarcoma
+
+We will use a dataset of single cells from a malignant peripheral
+nerve sheath tumour. Cells were collected from different relapse
+and anatomically distinct regions originating from the same primary
+tumour.
+
+
+## ASCAT.sc to get copy number out
+
+### Quality check
+We will assume that quality check has been performed already. One can use e.g. MAPD, proportion of mitochondrial material, etc. We will also see that the inferred purity should be 1, which can be used as an extra filtering step in ASCAT.sc.
+
+### Setting up project and pipeline
+#### Defining directory structures and input files
+First we define the input and output files, i.e. where to fetch the BAMs and to output the profiles, repsectively. We define the window size as well as the reference genome file and the number of cores to be used for parallelization. Sometimes chromosomes are reported with an extra "chr" prefix, which is given in the variable CHRSTRING (set to "" if no prefix).
+
+
+
+```{r}
+BAMDIR <- "../input/" ##input file with indexed BAM files to read
+OUTDIR <- "../output/" ##your output file
+FASTA <- "../ref/hs37d5.fa" ##reference genome, fasta file
+window <- "100000" ##window size for binning (increase if less reads sequenced/more noise)
+CHRSTRING <- "" ##"" or "chr" in your reference file
+MC.CORES <- 5 ## number of samples to process in parallel
+```
+
+Next we define where to fetch the pre-computed variable-size bins on disk. These correspond to the aligner and the read length of our experiment. We use the pre-computed bins from Ginkgo (https://github.com/robertaboukhalil/ginkgo), which can be downloaded [here](http://qb.cshl.edu/ginkgo/uploads/hg19.original.tar.gz).
+
+
+```
+BINFILE <- paste0("../bins.variable/hg19.original/variable_", window, "_48_bowtie") ## path to precomputed bins of the required window size/ not necessary to use this (old functionality)
+BADBINSFILE <- paste0("../bins.variable/hg19.original/badbins_variable_", window, "_48_bowtie") ## path to precomputed bad bins/not necessary to use this (old functionality)
+```
+
+#### Loading required libraries
+
+We next load the required libraries (there are more dependencies).
+
+```{r}
+library(Rsamtools)
+library(Biostrings)
+library(DNAcopy)
+library(parallel)
+```
+
+### Running ASCAT.sc
+
+#### Loading bams and names
+```{r, eval=F}
+####################################################
+## Get BAMs in the BAM directory
+bams <- dir(BAMDIR,full=T) ## FULL PATHS
+bamsF <- dir(BAMDIR,full=F) ## BAM NAMES
+bamsF <- bamsF[grepl("bam$",bams)] ## Just keep files ending in "bam"
+bams <- bams[grepl("bam$",bams)]
+print(bamsF)
+####################################################
+setwd(OUTDIR)
+####################################################
+```
+
+#### GC content calculation
+
+We load the reference and define the chromosomes we are interested in (here the automosomes and X).
+
+```{r, eval=F}
+####################################################
+dna <<- getRefGenome(fasta=FASTA) ## Load reference genome, only used to compute GC content
+####################################################
+## CHROMOSOMES INVESTIGATED
+ALLCHR <- paste0("",c(1:22,"X"))[1:22] ## Define chromosomes, currently assumes female if X is provided (better remove for now or if male)
+####################################################
+```
+
+We then load the starts and ends of each bins per chromosome and compute the GC content within each bin. As it takes a few minutes to run, We recommend saving the GC-content object for later re-use.
+
+```{r, eval=F}
+## get starts and ends of the variable bins
+## these are precomputed in file BINFILE (here for hg19 - bowtie)
+lSe <- lapply(ALLCHR,function(chr)
+    getStartsEnds(window=window,
+		  chr=paste0(CHRSTRING,chr),
+		  lengthChr=length(dna[[chr]]),
+		  dna=dna))
+names(lSe) <- ALLCHR
+## get GC content in the bins
+## this could be precomputed for all projects with same aligner+read length
+## should take around a few minutes to compute
+lGCT <- lapply(ALLCHR,function(chr)
+{
+    cat(".")
+    gcT <- gcTrack(chr,lSe[[chr]]$starts,
+                   lSe[[chr]]$ends,
+                   dna=dna)
+})
+names(lSe) <- names(lGCT) <- paste0(CHRSTRING, ALLCHR)
+save(lGCT, file=paste0(OUTDIR,"lGCT.",window,".Rda"))
+```
+
+
+#### Load coverage tracks
+We finally derive the counts and smooth the track using a lowess/loess fit against GC content for all bams. This will constitute our input data to fit copy number. Because this is a time and I/O consuming task, we save the tracks on disk directly afterwards.
+
+
+```{r, eval=F}
+####################################################
+allTracks <- mclapply(bams,function(bamfile)
+{
+    cat(".")
+    try(getTrackForAll(bamfile,
+                       window,
+                       lSe=lSe,
+                       lGCT=lGCT,
+                       allchr=paste0(CHRSTRING,ALLCHR),
+                       sdNormalise=0),silent=T)
+},mc.cores=MC.CORES)
+####################################################
+names(allTracks) <- bamsF
+save(allTracks,file=paste0(OUTDIR,"allTracks.",
+	window,
+	".Rda"))
+####################################################
+```
+
+#### Fit copy number to find optimal profile
+
+Once the logr track obtained, we can select an optimal pair of purity and ploidy values to explain the data. In single cells, purity should be 100%. Anything lower would potentially point to a noisy logr or a problem with the fit. 
+Tumour/normal doublets can also be fitted as 50% purity. For single cells, one can try 50% and 100% purity and also force the purity to be around 100% in the grid search.
+
+
+```{r, eval=F}
+allSolutions <- lapply(allTracks,searchGrid,purs=c(.5,1),ploidies=seq(1.7, 6, 0.02),forcepurity=seq(0.99,1))
+save(allSolutions,file=paste0(OUTDIR,"/allSolutions",window,".Rda"))
+```
+
+#### Filtering noisy cells
+
+Next we derive a metric of the noise in the profiles (related to MAPD) and we set a threshold on this to select cells with a good profile/filter out cells with a bad profile.
+
+```{r, eval=F}
+
+getQuality.SD <- function(listTracks, lSolutions, plot=F)
+{
+    mytry <- function(x)
+    {
+        tt <- try(x,silent=T)
+        if(inherits(tt,"try-error")) return(NA)
+        else tt
+    }
+    allcalls <- lapply(1:length(listTracks), function(x)
+        sc_getCalls(listTracks[[x]],
+                    lSolutions[[x]]$purity, lSolutions[[x]]$ploidy))
+    quality <- colSums(sapply(allcalls,function(x) sapply(x,function(y)
+        mytry(sum(y$num.mark*y$CNsd)/sum(y$num.mark)))),na.rm=T)
+    quality <- quality
+    if(plot)
+    {
+        par(mar=c(8,5,1,1))
+        barplot(quality,las=2)
+    }
+    quality
+}
+
+
+qualities <- getQuality.SD(allTracks, allSolutions, plot=F)
+###############################################################
+quantile(qualities,probs=seq(0,1,.1))
+###############################################################
+QUALITYTHRESHOLD <- 10
+###############################################################
+```
+
+We can also get an independent metric related to the NRPCC and annotate the cells for whether the fit is ambiguous (usually this means all optimal fits were leading to <=0 copies on a large fraction of the genome, this happens in very noisy cells or replicating cells where GC correction failed) or can be fitted as a doublet.
+
+
+```{r, eval=F}
+###############################################################
+mat.records  <-  sapply(allTracks,function(x) unlist(lapply(x$lCTS,function(y) y$records)))
+###############################################################
+mm. <- mm
+mm.[mm.<0] <- 0
+nrpcc <- colMeans(mat.records/(mm.+2),na.rm=T)
+ambiguous <- sapply(allSolutions,function(x) x$ambiguous)
+doublet <- sapply(allSolutions,function(x) if(!is.null(x$bestfit)) !x$bestfit$ambiguous else F)
+###############################################################
+```
+
+We plot the MAPD vs. NRPCC and annotate cells for being ambiguous or doublet-like. We can filter cells out based on this plot. Indeed, for a given amount of read counts per chromosome copy, we derive an experimental level of noise for all cells. Any cells seen as outlier for the trend across cells could be removed as a precaution.
+
+
+```{r, eval=F}
+###############################################################
+pdf(paste0(OUTDIR, "/nrpcc.vs.qualities.pdf"),
+    width=5,height=5)
+plot(y=qualities,
+     x=nrpcc,
+     ylab="noise",
+     xlab="nrpcc",
+     col=ifelse(ambiguous,"red","black"),
+     pch=ifelse(doublet,3,19),
+     cex=.5,
+     frame=F)
+abline(v=10,h=10,lty=2)
+dev.off()
+###############################################################
+```
+
+
+#### Get profiles and write to disk
+
+
+We can now get all profiles (fit them with the identified purity/ploidy solutions then shape them as a data.frame).
+
+```{r, eval=F}
+allProfiles <- lapply(1:length(allTracks),function(x)
+{
+    getProfile(fitProfile(allTracks[[x]],
+                          purity=allSolutions[[x]]$purity,
+                          ploidy=allSolutions[[x]]$ploidy))
+})
+```
+
+Finally, we can write them to disk for further use.
+
+
+```{r, eval=F}
+tnull <- lapply(1:length(allProfiles),function(x)
+{
+writeProfile(allProfiles[[x]],
+	     samplename=names(allTracks)[x],
+	     outdir=OUTDIR)	
+})
+```
+
+
+
+
+#### Plotting results
+
+If we have run on many cells, we can also plot the results in a heatmap to have a global picture.
+
+```{r, eval=F}
+mm <- sc_getMatrixOfCalls(allTracks,allSolutions,lSe)
+###############################################################
+mm <- round(mm)
+mm <- mm-2
+for(i in 1:ncol(mm))
+{
+    mm[,i][is.na(mm[,i])] <- as.numeric(names(which.max(table(mm[,i]))))
+}
+###############################################################
+sc_plotHeat(mm[,qualities<QUALITYTHRESHOLD & nrpcc>10 & !ambiguous & !doublet],
+scaleY=1,
+centromeres=NULL)
+```
+
+
+## Pipeline for [singe cell CGH dataset](https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-52366/?query=%22single+cell%22+DNA&page=3&pagesize=25)
+
+Potentially coming later, though CGH is not used anymore.

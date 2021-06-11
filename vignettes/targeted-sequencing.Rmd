@@ -1,0 +1,345 @@
+---
+title: "targeted-sequencing"
+author: "Maxime Tarabichi <maxime.tarabichi@gmail.com>"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Methylation-data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+  )
+library(magrittr)
+library(kableExtra)
+```
+
+
+```{r setup}
+library(ASCAT.sc)
+library(Biostrings)
+library(GenomicRanges)
+
+```
+
+
+## ASCAT.sc on targeted sequencing from undifferentiated sarcomas 
+
+
+We will analyse a set of undifferentiated sarcomas (USARC) for which
+targeted sequencing has been performed, and for a subset, we also have
+access to whole-genome sequencing, which will allow to compare the
+profiles otbained from both approaches.
+
+
+In targeted pull-down sequencing experiments, a stable ~40% of the sequenced
+reads are off-target, and uniformly coming from along the genome. This
+means that if the total number of sequenced reads is high, regardless
+of the number of targets in the panel, we get a shallow coverage
+whole-genome sequencing experiment for free. 
+
+But because the genome coverage is noisier than shallow coverage
+sequencing, we need to use a panel of normals to normalise the logr. 
+
+We bin the genome discounting the on-target regions and a buffer
+region around them. We then count the number of reads in each bin to
+derive a logr track, normalise it for the expected counts across a
+normal diploid panel sequenced using the same panel, correct for GC
+and other variables, and then apply the ASCAT.sc methodology to
+(re)fit the profiles.
+
+
+
+### Step1: set up to run pipeline
+
+
+#### Input variables
+
+We first define:
+- the path directory where the BAM files and their index
+- ID of the normal samples: we will need normal samples processed with
+  the same panel to normalise the logr
+- the path to the reference FASTA file
+- the window size: size of the genomic bins to count reads in
+- chromosome names
+
+```{r, eval=F}
+## ##################################################
+BAMDIR <- "../data/targeted"
+bams <- dir(BAMDIR,full=T,pattern=".bam$")
+normalids <- bams[grepl("normal",bams)]
+isNormal <- sapply(bams,function(x) any(sapply(normalids,grepl,x)))
+bed <- ts_treatBed(read.table("../data/targeted/3083331_Covered_b37.bed",sep="\t"),add=1000)
+## ##################################################
+FASTA <- "../data/targeted/hs37d5.fa"
+## ##################################################
+window <- 500000
+## ##################################################
+ALLCHR <- c(1:22)## ,"X") we leave the sex chromosome X out, as ideally the normal panel should be matched per sex.
+## Load reference genome
+## Doucle-check that chromosomes in the fasta are sorted the same as in ALLCHR
+dna <<- getRefGenome(fasta=FASTA,CHRS=ALLCHR)
+
+```
+
+#### Derive the genomic bins on the off-target genome
+
+We derive the genomic bins. They should have the same expected number
+of reads aligning, excluding the off-target reads.
+
+For simplicity, here, we just bin the genome in equal-size bins of
+500kb (window size), which is a good resolution for large-scale events
+(e.g. chromosome-arm level or large chromosome bands).
+
+We then derive a GC track for these bins using the function *gcTrack*.
+
+
+```{r, eval=F}
+
+####################################################
+lSe <- lapply(ALLCHR,function(chr)
+    getStartsEnds(window=window,
+                  chr=paste0("chr",chr),
+                  ##path=BINFILE,
+                  ##pathBadBins=BADBINSFILE,
+                  exclude=bed,
+                  lengthChr=sapply(dna,length)[chr]))
+names(lSe) <- ALLCHR
+lExclude <- lapply(ALLCHR,function(chr)
+    ts_getExcludeFromBedfile(bed,chr))
+names(lExclude) <- ALLCHR
+## get GC content in the bins
+## should take around a few minutes to compute
+lGCT <- lapply(ALLCHR,function(chr) gcTrack(chr,lSe[[chr]]$starts,lSe[[chr]]$ends,dna=dna))
+##save(lGCT,file=paste0("../data/targeted/lGCT.",window,".Rda"))
+##load(file=paste0("../data/targeted/lGCT.",window,".Rda"))
+
+```
+
+### Step2: deriving a noise profile from normal samples
+
+Then we will derive a noise profile from the normal samples.
+
+
+```{r, eval=F}
+
+system.time(lCTS.normal <- ts_mergeCountsNormal(bamsN=bams[isNormal],
+                                                window=window,
+                                                lExclude=lExclude,
+                                                lSe = lSe,
+                                                allchr = ALLCHR,
+                                                sdNormalise = 0,
+                                                mc.cores=7))
+
+```
+
+
+### Step3: count reads within bins (excluding on-target) and derive corrected logr
+
+We then derive counts within bins, excluding on-target regions and
+correction for the noise seen in the normals
+
+```{r, eval=F}
+
+system.time(allTracks <- mclapply(bams[!isNormal],function(bamfile)
+{
+    cat(".")
+    kk <- try(ts_getTrackForAll.excludeTargets(bamfile,
+                                               window,
+                                               lExclude,
+                                               lCTS.normal=lCTS.normal,
+                                               lSe=lSe,
+                                               lGCT=lGCT,
+                                               lRepli=NULL,
+                                               allchr=ALLCHR,
+                                               sdNormalise=0),silent=T)
+} , mc.cores=3)) ## 1662sec.
+names(allTracks) <- gsub("../data/targeted//","",bams[!isNormal])
+
+```
+
+### Step4: fit solutions
+
+
+Then we fit solutions for the logr track.
+
+```{r, eval=F}
+
+system.time(allSols <- parallel::mclapply(1:length(allTracks),function(x)
+{
+    kk <- try(searchGrid(allTracks[[x]],
+                   purs = seq(0.1, 1, 0.01),
+                   ploidies = seq(1.7,5, 0.01),
+                   maxTumourPhi=6,
+                   distance="mse"),silent=T)
+},mc.cores=3))
+names(allSols) <- names(allTracks)
+
+```
+
+
+Let us plot one of the solutions here.
+
+
+First we look at the distance matrix for all solutions on the grid.
+
+```{r, fig1, fig.height = 4, fig.width = 4, fig.align = "center", eval=TRUE, echo=FALSE}
+## ##################################################
+plotSunrise(allSols[[1]])
+## ##################################################
+```
+
+We note that there are many local minima for the total distance to
+integer values (dark blue) and manual refitting is almost invariably
+needed. If working on exomes, combining ASCAT.sc with ASCAT allow to
+recover potentially missed events in the non-targeted regions. The
+ASCAT.sc fit can then be refitted to match the ASCAT copy number
+profiles. 
+
+Then we look at the best fit, which minimises the distance to integer
+values, while respecting pre-defined built-in rules, e.g. no negative
+copy number, minimum size of homozygous deletions.
+
+
+```{r, fig2, fig.height = 3, fig.width = 7, fig.align = "center", eval=TRUE, echo=FALSE}
+## ##################################################
+plotSolution(allTracks[[1]],
+             purity=allSols[[1]]$purity,
+             ploidy=allSols[[1]]$ploidy,
+             lwdSeg=2,
+             ylim=c(0,15))
+## ##################################################
+```
+
+Finally we can get the corresponding copy number profile as a data
+frame with relevant information for downstream analyses.
+
+
+```{r, eval=T}
+profile <- getProfile(fitProfile(allTracks[[1]],
+                                 purity=allSols[[1]]$purity,
+                                 ploidy=allSols[[1]]$ploidy))
+head(profile)
+knitr::kable(profile, format="html") %>%
+    kable_styling() %>%
+    scroll_box(width = "100%", height = "200px")
+```
+
+
+We refer to the methylation-data vignette for manual refitting, which
+works the same way (except here the gamma can be left to default of
+gamma=1). 
+
+### All profiles
+
+
+```{r, fig3, fig.height = 3, fig.width = 7, fig.align = "center", eval=TRUE, echo=FALSE}
+for(i in 1:length(allTracks))
+## ##################################################
+    plotSolution(allTracks[[i]],
+                 purity=allSols[[i]]$purity,
+                 ploidy=allSols[[i]]$ploidy,
+                 lwdSeg=2,
+                 ylim=c(0,15))
+## ##################################################
+```
+
+
+### The need for a PON correction
+
+For the chromosome X, when normalising using a panel of normals (PON), it is good
+practice to separate females and males, as they do not carry the same
+number of X chromosomes. 
+
+For females, the X chromosome can be treated as an autosome in terms
+of logR. However, males if corrected against males, should have a
+different mapping of logr to integer. if the same number of copies is
+observed in the tumour and the normal, i.e. logR=0, that means a total
+number of copies of 1, not 2.
+
+A simple way not to have to perform all this book-keeping, is to
+either use only females in the PON or not to use a PON at all, 
+in which case the X chromosome can be treated the same way as an
+autosome.
+
+For targeted sequencing, though, we show that we do need to correct
+for a normal control, as the track is noisy. 
+
+Next we compare the results with and without PON correction for three samples.
+
+
+```{r,eval=F}
+firsts <- 1:3
+system.time(allTracks.nopon <- mclapply(bams[!isNormal][firsts],function(bamfile)
+{
+    cat(".")
+    kk <- try(ts_getTrackForAll.excludeTargets(bamfile,
+                                               window,
+                                               lExclude,
+                                               lCTS.normal=NULL, ##lCTS.normal,
+                                               lSe=lSe,
+                                               lGCT=lGCT,
+                                               lRepli=NULL,
+                                               allchr=ALLCHR,
+                                               sdNormalise=0.1),silent=T)
+} , mc.cores=3)) ## 1662sec.
+names(allTracks.nopon) <- gsub("../data/targeted//","",bams[!isNormal][firsts])
+```
+
+We fit the profiles.
+
+```{r, eval=F}
+
+system.time(allSols.nopon <- parallel::mclapply(1:length(allTracks.nopon),function(x)
+{
+    kk <- try(searchGrid(allTracks.nopon[[x]],
+                   purs = seq(0.1, 1, 0.01),
+                   ploidies = seq(1.7,5, 0.01),
+                   maxTumourPhi=6,
+                   distance="mse"),silent=T)
+},mc.cores=3))
+names(allSols.nopon) <- names(allTracks.nopon)
+
+```
+
+
+Let us compare the profiles (top = PON; bottom = no PON).
+
+
+```{r, fig5, fig.height = 6, fig.width = 7, fig.align = "center", eval=TRUE, echo=FALSE}
+for(i in firsts)
+{    par(mfcol=c(2,1))
+    ## ##################################################
+    plotSolution(allTracks[[i]],
+                 purity=allSols[[i]]$purity,
+                 ploidy=allSols[[i]]$ploidy,
+                 lwdSeg=2,
+                 ylim=c(0,15))
+    ## ##################################################
+    plotSolution(allTracks.nopon[[1]],
+                 purity=allSols.nopon[[i]]$purity,
+                 ploidy=allSols.nopon[[i]]$ploidy,
+                 lwdSeg=2,
+                 ylim=c(0,15))
+    ## ##################################################
+}
+```
+
+
+
+
+### Session info
+
+```{r,eval=T}
+sessionInfo()
+```

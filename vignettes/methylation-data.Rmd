@@ -1,0 +1,781 @@
+---
+title: "ASCAT.sc: methylation-data"
+author: "Maxime Tarabichi <maxime.tarabichi@gmail.com>"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Methylation-data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+  )
+library(magrittr)
+library(kableExtra)
+```
+
+```{r, include = FALSE, eval = FALSE}
+## ##################################################
+library(GenomicRanges)
+## ##################################################
+automateRefit <- function(bbcna,
+                          track.sc,
+                          solution,
+                          minpc=.80,
+                          minsize=20000000,
+                          gamma=GAMMA)
+{
+    bbcna <- bbcna[bbcna[,"frac1_A"]==1 & bbcna[,"endpos"]-bbcna[,"startpos"]>minsize,]
+    profile <- getProfile(fitProfile(track.sc,
+                                     purity=solution$purity,
+                                     ploidy=solution$ploidy))
+    ll.sc <- profile[,3]-profile[,2]
+    ll.bb <- bbcna[,3]-bbcna[,2]
+    grprof <- GRanges(profile[,1],IRanges(profile[,2],profile[,3]))
+    grbb <- GRanges(bbcna[,1],IRanges(bbcna[,2],bbcna[,3]))
+    ovs <- findOverlaps(grprof,grbb)
+    ll.ovs <- pmin(profile[queryHits(ovs),3],bbcna[subjectHits(ovs),3])-pmax(profile[queryHits(ovs),2],bbcna[subjectHits(ovs),2])
+    keep <- ll.ovs/ll.sc[queryHits(ovs)]>minpc & ll.ovs/ll.bb[subjectHits(ovs)]>minpc
+    sum(keep)
+    keep.bb <- subjectHits(ovs)[keep]
+    keep.sc <- queryHits(ovs)[keep]
+    priority <- order(ll.bb[keep.bb],decreasing=T)
+    total.bb <- bbcna[keep.bb,"nMaj1_A"]+bbcna[keep.bb,"nMin1_A"]
+    twolargestoverlappingstates <- priority[!duplicated(total.bb[priority])][1:2]
+    two.sc <- keep.sc[twolargestoverlappingstates]
+    two.bb <- keep.bb[twolargestoverlappingstates]
+    refittedsolution <- refitProfile(track.sc,
+                                     solution,
+                                     chr1=NA,
+                                     ind1=two.sc[1],
+                                     total1=sum(bbcna[two.bb[1],c("nMaj1_A","nMin1_A")]),
+                                     chr2=NA,
+                                     ind2=two.sc[2],
+                                     total2=sum(bbcna[two.bb[2],c("nMaj1_A","nMin1_A")]),
+                                      gridpur=seq(-.025,.025,.01),
+                                     gridpl=seq(-.1,.1,.01),
+                                     gamma=GAMMA)
+    return(refittedsolution)
+}
+
+plotBB <- function(cna, pps, ylim=c(0,8))
+{
+    chrs <- c(1:22,"X")
+    breaks <- c(0, cumsum(sapply(chrs, function(x) max(cna[cna[,1]==x,"endpos"])/1e+06)))
+    names(breaks) <- c(chrs,"last")
+    plot(0, 0, col = rgb(0, 0, 0, 0), xaxt = "n", yaxt = "n",
+         xlim = c(0, max(breaks)), xlab = "Genomic Position",
+         ylab = "relative copy number", frame = F, ylim = ylim,
+         main=paste0("purity=",signif(pps[1],2),"; tumour ploidy=",signif(pps[2],2)))
+    axis(side = 2)
+    segments(cna[,2]/1e+06+breaks[as.character(cna[,1])],
+             cna[,"ntot"],
+             cna[,3]/1e+06+breaks[as.character(cna[,1])],
+             cna[,"ntot"],lwd=1.4,col="red")
+    abline(v = breaks, lwd = 1, lty = 2, col = rgb(0.6, 0.6,
+                                                   0.6, 0.4))
+    abline(h = 1:50, lwd = 1, lty = 2, col = rgb(0.6, 0.6, 0.6,
+                                                 0.2))
+    text(x = breaks[2:length(breaks)] - 25, y = max(ylim), names(breaks)[1:(length(breaks)-1)],
+         cex = 0.4)
+}
+
+getAllChrEnds <- function(all.sc)
+{
+    all <- do.call("rbind",lapply(all.sc,function(x) x[,c(1,3)]))
+    all <- unique(all)
+    all <- all[order(all[,1],all[,2],decreasing=F),]
+    starts <- unlist(lapply(unique(all[,1]),function(x) c(min(all[all[,1]==x,2]),all[all[,1]==x,2]+1)[-c(sum(all[,1]==x)+1)]))
+    GRanges(all[,1],IRanges(starts,all[,2]))
+}
+
+
+transformCNA <- function(cna, gr, isbb=F)
+{
+    weightedmeansc <- function(cna,inds)
+    {
+        sizes <- (cna[inds,3]-cna[inds,2])/1000000
+        tot <- cna[inds,"total_copy_number_logr"]
+        sum(tot*sizes/sum(sizes))
+    }
+    weightedmeanbb <- function(cna,inds)
+    {
+        sizes <- (cna[inds,3]-cna[inds,2])/1000000
+        tot <- cna[inds,"ntot"]
+        sum(tot*sizes/sum(sizes))
+    }
+    if(isbb)
+    {
+        grbb <- GRanges(cna[,1],IRanges(cna[,2],cna[,3]))
+        ovs <- findOverlaps(gr,grbb)
+        tots <- tapply(1:length(ovs),queryHits(ovs),function(x) weightedmeanbb(cna,subjectHits(ovs)[x]))
+        alltots <- rep(NA,length(gr))
+        alltots[as.numeric(names(tots))] <- tots
+        return(data.frame(chr=as.character(seqnames(gr)),
+                          start=start(gr),
+                          end=end(gr),
+                          tot=alltots))
+    }
+    grbb <- GRanges(cna[,1],IRanges(cna[,2],cna[,3]))
+    ovs <- findOverlaps(gr,grbb)
+    tots <- tapply(1:length(ovs),queryHits(ovs),function(x) weightedmeansc(cna,subjectHits(ovs)[x]))
+    alltots <- rep(NA,length(gr))
+    alltots[as.numeric(names(tots))] <- tots
+    return(data.frame(chr=as.character(seqnames(gr)),
+                      start=start(gr),
+                      end=end(gr),
+                      tot=alltots))
+}
+## ##################################################
+colrefit <- rgb(.8,.2,.4,.7)
+coldefault <- rgb(.1,.1,.1,.7)
+## ##################################################
+```
+
+## Introduction
+
+In this vignette we use ASCAT.sc together with minfi and conumee to
+extract copy number profiles from methylation array data. 
+
+```{r setup, eval =F}
+## ##################################################
+library(ASCAT.sc)
+library(minfi)
+library(conumee)
+## ##################################################
+```
+
+## ASCAT.sc on undifferentiated sarcomas methylation arrays
+
+We analyse a set of undifferentiated sarcomas (USARC,
+downloadable
+[here](https://www.ebi.ac.uk/arrayexpress/experiments/E-MTAB-6961/?query=Nischalan+Pillay))
+for which whole genome and targeted sequencing is also available to compare.
+
+First we have to pre-process the data. For this, we use minfi and the
+rationale behind conumee. 
+
+The step we are adding at the end of the typical conumee cnv analysis is the fitting step,
+where we try and guess the purity of the sample (i.e. the fraction of
+tumour cells) through fitting integer copy numbers to the track. 
+The idea is that a change in intensity due to clonal copy number
+changes (i.e. copy number changes present in all the tumour cells)
+will be proportional to the purity of the sample.
+
+
+### Load and preprocess data
+
+First we load the raw data (here a set of undifferentiated sarcomas)
+and extract the technical signal from the normal panel (skeletal
+muscle) in the data. 
+If you do not have a panel of normal, you can use normal diploid samples from
+another dataset on the same platform (e.g. downloadable from
+[ArrayExpress](https://www.ebi.ac.uk/arrayexpress/)). 
+We also load [pre-computed
+bins](https://github.com/mwsill/mnp_training/blob/master/CNV_data/CNanalysis4_conumee_ANNO.vh20150715.RData)
+for this platform. 
+These steps might take a bit of time and memory depending on the size
+of your dataset. Here we load and process 90+ samples in less than
+10 minutes and it takes up to 8GB RAM before garbage collection.
+
+
+```{r, eval=F}
+## ##################################################
+## Chromosomes to fit (here all autosomes)
+ALLCHR <- paste0("chr",c(1:22))
+## ##################################################
+## Set input directory and read in the files 
+inputdir <- paste0("../data/methyl/E-MTAB-6961.raw")
+rgSet <- read.metharray.exp(inputdir); gc();
+normals <- strsplit("200598660066_R06C01,200598660078_R02C01,200598660078_R03C01,200598660078_R04C01,200598660078_R05C01,200598660078_R06C01,200598660078_R07C01,200598660078_R08C01,200598660079_R01C01,200598660079_R02C01,200598660079_R03C01,200598660079_R04C01,200598660081_R08C01",split=",")[[1]]
+## ##################################################
+## Get raw signals for all samples and the panel of normals
+data <- preprocessRaw(rgSet); rm("rgSet"); gc();
+## ##################################################
+## Load precomputed bins from https://github.com/mwsill/mnp_training
+load("CNanalysis4_conumee_ANNO.vh20150715.RData")
+## ##################################################
+## Extract total intensity and get annotations
+totalintensity <- getMeth(data)+getUnmeth(data)+1; gc();
+annot <- as.data.frame(getAnnotation(data)); rm("data"); gc();
+annot <- annot[annot[,"chr"]%in%ALLCHR,]
+## ##################################################
+## order chromosome, starts and ends of probes
+annot <- annot[order(annot[,"chr"],annot[,"pos"],decreasing=F),]
+starts <- as.numeric(as.character(annot[,"pos"]))
+ends <- as.numeric(as.character(annot[,"pos"]))
+chrs <- as.character(annot[,"chr"])
+## ##################################################
+## Final ordered total intensities for all and normal
+totalintensity <- totalintensity[rownames(annot),]
+totalintensityNormal <- totalintensity[,colnames(totalintensity)%in%normals]; gc();
+## ##################################################
+```
+
+### Correct for panel of normal (PoN)
+
+Next we model the track as a linear combination of the normal samples
+(diploid) in the panel, as per the [conumee methodology](https://github.com/hovestadt/conumee/blob/master/R/process.R).  If you
+do not have a panel of normal, you can use normal diploid samples from
+another dataset profiled on the same platform (e.g. downloadable from
+[ArrayExpress](https://www.ebi.ac.uk/arrayexpress/)).
+
+```{r, eval=F}
+## ##################################################
+## log PoN-fitted intensity values of all probes for all samples
+logr <- log2(sapply(1:ncol(totalintensity),function(x)
+{
+    notalreadyinpanel <- !colnames(totalintensityNormal)%in%colnames(totalintensity)[x]
+    predicted <- lm(y~.-1,
+                    data=data.frame(y=totalintensity[,x],
+                                    X=totalintensityNormal[,notalreadyinpanel]))$fitted.values
+    predicted[predicted<1] <- 1
+    totalintensity[,x]/predicted
+}))
+colnames(logr) <- colnames(totalintensity); gc();
+## ##################################################
+```
+
+### Segmenting the logr track
+
+Next we bin the probes and segment the binned tracks. In this vignette, we only
+process one sample for the sake of clarity in the following steps -
+but the user should try and process all and look at the results to
+gain more insight into how well the fitting is working.
+
+```{r, eval=F}
+## ##################################################
+track <- list()
+for(samp in colnames(logr)[1:96])
+{
+    cat(".")
+    ## ##################################################
+    .logr <- logr[,samp]
+    ## ##################################################
+    input <- meth_bin(.logr,
+                      starts=starts,
+                      ends=ends,
+                      chrs=chrs,
+                      anno@bins)
+    track[[samp]] <- getTrackForAll.bins(input[[1]],
+                                         input[[4]],
+                                         input[[2]],
+                                         input[[3]],
+                                         allchr=gsub("chr","",ALLCHR))
+    ## ##################################################
+}
+## ##################################################
+```
+
+### (Re-)fitting to integers while inferring the purity and ploidy
+
+Finally, we fit the segmented track to integers, inferring the purity
+of the sample. We plot the best solution among the possible
+combinations of average ploidy and purity that are considered.
+
+
+#### Gamma parameter
+
+In the original ASCAT publication, the logr equation for array-based
+copy number includes a platform-specific "gamma" parameter:
+
+$$logr=\gamma log_2(\frac{2(1-\rho )+\rho n_{tot}}{\psi })$$
+
+
+Unlike for sequencing, hybridisation-based logr is not linearly
+proportional to the DNA content. The gamma parameter gamma=0.55 
+was test for Illumina Array on this series, for which we also have
+whole-genome sequencing for a subset of 51 samples. Later, in this section we
+show the results of this calibration across the whole cohort.
+
+```{r, eval=F, include = FALSE}
+## ##################################################
+## Table of correspondence
+tab1 <- read.csv("../../MethylGamma/usarc/correspID.Array.csv")
+tab2 <- read.csv("../../MethylGamma/usarc/samplesToUse.csv")
+samps_corr <- sapply(as.character(tab1[,1]), function(x){ out <-  as.character(tab2[tab2[,1]==x,2]); if(length(out)==0) return(NA) else return(out)})
+samps_corr <- samps_corr[!is.na(samps_corr)]
+names(samps_corr) <- sapply(names(samps_corr),function(x)
+    paste(tab1[tab1[,1]==x,"Sentrix_ID"],tab1[tab1[,1]==x,"Sentrix_Position"],sep="_"))
+## ##################################################
+
+## ##################################################
+## Get BB profiles
+infiles <- dir("../../MethylGamma/bb_profiles/",pattern="_subclones.txt",full=T)
+infiles_ps <- dir("../../MethylGamma/bb_profiles/",pattern="cellularity",full=T)
+bbs <- lapply(samps_corr,function(x)
+{
+    read.table(infiles[grepl(x,infiles)],header=T,sep="\t")
+})
+pps <- lapply(samps_corr,function(x)
+{
+    read.table(infiles_ps[grepl(x,infiles_ps)],header=T,sep="\t")
+})
+## ##################################################
+allploidies_bb <- sapply(names(track),function(x)
+{
+    if(x%in%names(pps)) return(pps[[x]][2])
+    return(NA)
+})
+allpurities_bb <- sapply(names(track),function(x)
+{
+    if(x%in%names(pps)) return(pps[[x]][1])
+    return(NA)
+})
+## ##################################################
+```
+
+So, we first set a global variable GAMMA=0.55, which we be passed as
+arguments to the different functions of the copy number calling pipeline.
+
+
+```{r,  eval=T}
+## ##################################################
+GAMMA <- .55
+## ##################################################
+```
+
+We know analyse the results on the first sample. We show the solution
+on the sunrise plot for the first sample, using this gamma parameter,
+and the corresponding copy number solution.
+
+```{r, fig1, fig.height = 4, fig.width = 4, fig.align = "center", eval=T, fig.show = 'hold'}
+## ##################################################
+solution <- searchGrid(track[[samp]],
+                      purs=seq(0.1, 1, 0.01),
+                      ploidies=seq(1.5, 6, 0.01),
+                      maxTumourPhi=8,
+                      gamma=GAMMA)
+str(solution)
+plotSunrise(solution)
+## ##################################################
+```
+
+```{r, fig2, fig.height = 3, fig.width = 7, fig.align = "center", eval=T, fig.show = 'hold'}
+## ##################################################
+plotSolution(track[[samp]],
+             purity=solution$purity,
+             ploidy=solution$ploidy,lwdSeg=2,ylim=c(0,15),
+             gamma=GAMMA)
+## ##################################################
+```
+
+Finally we can get the corresponding copy number profile as a data
+frame with relevant information for downstream analyses.
+
+
+```{r, eval=T}
+profile <- getProfile(fitProfile(track[[samp]],
+                                 purity=solution$purity,
+                                 ploidy=solution$ploidy,
+                                 gamma=GAMMA))
+head(profile)
+knitr::kable(profile, format="html") %>%
+    kable_styling() %>%
+    scroll_box(width = "100%", height = "200px")
+```
+
+#### Refitting copy number
+
+One important step in copy number fitting, is the manual refitting
+step. Unless given the tumour ploidy experimentally, there is
+ambiguity in the pairs of ploidy and purity to explain the
+data. Therefore, it is important to manually review the profile and
+refit if necessary. There are hints in the data to inform on whether a
+fit is good or not. Some are present in the data, e.g. we have already coded a hard limit
+on the fraction of the genome allowed to present homozygous deletion (HD),
+more is considered impossible as the cells would not be viable. Though
+we have never seen large portion of the genome with clonal HD across cancer samples,
+this is a somewhat disputed hypothesis for individual cells. 
+Other hints can be linked to prior knowledge, e.g. papillary thyroid carcinomas are in
+general close to diploid, so it is unlikely to see a tumour ploidy
+around 6 in these cancers, whereas undifferentiated sarcomas can show
+extremely high ploidies and often present with two whole genome doublings.
+
+In this step of the analysis we will refit the profile to a lower
+ploidy. There are two ways we can do this in ASCAT.sc: 
+
+##### First, by performing a restricted grid search on given values of purity and ploidy
+
+Let's say you believed the tumour ploidy should not be as high. You could run the grid search while setting a maximum tumour ploidy of 4:
+
+```{r, fig.height = 4, fig.width = 4, fig.align = "center", eval=T, fig.show = 'hold'}
+## ##################################################
+solution <- searchGrid(track[[samp]],
+                      purs=seq(0.01, 1, 0.01),
+                      ploidies=seq(1.5, 6, 0.01),
+                      maxTumourPhi=4,
+                      gamma=GAMMA) ## max tumour ploidy is set to 4
+plotSunrise(solution)
+## ##################################################
+```
+
+```{r, fig5, fig.height = 3, fig.width = 7, fig.align = "center", eval=T, fig.show = 'hold'}
+## ##################################################
+plotSolution(track[[samp]],
+             purity=solution$purity,
+             ploidy=solution$ploidy,lwdSeg=2,ylim=c(0,7),
+             gamma=GAMMA)
+## ##################################################
+```
+
+Alternatively you could limit the search for a solution within the boundaries you
+think are plausible. Say purity by the pathologist is supposed to be
+much higher (around 90% tumour content) and tumour ploidy is expected to be
+slightly above 2.
+
+
+```{r, fig.height = 4, fig.width = 4, fig.align = "center", eval=T, fig.show = 'hold'}
+## ##################################################
+solution <- searchGrid(track[[samp]],
+                      purs=seq(0.7, 1, 0.01), ## purity is at least 70%
+                      ploidies=seq(1.5, 3, 0.01),
+                      maxTumourPhi=3,
+                      gamma=GAMMA)
+plotSunrise(solution)
+## ##################################################
+```
+
+```{r, fig6, fig.height = 3, fig.width = 7, fig.align = "center", eval=T, fig.show = 'hold'}
+## ##################################################
+plotSolution(track[[samp]],
+             purity=solution$purity,
+             ploidy=solution$ploidy,lwdSeg=2,ylim=c(0,5),
+             gamma=GAMMA)
+## ##################################################
+```
+
+
+##### Second, fixing the expected integer values of two long segments 
+
+
+Another way to refit a profile is to fix the expected copy number of
+two big segments on separate chromosomes. The refitting function in
+ASCAT.sc *refitProfile* will infer the purity and ploidy that could have given rise to these
+logr values given the integer copy number values that generated them.
+
+
+```{r, fig.height = 4, fig.width = 8, fig.align = "center", eval=T, fig.show = 'hold'}
+## ##################################################
+## first solution is the reference solution
+firstsolution <- searchGrid(track[[samp]], 
+                            purs=seq(0.01, 1, 0.01),
+                            ploidies=seq(1.5, 6, 0.01),
+                            maxTumourPhi=8,
+                            gamma=GAMMA)  
+## refitted solution from the fit using the first solution
+## the longest segment on chromosome 17 should align to 5 total copies
+## the longest segment on chromosome 6 should align to 3 total copies
+refittedsolution <- refitProfile(track[[samp]],
+                                 firstsolution,
+                                 chr1="17",
+                                 total1=5,
+                                 chr2="6",
+                                 total2=3,
+                                 gamma=GAMMA)
+par(mfcol=c(1,2)); plotSunrise(firstsolution); plotSunrise(refittedsolution)
+## ##################################################
+```
+
+```{r, fig7, fig.height = 3, fig.width = 7, fig.align = "center", eval=T, fig.show = 'hold'}
+## ##################################################
+plotSolution(track[[samp]],
+             purity=refittedsolution$purity,
+             ploidy=refittedsolution$ploidy,lwdSeg=2,ylim=c(0,10),
+             gamma=GAMMA)
+abline(h=c(3,5),lwd=2,col=c(rgb(.333,.1019,.545,.5),rgb(.6,.188,1,.5)),lty=2)
+## ##################################################
+```
+The long segments on chromosomes 17 and 6 now align with copy number 5
+and 3 respectively (purple segments).
+
+#### Comparing to whole-genome sequencing copy number profiles
+
+Now we will derive the logr track for all methylation samples, which can
+be run in parallel.
+
+```{r, eval=F}
+## ##################################################
+library(parallel)
+## ##################################################
+track <- mclapply(colnames(logr),function(samp)
+##for(samp in colnames(logr))
+{
+    cat(".")
+    ## ##################################################
+    .logr <- logr[,samp]
+    ## ##################################################
+    input <- meth_bin(.logr,
+                      starts=starts,
+                      ends=ends,
+                      chrs=chrs,
+                      anno@bins)
+    ##track[[samp]] <-
+    getTrackForAll.bins(input[[1]],
+                        input[[4]],
+                        input[[2]],
+                        input[[3]],
+                        allchr=gsub("chr","",ALLCHR))
+    ## ##################################################
+##}
+},mc.cores=8)
+names(track) <- colnames(logr)
+```
+
+And the automated solutions for all samples, also in parallel.
+
+```{r, eval=F}
+## ##################################################
+allSols <- parallel::mclapply(1:length(track),function(x)
+{
+    cat(".")
+    searchGrid(track[[x]],
+               purs = seq(0.1, .9, 0.01),
+               ploidies = seq(1.7,6.5, 0.01),
+               maxTumourPhi=8,gamma=GAMMA)
+},mc.cores=8)
+## ##################################################
+
+## ##################################################
+## extract all aumotated purity and ploidy values
+allploidies <- sapply(allSols,function(x) getTumourPhi(x$ploidy,x$purity))
+allpurities <- sapply(allSols,function(x) x$purity)
+## ##################################################
+```
+
+Let's compare the purity and ploidy values from the automated fits to
+the whole genome sequencing (WGS) values obtained with Battenberg. We
+note that the WGS ploidy were manually refitted to match experimental
+ploidy values obtained independently by FACS and image cytometry.
+
+
+
+```{r, fig8, fig.height = 4, fig.width = 7, fig.align = "center", eval=T, fig.show = 'hold', echo=FALSE}
+## ##################################################
+par(mfcol=c(1,2))
+## ##################################################
+plot(allploidies,
+     allploidies_bb,
+     xlab="Methylation ASCAT.sc",
+     ylab="WGS Battenberg",
+     xlim=c(0,8),ylim=c(0,7),
+     main=as.expression(bquote(psi[tumour])),
+     col=rgb(0,0,0,0),
+     frame=F,pch=19)
+abline(0,1)
+text(allploidies,allploidies_bb,paste0("S",1:length(track)),cex=.6,
+     col=ifelse(allpurities<.95,coldefault,coldefault))
+## ##################################################
+plot(allpurities,
+     allpurities_bb,
+     xlab="Methylation ASCAT.sc",
+     ylab="WGS Battenberg",
+     xlim=c(0,1),ylim=c(0,1),
+     main=as.expression(bquote(rho)),
+     frame=F,pch=19,
+     col=rgb(0,0,0,0))
+text(allpurities,
+     allpurities_bb,paste0("S",1:length(track)),cex=.6,
+     col=ifelse(allpurities<.95,coldefault,coldefault))
+abline(0,1)
+## ##################################################
+```
+
+This does not look great! Especially, many samples have ploidy values
+that are "shifted" by integer values. This is an excellent
+illustration of the ambuiguity in *in silico* ploidy estimates. 
+
+Next, we automate a refitting strategy of the methylation to match the
+WGS values. We select two large overlapping segments of different
+total number of copies in the WGS to refit the methylation ploidy
+values and plot the results after refitting. Coloured samples is where
+this strategy was applicable. (Manual refitting would likely solve all
+remaining cases, possible reasons for bad refit: bad sample matching,
+different copy numbers in methyl and WGS for the selected segments, etc.).
+
+
+
+```{r, eval=F, include=F}
+## ##################################################
+allSols_refit <- mclapply(1:length(track),function(x)
+{
+    cat(".")
+    newsol <- try(automateRefit(bbs[[names(track)[x]]],
+                                track.sc=track[[x]],
+                                solution=allSols[[x]],
+                                minpc=.80,
+                                gamma=GAMMA),silent=F)
+    if(inherits(newsol,"try-error")) return(list(sol=allSols[[x]],refit=FALSE))
+    if(newsol$ambiguous) return(list(sol=allSols[[x]],refit=FALSE))
+    list(sol=newsol,refit=TRUE)
+},mc.cores=8)
+## ##################################################
+
+## ##################################################
+allploidiesR <- sapply(allSols_refit,function(x) getTumourPhi(x$sol$ploidy,x$sol$purity))
+allpuritiesR <- sapply(allSols_refit,function(x) x$sol$purity)
+## ##################################################
+wasrefitted <- sapply(allSols_refit,function(x) x$refit)
+## ##################################################
+```
+
+
+
+```{r, fig9, fig.height = 4, fig.width = 7, fig.align = "center", eval=TRUE, echo=FALSE}
+## ##################################################
+par(mfcol=c(1,2))
+## ##################################################
+plot(allploidies,
+     allploidies_bb,
+     xlab="Methylation ASCAT.sc",
+     ylab="WGS Battenberg",
+     xlim=c(0,8),ylim=c(0,7),
+     main=as.expression(bquote(psi[tumour])),col=rgb(0,0,0,0),
+     frame=F,pch=19)
+abline(0,1)
+abline(v=0:10,h=0:10,lty=2,col=rgb(0,0,0,.1))
+##text(allploidies,allploidies_bb,paste0("S",1:length(track)),cex=.6,
+##     col=ifelse(allpurities<.95,"black","black"))
+text(allploidiesR,allploidies_bb,paste0("S",1:length(track)),cex=.6,
+     col=ifelse(wasrefitted,colrefit,coldefault))
+legend("topleft",
+       col=c(coldefault,colrefit),
+       pch=19,
+       box.col=rgb(0,0,0,0),
+       c("default","refitted (automated)"),
+       cex=.7)
+## ##################################################
+plot(allpurities,
+     allpurities_bb,
+     xlab="Methylation ASCAT.sc",
+     ylab="WGS Battenberg",
+     xlim=c(0,1),ylim=c(0,1),
+     main=as.expression(bquote(rho)),
+     frame=F,pch=19,
+     col=rgb(0,0,0,0))
+abline(v=seq(0,1,.1),h=seq(0,1,.1),lty=2,col=rgb(0,0,0,.1))
+##text(allpurities,
+##     allpurities_bb,paste0("S",1:length(track)),cex=.6,
+##     col=ifelse(allpurities<.95,"black","black"))
+text(allpuritiesR,
+     allpurities_bb,
+     paste0("S",1:length(track)),cex=.6,
+     col=ifelse(wasrefitted,colrefit,coldefault))
+abline(0,1)
+## ##################################################
+```
+
+This looks much better, the ploidies align nicely for the refitted
+profile. As a reminder, we have just forced two large segments to
+match in terms of total copy number, the rest of the fit, especially
+the purity is not defined by us, and seem to agree nicely. 
+
+
+Although the average ploidy values seem to match very well, we can
+ask whether the rest of the copy number segments also match. 
+We derive similarity metrics between all WGS and methyl profiles and
+plot them in a reducted 2D space using UMAP, where we link pairs of
+WGS-methyl samples. We use the manhattan distance.
+
+
+
+```{r, eval=F, include=F}
+## ##################################################
+all_refit_profiles <- parallel::mclapply(1:length(track),function(x)
+{
+    getProfile(fitProfile(track[[x]],allSols_refit[[x]]$sol$purity,
+                          allSols_refit[[x]]$sol$ploidy,
+                          gamma=GAMMA))
+},mc.cores=8)
+## ##################################################
+
+## ##################################################
+grallend <- getAllChrEnds(all_refit_profiles)
+allrefT <- lapply(all_refit_profiles,transformCNA,gr,isbb=F)
+allbbT <- lapply(bbs,transformCNA,gr,isbb=T)
+## ##################################################
+
+## ##################################################
+library(rdist)
+## ##################################################
+allprofs <- do.call("cbind",lapply(allrefT,function(x) x[,4]))
+colnames(allprofs) <- paste0("ASCAT.sc_",names(track))
+allprofs <- cbind(allprofs,do.call("cbind",lapply(allbbT,function(x) x[,4])))
+allprofs <- allprofs[rowSums(is.na(allprofs))==0,]
+## ##################################################
+dists <- as.dist(rdist(t(allprofs),metric="manhattan"))
+## ##################################################
+ump <- umap::umap(as.matrix(dists),method="naive")
+## ##################################################
+```
+
+```{r, fig10, fig.height = 4.5, fig.width = 5, fig.align = "center", eval=TRUE, echo=FALSE}
+## ##################################################
+plot(ump$layout,
+     frame=F,
+     xlab="umap1",
+     ylab="umap2",
+     pch=19,
+     col=c(rep(rgb(.6,.4,.7),length(track)),rep(rgb(0,0,0,.5),length(bbs))))
+## ##################################################
+LL <- length(track)
+count <- 0
+for(i in 1:LL)
+{
+    xx <- ump$layout[i,]
+    ww <- which(names(bbs)==names(track)[i])
+    if(length(ww)>0)
+        {
+            count <- count+1
+            ind <- LL+ww
+            xxp <- ump$layout[ind,]
+            if(sqrt(sum((xx-xxp)^2))<3)
+                segments(xx[1],xx[2],xxp[1],xxp[2],lwd=3,col=rgb(.9,.1,.9,.5))
+        }
+}
+legend("bottomleft",
+       lwd=3,
+       "replicates",
+       col=rgb(.9,.1,.9,.5),
+       box.col=rgb(0,0,0,0),
+       cex=.6)
+legend("left",
+       pch=19,
+       c("methyl","wgs"),
+       col=c(rgb(.6,.4,.7),rgb(0,0,0,.5)),
+       box.col=rgb(0,0,0,0),
+       cex=.8)
+## ##################################################
+```
+
+Not reading too much into the clusters, this simply shows that the profiles
+of replicates give similar total copy number profiles along the whole genome.
+
+
+### Session info
+
+```{r,eval=T}
+sessionInfo()
+```
+
+```{r, eval=F, echo=FALSE}
+mset <- mapToGenome(data)
+anno@probes <- subsetByOverlaps(anno@probes, granges(mset))
+x <- CNV.load(data[,colnames(logr)[1]])
+ref <- CNV.load(dataN)
+fit <- CNV.fit(x,ref=ref,anno=anno)
+fit <- CNV.bin(fit)
+fit <- CNV.detail(fit)
+fit <- CNV.segment(fit)
+quartz(width=14,height=4)
+CNV.genomeplot(fit,chrY=T)
+```

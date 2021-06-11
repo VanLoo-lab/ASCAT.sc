@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+
+<title>single-cell-data</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#header {
+text-align: center;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">single-cell-data</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="co">## ##################################################</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="kw">library</span>(ASCAT.sc)</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="co">## ##################################################</span></a></code></pre></div>
+<p>In this vignette, we use ASCAT.sc to analyse a single cell dataset and derive copy number profiles for each cell. The pipeline is very similar to <a href="https://www.nature.com/articles/nmeth.3578">Ginkgo</a>. The main difference remains in the fitting of the states to integers, which follows <a href="https://www.pnas.org/content/107/39/16910">ASCAT</a>’s rationale and uses the same equations.</p>
+<div id="an-example-dataset-sarcoma" class="section level2">
+<h2>An example dataset: sarcoma</h2>
+<p>We will use a dataset of single cells from a malignant peripheral nerve sheath tumour. Cells were collected from different relapse and anatomically distinct regions originating from the same primary tumour.</p>
+</div>
+<div id="ascat.sc-to-get-copy-number-out" class="section level2">
+<h2>ASCAT.sc to get copy number out</h2>
+<div id="quality-check" class="section level3">
+<h3>Quality check</h3>
+<p>We will assume that quality check has been performed already. One can use e.g. MAPD, proportion of mitochondrial material, etc. We will also see that the inferred purity should be 1, which can be used as an extra filtering step in ASCAT.sc.</p>
+</div>
+<div id="setting-up-project-and-pipeline" class="section level3">
+<h3>Setting up project and pipeline</h3>
+<div id="defining-directory-structures-and-input-files" class="section level4">
+<h4>Defining directory structures and input files</h4>
+<p>First we define the input and output files, i.e. where to fetch the BAMs and to output the profiles, repsectively. We define the window size as well as the reference genome file and the number of cores to be used for parallelization. Sometimes chromosomes are reported with an extra “chr” prefix, which is given in the variable CHRSTRING (set to &quot;&quot; if no prefix).</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1">BAMDIR &lt;-<span class="st"> &quot;../input/&quot;</span> <span class="co">##input file with indexed BAM files to read</span></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">OUTDIR &lt;-<span class="st"> &quot;../output/&quot;</span> <span class="co">##your output file</span></a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">FASTA &lt;-<span class="st"> &quot;../ref/hs37d5.fa&quot;</span> <span class="co">##reference genome, fasta file</span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">window &lt;-<span class="st"> &quot;100000&quot;</span> <span class="co">##window size for binning (increase if less reads sequenced/more noise)</span></a>
+<a class="sourceLine" id="cb2-5" data-line-number="5">CHRSTRING &lt;-<span class="st"> &quot;&quot;</span> <span class="co">##&quot;&quot; or &quot;chr&quot; in your reference file</span></a>
+<a class="sourceLine" id="cb2-6" data-line-number="6">MC.CORES &lt;-<span class="st"> </span><span class="dv">5</span> <span class="co">## number of samples to process in parallel</span></a></code></pre></div>
+<p>Next we define where to fetch the pre-computed variable-size bins on disk. These correspond to the aligner and the read length of our experiment. We use the pre-computed bins from Ginkgo (<a href="https://github.com/robertaboukhalil/ginkgo" class="uri">https://github.com/robertaboukhalil/ginkgo</a>), which can be downloaded <a href="http://qb.cshl.edu/ginkgo/uploads/hg19.original.tar.gz">here</a>.</p>
+<pre><code>BINFILE &lt;- paste0(&quot;../bins.variable/hg19.original/variable_&quot;, window, &quot;_48_bowtie&quot;) ## path to precomputed bins of the required window size/ not necessary to use this (old functionality)
+BADBINSFILE &lt;- paste0(&quot;../bins.variable/hg19.original/badbins_variable_&quot;, window, &quot;_48_bowtie&quot;) ## path to precomputed bad bins/not necessary to use this (old functionality)</code></pre>
+</div>
+<div id="loading-required-libraries" class="section level4">
+<h4>Loading required libraries</h4>
+<p>We next load the required libraries (there are more dependencies).</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">library</span>(Rsamtools)</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2"><span class="kw">library</span>(Biostrings)</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3"><span class="kw">library</span>(DNAcopy)</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4"><span class="kw">library</span>(parallel)</a></code></pre></div>
+</div>
+</div>
+<div id="running-ascat.sc" class="section level3">
+<h3>Running ASCAT.sc</h3>
+<div id="loading-bams-and-names" class="section level4">
+<h4>Loading bams and names</h4>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="co">####################################################</span></a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="co">## Get BAMs in the BAM directory</span></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">bams &lt;-<span class="st"> </span><span class="kw">dir</span>(BAMDIR,<span class="dt">full=</span>T) <span class="co">## FULL PATHS</span></a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">bamsF &lt;-<span class="st"> </span><span class="kw">dir</span>(BAMDIR,<span class="dt">full=</span>F) <span class="co">## BAM NAMES</span></a>
+<a class="sourceLine" id="cb5-5" data-line-number="5">bamsF &lt;-<span class="st"> </span>bamsF[<span class="kw">grepl</span>(<span class="st">&quot;bam$&quot;</span>,bams)] <span class="co">## Just keep files ending in &quot;bam&quot;</span></a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">bams &lt;-<span class="st"> </span>bams[<span class="kw">grepl</span>(<span class="st">&quot;bam$&quot;</span>,bams)]</a>
+<a class="sourceLine" id="cb5-7" data-line-number="7"><span class="kw">print</span>(bamsF)</a>
+<a class="sourceLine" id="cb5-8" data-line-number="8"><span class="co">####################################################</span></a>
+<a class="sourceLine" id="cb5-9" data-line-number="9"><span class="kw">setwd</span>(OUTDIR)</a>
+<a class="sourceLine" id="cb5-10" data-line-number="10"><span class="co">####################################################</span></a></code></pre></div>
+</div>
+<div id="gc-content-calculation" class="section level4">
+<h4>GC content calculation</h4>
+<p>We load the reference and define the chromosomes we are interested in (here the automosomes and X).</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="co">####################################################</span></a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">dna &lt;&lt;-<span class="st"> </span><span class="kw">getRefGenome</span>(<span class="dt">fasta=</span>FASTA) <span class="co">## Load reference genome, only used to compute GC content</span></a>
+<a class="sourceLine" id="cb6-3" data-line-number="3"><span class="co">####################################################</span></a>
+<a class="sourceLine" id="cb6-4" data-line-number="4"><span class="co">## CHROMOSOMES INVESTIGATED</span></a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">ALLCHR &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="st">&quot;&quot;</span>,<span class="kw">c</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">22</span>,<span class="st">&quot;X&quot;</span>))[<span class="dv">1</span><span class="op">:</span><span class="dv">22</span>] <span class="co">## Define chromosomes, currently assumes female if X is provided (better remove for now or if male)</span></a>
+<a class="sourceLine" id="cb6-6" data-line-number="6"><span class="co">####################################################</span></a></code></pre></div>
+<p>We then load the starts and ends of each bins per chromosome and compute the GC content within each bin. As it takes a few minutes to run, We recommend saving the GC-content object for later re-use.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="co">## get starts and ends of the variable bins</span></a>
+<a class="sourceLine" id="cb7-2" data-line-number="2"><span class="co">## these are precomputed in file BINFILE (here for hg19 - bowtie)</span></a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">lSe &lt;-<span class="st"> </span><span class="kw">lapply</span>(ALLCHR,<span class="cf">function</span>(chr)</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">    <span class="kw">getStartsEnds</span>(<span class="dt">window=</span>window,</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">          <span class="dt">chr=</span><span class="kw">paste0</span>(CHRSTRING,chr),</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6">          <span class="dt">lengthChr=</span><span class="kw">length</span>(dna[[chr]]),</a>
+<a class="sourceLine" id="cb7-7" data-line-number="7">          <span class="dt">dna=</span>dna))</a>
+<a class="sourceLine" id="cb7-8" data-line-number="8"><span class="kw">names</span>(lSe) &lt;-<span class="st"> </span>ALLCHR</a>
+<a class="sourceLine" id="cb7-9" data-line-number="9"><span class="co">## get GC content in the bins</span></a>
+<a class="sourceLine" id="cb7-10" data-line-number="10"><span class="co">## this could be precomputed for all projects with same aligner+read length</span></a>
+<a class="sourceLine" id="cb7-11" data-line-number="11"><span class="co">## should take around a few minutes to compute</span></a>
+<a class="sourceLine" id="cb7-12" data-line-number="12">lGCT &lt;-<span class="st"> </span><span class="kw">lapply</span>(ALLCHR,<span class="cf">function</span>(chr)</a>
+<a class="sourceLine" id="cb7-13" data-line-number="13">{</a>
+<a class="sourceLine" id="cb7-14" data-line-number="14">    <span class="kw">cat</span>(<span class="st">&quot;.&quot;</span>)</a>
+<a class="sourceLine" id="cb7-15" data-line-number="15">    gcT &lt;-<span class="st"> </span><span class="kw">gcTrack</span>(chr,lSe[[chr]]<span class="op">$</span>starts,</a>
+<a class="sourceLine" id="cb7-16" data-line-number="16">                   lSe[[chr]]<span class="op">$</span>ends,</a>
+<a class="sourceLine" id="cb7-17" data-line-number="17">                   <span class="dt">dna=</span>dna)</a>
+<a class="sourceLine" id="cb7-18" data-line-number="18">})</a>
+<a class="sourceLine" id="cb7-19" data-line-number="19"><span class="kw">names</span>(lSe) &lt;-<span class="st"> </span><span class="kw">names</span>(lGCT) &lt;-<span class="st"> </span><span class="kw">paste0</span>(CHRSTRING, ALLCHR)</a>
+<a class="sourceLine" id="cb7-20" data-line-number="20"><span class="kw">save</span>(lGCT, <span class="dt">file=</span><span class="kw">paste0</span>(OUTDIR,<span class="st">&quot;lGCT.&quot;</span>,window,<span class="st">&quot;.Rda&quot;</span>))</a></code></pre></div>
+</div>
+<div id="load-coverage-tracks" class="section level4">
+<h4>Load coverage tracks</h4>
+<p>We finally derive the counts and smooth the track using a lowess/loess fit against GC content for all bams. This will constitute our input data to fit copy number. Because this is a time and I/O consuming task, we save the tracks on disk directly afterwards.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="co">####################################################</span></a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">allTracks &lt;-<span class="st"> </span><span class="kw">mclapply</span>(bams,<span class="cf">function</span>(bamfile)</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">{</a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">    <span class="kw">cat</span>(<span class="st">&quot;.&quot;</span>)</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">    <span class="kw">try</span>(<span class="kw">getTrackForAll</span>(bamfile,</a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">                       window,</a>
+<a class="sourceLine" id="cb8-7" data-line-number="7">                       <span class="dt">lSe=</span>lSe,</a>
+<a class="sourceLine" id="cb8-8" data-line-number="8">                       <span class="dt">lGCT=</span>lGCT,</a>
+<a class="sourceLine" id="cb8-9" data-line-number="9">                       <span class="dt">allchr=</span><span class="kw">paste0</span>(CHRSTRING,ALLCHR),</a>
+<a class="sourceLine" id="cb8-10" data-line-number="10">                       <span class="dt">sdNormalise=</span><span class="dv">0</span>),<span class="dt">silent=</span>T)</a>
+<a class="sourceLine" id="cb8-11" data-line-number="11">},<span class="dt">mc.cores=</span>MC.CORES)</a>
+<a class="sourceLine" id="cb8-12" data-line-number="12"><span class="co">####################################################</span></a>
+<a class="sourceLine" id="cb8-13" data-line-number="13"><span class="kw">names</span>(allTracks) &lt;-<span class="st"> </span>bamsF</a>
+<a class="sourceLine" id="cb8-14" data-line-number="14"><span class="kw">save</span>(allTracks,<span class="dt">file=</span><span class="kw">paste0</span>(OUTDIR,<span class="st">&quot;allTracks.&quot;</span>,</a>
+<a class="sourceLine" id="cb8-15" data-line-number="15">    window,</a>
+<a class="sourceLine" id="cb8-16" data-line-number="16">    <span class="st">&quot;.Rda&quot;</span>))</a>
+<a class="sourceLine" id="cb8-17" data-line-number="17"><span class="co">####################################################</span></a></code></pre></div>
+</div>
+<div id="fit-copy-number-to-find-optimal-profile" class="section level4">
+<h4>Fit copy number to find optimal profile</h4>
+<p>Once the logr track obtained, we can select an optimal pair of purity and ploidy values to explain the data. In single cells, purity should be 100%. Anything lower would potentially point to a noisy logr or a problem with the fit. Tumour/normal doublets can also be fitted as 50% purity. For single cells, one can try 50% and 100% purity and also force the purity to be around 100% in the grid search.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1">allSolutions &lt;-<span class="st"> </span><span class="kw">lapply</span>(allTracks,searchGrid,<span class="dt">purs=</span><span class="kw">c</span>(.<span class="dv">5</span>,<span class="dv">1</span>),<span class="dt">ploidies=</span><span class="kw">seq</span>(<span class="fl">1.7</span>, <span class="dv">6</span>, <span class="fl">0.02</span>),<span class="dt">forcepurity=</span><span class="kw">seq</span>(<span class="fl">0.99</span>,<span class="dv">1</span>))</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2"><span class="kw">save</span>(allSolutions,<span class="dt">file=</span><span class="kw">paste0</span>(OUTDIR,<span class="st">&quot;/allSolutions&quot;</span>,window,<span class="st">&quot;.Rda&quot;</span>))</a></code></pre></div>
+</div>
+<div id="filtering-noisy-cells" class="section level4">
+<h4>Filtering noisy cells</h4>
+<p>Next we derive a metric of the noise in the profiles (related to MAPD) and we set a threshold on this to select cells with a good profile/filter out cells with a bad profile.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" data-line-number="1">getQuality.SD &lt;-<span class="st"> </span><span class="cf">function</span>(alltracks,<span class="dt">plot=</span>F)</a>
+<a class="sourceLine" id="cb10-2" data-line-number="2">{</a>
+<a class="sourceLine" id="cb10-3" data-line-number="3">    quality &lt;-<span class="st"> </span><span class="kw">colSums</span>(<span class="kw">sapply</span>(alltracks,<span class="cf">function</span>(x) <span class="kw">sapply</span>(x,<span class="cf">function</span>(y)</a>
+<a class="sourceLine" id="cb10-4" data-line-number="4">        <span class="kw">mytry</span>(<span class="kw">sum</span>(y<span class="op">$</span>num.mark<span class="op">*</span>y<span class="op">$</span>CNsd)<span class="op">/</span><span class="kw">sum</span>(y<span class="op">$</span>num.mark)))),<span class="dt">na.rm=</span>T)</a>
+<a class="sourceLine" id="cb10-5" data-line-number="5">    quality &lt;-<span class="st"> </span>quality<span class="op">/</span><span class="kw">max</span>(quality)</a>
+<a class="sourceLine" id="cb10-6" data-line-number="6">    <span class="cf">if</span>(plot)</a>
+<a class="sourceLine" id="cb10-7" data-line-number="7">    {</a>
+<a class="sourceLine" id="cb10-8" data-line-number="8">        <span class="kw">par</span>(<span class="dt">mar=</span><span class="kw">c</span>(<span class="dv">8</span>,<span class="dv">5</span>,<span class="dv">1</span>,<span class="dv">1</span>))</a>
+<a class="sourceLine" id="cb10-9" data-line-number="9">        <span class="kw">barplot</span>(quality,<span class="dt">las=</span><span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb10-10" data-line-number="10">    }</a>
+<a class="sourceLine" id="cb10-11" data-line-number="11">    quality</a>
+<a class="sourceLine" id="cb10-12" data-line-number="12">}</a>
+<a class="sourceLine" id="cb10-13" data-line-number="13">qualities &lt;-<span class="st"> </span><span class="kw">getQuality.SD</span>(allTracks, allSolutions, <span class="dt">plot=</span>F)</a>
+<a class="sourceLine" id="cb10-14" data-line-number="14"><span class="co">###############################################################</span></a>
+<a class="sourceLine" id="cb10-15" data-line-number="15"><span class="kw">quantile</span>(qualities,<span class="dt">probs=</span><span class="kw">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,.<span class="dv">1</span>))</a>
+<a class="sourceLine" id="cb10-16" data-line-number="16"><span class="co">###############################################################</span></a>
+<a class="sourceLine" id="cb10-17" data-line-number="17">QUALITYTHRESHOLD &lt;-<span class="st"> </span><span class="dv">10</span></a>
+<a class="sourceLine" id="cb10-18" data-line-number="18"><span class="co">###############################################################</span></a></code></pre></div>
+<p>We can also get an independent metric related to the NRPCC and annotate the cells for whether the fit is ambiguous (usually this means all optimal fits were leading to &lt;=0 copies on a large fraction of the genome, this happens in very noisy cells or replicating cells where GC correction failed) or can be fitted as a doublet.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="co">###############################################################</span></a>
+<a class="sourceLine" id="cb11-2" data-line-number="2">mat.records  &lt;-<span class="st">  </span><span class="kw">sapply</span>(allTracks,<span class="cf">function</span>(x) <span class="kw">unlist</span>(<span class="kw">lapply</span>(x<span class="op">$</span>lCTS,<span class="cf">function</span>(y) y<span class="op">$</span>records)))</a>
+<a class="sourceLine" id="cb11-3" data-line-number="3"><span class="co">###############################################################</span></a>
+<a class="sourceLine" id="cb11-4" data-line-number="4">mm. &lt;-<span class="st"> </span>mm</a>
+<a class="sourceLine" id="cb11-5" data-line-number="5">mm.[mm.<span class="op">&lt;</span><span class="dv">0</span>] &lt;-<span class="st"> </span><span class="dv">0</span></a>
+<a class="sourceLine" id="cb11-6" data-line-number="6">nrpcc &lt;-<span class="st"> </span><span class="kw">colMeans</span>(mat.records<span class="op">/</span>(mm.<span class="op">+</span><span class="dv">2</span>),<span class="dt">na.rm=</span>T)</a>
+<a class="sourceLine" id="cb11-7" data-line-number="7">ambiguous &lt;-<span class="st"> </span><span class="kw">sapply</span>(allSolutions,<span class="cf">function</span>(x) x<span class="op">$</span>ambiguous)</a>
+<a class="sourceLine" id="cb11-8" data-line-number="8">doublet &lt;-<span class="st"> </span><span class="kw">sapply</span>(allSolutions,<span class="cf">function</span>(x) <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(x<span class="op">$</span>bestfit)) <span class="op">!</span>x<span class="op">$</span>bestfit<span class="op">$</span>ambiguous <span class="cf">else</span> F)</a>
+<a class="sourceLine" id="cb11-9" data-line-number="9"><span class="co">###############################################################</span></a></code></pre></div>
+<p>We plot the MAPD vs. NRPCC and annotate cells for being ambiguous or doublet-like. We can filter cells out based on this plot. Indeed, for a given amount of read counts per chromosome copy, we derive an experimental level of noise for all cells. Any cells seen as outlier for the trend across cells could be removed as a precaution.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="co">###############################################################</span></a>
+<a class="sourceLine" id="cb12-2" data-line-number="2"><span class="kw">pdf</span>(<span class="kw">paste0</span>(OUTDIR, <span class="st">&quot;/nrpcc.vs.qualities.pdf&quot;</span>),</a>
+<a class="sourceLine" id="cb12-3" data-line-number="3">    <span class="dt">width=</span><span class="dv">5</span>,<span class="dt">height=</span><span class="dv">5</span>)</a>
+<a class="sourceLine" id="cb12-4" data-line-number="4"><span class="kw">plot</span>(<span class="dt">y=</span>qualities,</a>
+<a class="sourceLine" id="cb12-5" data-line-number="5">     <span class="dt">x=</span>nrpcc,</a>
+<a class="sourceLine" id="cb12-6" data-line-number="6">     <span class="dt">ylab=</span><span class="st">&quot;noise&quot;</span>,</a>
+<a class="sourceLine" id="cb12-7" data-line-number="7">     <span class="dt">xlab=</span><span class="st">&quot;nrpcc&quot;</span>,</a>
+<a class="sourceLine" id="cb12-8" data-line-number="8">     <span class="dt">col=</span><span class="kw">ifelse</span>(ambiguous,<span class="st">&quot;red&quot;</span>,<span class="st">&quot;black&quot;</span>),</a>
+<a class="sourceLine" id="cb12-9" data-line-number="9">     <span class="dt">pch=</span><span class="kw">ifelse</span>(doublet,<span class="dv">3</span>,<span class="dv">19</span>),</a>
+<a class="sourceLine" id="cb12-10" data-line-number="10">     <span class="dt">cex=</span>.<span class="dv">5</span>,</a>
+<a class="sourceLine" id="cb12-11" data-line-number="11">     <span class="dt">frame=</span>F)</a>
+<a class="sourceLine" id="cb12-12" data-line-number="12"><span class="kw">abline</span>(<span class="dt">v=</span><span class="dv">10</span>,<span class="dt">h=</span><span class="dv">10</span>,<span class="dt">lty=</span><span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb12-13" data-line-number="13"><span class="kw">dev.off</span>()</a>
+<a class="sourceLine" id="cb12-14" data-line-number="14"><span class="co">###############################################################</span></a></code></pre></div>
+</div>
+<div id="get-profiles-and-write-to-disk" class="section level4">
+<h4>Get profiles and write to disk</h4>
+<p>We can now get all profiles (fit them with the identified purity/ploidy solutions then shape them as a data.frame).</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1">allProfiles &lt;-<span class="st"> </span><span class="kw">lapply</span>(<span class="dv">1</span><span class="op">:</span><span class="kw">length</span>(allTracks),<span class="cf">function</span>(x)</a>
+<a class="sourceLine" id="cb13-2" data-line-number="2">{</a>
+<a class="sourceLine" id="cb13-3" data-line-number="3">    <span class="kw">getProfile</span>(<span class="kw">fitProfile</span>(allTracks[[x]],</a>
+<a class="sourceLine" id="cb13-4" data-line-number="4">                          <span class="dt">purity=</span>allSolutions[[x]]<span class="op">$</span>purity,</a>
+<a class="sourceLine" id="cb13-5" data-line-number="5">                          <span class="dt">ploidy=</span>allSolutions[[x]]<span class="op">$</span>ploidy))</a>
+<a class="sourceLine" id="cb13-6" data-line-number="6">})</a></code></pre></div>
+<p>Finally, we can write them to disk for further use.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" data-line-number="1">tnull &lt;-<span class="st"> </span><span class="kw">lapply</span>(<span class="dv">1</span><span class="op">:</span><span class="kw">length</span>(allProfiles),<span class="cf">function</span>(x)</a>
+<a class="sourceLine" id="cb14-2" data-line-number="2">{</a>
+<a class="sourceLine" id="cb14-3" data-line-number="3"><span class="kw">writeProfile</span>(allProfiles[[x]],</a>
+<a class="sourceLine" id="cb14-4" data-line-number="4">         <span class="dt">samplename=</span><span class="kw">names</span>(allTracks)[x],</a>
+<a class="sourceLine" id="cb14-5" data-line-number="5">         <span class="dt">outdir=</span>OUTDIR) </a>
+<a class="sourceLine" id="cb14-6" data-line-number="6">})</a></code></pre></div>
+</div>
+<div id="plotting-results" class="section level4">
+<h4>Plotting results</h4>
+<p>If we have run on many cells, we can also plot the results in a heatmap to have a global picture.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1">mm &lt;-<span class="st"> </span><span class="kw">sc_getMatrixOfCalls</span>(allTracks,allSolutions,lSe)</a>
+<a class="sourceLine" id="cb15-2" data-line-number="2"><span class="co">###############################################################</span></a>
+<a class="sourceLine" id="cb15-3" data-line-number="3">mm &lt;-<span class="st"> </span><span class="kw">round</span>(mm)</a>
+<a class="sourceLine" id="cb15-4" data-line-number="4">mm &lt;-<span class="st"> </span>mm<span class="dv">-2</span></a>
+<a class="sourceLine" id="cb15-5" data-line-number="5"><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw">ncol</span>(mm))</a>
+<a class="sourceLine" id="cb15-6" data-line-number="6">{</a>
+<a class="sourceLine" id="cb15-7" data-line-number="7">    mm[,i][<span class="kw">is.na</span>(mm[,i])] &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(<span class="kw">names</span>(<span class="kw">which.max</span>(<span class="kw">table</span>(mm[,i]))))</a>
+<a class="sourceLine" id="cb15-8" data-line-number="8">}</a>
+<a class="sourceLine" id="cb15-9" data-line-number="9"><span class="co">###############################################################</span></a>
+<a class="sourceLine" id="cb15-10" data-line-number="10"><span class="kw">sc_plotHeat</span>(mm[,qualities<span class="op">&lt;</span>QUALITYTHRESHOLD <span class="op">&amp;</span><span class="st"> </span>nrpcc<span class="op">&gt;</span><span class="dv">10</span> <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span>ambiguous <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span>doublet],</a>
+<a class="sourceLine" id="cb15-11" data-line-number="11"><span class="dt">scaleY=</span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb15-12" data-line-number="12"><span class="dt">centromeres=</span><span class="ot">NULL</span>)</a></code></pre></div>
+</div>
+</div>
+</div>
+<div id="pipeline-for-singe-cell-cgh-dataset" class="section level2">
+<h2>Pipeline for <a href="https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-52366/?query=%22single+cell%22+DNA&amp;page=3&amp;pagesize=25">singe cell CGH dataset</a></h2>
+<p>Potentially coming later, though CGH is not used anymore.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
