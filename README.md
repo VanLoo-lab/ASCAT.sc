@@ -19,3 +19,13 @@ shallow-coverage (sc), and targeted sequencing, as well as methylation arrays
 ## Usage
 
 See vignettes for how-to pipelines.
+
+
+## Cell-line profiles
+
+ASCAT.sc total copy-number profiles on cell lines from various sources (GDSC and CCLE) can be found here:
+https://drive.google.com/drive/folders/1RwhF9cw6KP55fHtlNKTzk36syXN9fspo?usp=sharing
+These are accompanied by the R script to derive the profiles, as well as sample ID mapping and QC flags.
+
+**Credits to:** Philip S Smith, CRUK Cambridge Institute
+

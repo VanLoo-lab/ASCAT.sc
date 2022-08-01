@@ -1,11 +1,13 @@
 plotSolution <- function(tracksSingle,
                          purity,
                          ploidy,
+                         sol=NULL,
                          lwdSeg=2,
                          ylim=c(0,8),
                          gamma=1,
                          ismale=F,
                          isPON=F,
+                         allchr=NULL,
                          colFit=rgb(0.756, 0.494, 0.756),
                          ...)
 {
@@ -16,7 +18,7 @@ plotSolution <- function(tracksSingle,
          xlim = c(0, max(breaks)), xlab = "Genomic Position",
          ylab = "Total copy number", frame = F, ylim=ylim, ...)
     ##axis(side = 1)
-    axis(side = 2)
+    axis(side = 2, las=2)
     for (i in 1:length(tracksSingle$lSegs)) {
         segments(tracksSingle$lCTS[[i]]$start/1e+06 + breaks[i],
                  transform_bulk2tumour(tracksSingle$lCTS[[i]]$smoothed,
@@ -55,15 +57,25 @@ plotSolution <- function(tracksSingle,
     abline(h=1:50, lwd = 1,
            lty = 2,
            col = rgb(0.6, 0.6, 0.6, 0.2))
+    labels <- allchr
+    if(is.null(allchr))
+        labels <- if(is.null(names(tracksSingle$lCTS))) names(breaks)[2:length(breaks)]
+                  else names(tracksSingle$lCTS)
     text(x = breaks[2:length(breaks)] - 25,
          y = max(ylim),
-         names(breaks)[2:length(breaks)],
+         ##if(is.null(allchr)) names(breaks)[2:length(breaks)] else allchr,
+         labels=labels,
          cex = 0.4)
+    dpb <- median(unlist(lapply(tracksSingle$lCTS,function(x) x$records)),na.rm=T)
+    dpb <- if(all(tracksSingle$lCTS[[1]]$records==tracksSingle$lCTS[[1]]$smoothed)) NA else dpb
     mtext(side = 3,
           paste0("purity=",
                  signif(purity,2),
                  "; average ploidy=",
                  signif(ploidy,2),
                  "; tumor ploidy=",
-                 signif(getTumourPhi(ploidy,purity),2)))
+                 signif(getTumourPhi(ploidy,purity),2),
+                 if(!is.null(sol)) paste0("; ",ifelse(is.null(sol$ambiguous),"",paste0("ambiguous:",sol$ambiguous))),
+                 if(is.na(dpb)) "" else paste0("; dpb=",signif(dpb,2))),
+          cex=.8)
 }

@@ -3,10 +3,13 @@ fitProfile <- function(tracksSingle,
                        ploidy,
                        ismale=F,
                        isPON=F,
-                       gamma=1)
+                       gamma=1,
+                       gridsearch=F)
 {
     tracksSingle <- normaliseByPloidy(tracksSingle)
-    meansSeg <- lapply(1:length(tracksSingle$lSegs), function(i) {
+    NN <- length(tracksSingle$lSegs)
+    if(gridsearch) NN <- min(NN,23) ## avoid checking chromosome Y in the grid search (leads to HD flag in males)
+    meansSeg <- lapply(1:NN, function(i) {
         out <- tracksSingle$lSegs[[i]]$output
         means <- lapply(1:nrow(out), function(x) {
             isIn <- tracksSingle$lCTS[[i]]$start > out$loc.start[x] &
@@ -24,7 +27,7 @@ fitProfile <- function(tracksSingle,
                                                  gamma=gamma,
                                                  ismale=ismale,
                                                  isPON=isPON,
-                                                 isX=tracksSingle$lSegs[[i]]$output$chrom[1]%in%c("23","X")),
+                                                 isX=tracksSingle$lSegs[[i]]$output$chrom[1]%in%c("23","X", "chrX","chr23")),
                  mu = mu,
                  sd = sd,
                  start = out$loc.start[x],

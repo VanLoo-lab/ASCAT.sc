@@ -1,10 +1,15 @@
 smoothCoverageTrack <- function(lCT,
                                 lSe,
                                 lGCT,
+                                lNormals=NULL,
                                 method=c("loess",
                                          "lowess"))
 {
     allRec <- unlist(lapply(lCT,function(x) log2(x$records+1)))
+    if(!is.null(lNormals))
+    {
+        allRec <- allRec-unlist(lapply(lNormals,function(x) log2(x$records+1)))
+    }
     allGC <- unlist(lGCT)
     starts <- c(0,cumsum(sapply(lCT,nrow)[-c(length(lCT))]))+1
     ends <- cumsum(sapply(lCT,nrow))

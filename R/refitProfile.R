@@ -9,10 +9,13 @@ refitProfile <- function(track,
                          gamma=1,
                          ismale=F,
                          isPON=F,
+                         CHRS=NULL,
                          gridpur=seq(-.05,.05,.01),
                          gridpl=seq(-.1,.2,.01))
 {
-    profile <- getProfile(fitProfile(track,solution$purity,solution$ploidy, gamma=gamma, ismale=ismale, isPON=isPON))
+    if(is.null(CHRS)) CHRS <- 1:22
+    profile <- getProfile(fitProfile(track,solution$purity,solution$ploidy, gamma=gamma, ismale=ismale, isPON=isPON),
+                          CHRS=CHRS)
     if(!is.na(chr1))
     {
         profile1 <- profile[profile[,"chromosome"]==chr1,,drop=F]

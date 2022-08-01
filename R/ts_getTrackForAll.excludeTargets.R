@@ -1,5 +1,4 @@
 ts_getTrackForAll.excludeTargets <- function (bamfile,
-                                              window,
                                               lExclude,
                                               lCTS.normal,
                                               lSe,

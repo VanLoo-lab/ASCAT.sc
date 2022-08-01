@@ -10,8 +10,12 @@ License: GNU-GPL V3
 Imports:
     Biostrings,
     GenomicRanges,
+    parallel,
     Rsamtools,
-    DNAcopy
+    DNAcopy,
+    xgboost,
+    minfi,
+    conumee
 Suggests: 
     knitr,
     rmarkdown
