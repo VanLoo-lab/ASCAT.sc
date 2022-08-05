@@ -66,7 +66,7 @@ run_sc_sequencing <- function(tumour_bams,
                                                                                 lCTS=lapply(allTracks,function(x) x$nlCTS.tumour),
                                                                                 lSe=nlSe,
                                                                                 lGCT=nlGCT,
-                                                                                lNormals=lNormals,
+                                                                                lNormals=NULL,
                                                                                 allchr=allchr,
                                                                                 segmentation_alpha=segmentation_alpha,
                                                                                 MC.CORES=MC.CORES))
@@ -106,7 +106,7 @@ run_sc_sequencing <- function(tumour_bams,
                                   purity=allSols[[x]]$purity,
                                   ploidy=allSols[[x]]$ploidy,
                                   ismale=if(sex[x]=="male") T else F),
-                       CHRS=paste0(chrstring_bam,allchr)),silent=F)
+                       CHRS=allchr),silent=F)
     },mc.cores=MC.CORES)
     names(allProfiles) <- names(allSols) <- names(allTracks)
     print("## return all results")
