@@ -43,8 +43,10 @@ printResults_all <- function(res,
                   list(summary=list(allSols=data.frame(samplename=names(res$allTracks),
                                                        purity=sapply(res$allSolutions,function(x) .mytry(x$purity)),
                                                        ploidy=sapply(res$allSolutions,function(x) .mytry(x$ploidy))),
-                                    allSols.refitted=data.frame(samplename=names(res$allTracks),
-                                                                purity=sapply(res$allSolutions.refitted.auto,function(x) .mytry(x$purity)),
-                                                                ploidy=sapply(res$allSolutions.refitted.auto,function(x) .mytry(x$ploidy))))))
+                                    allSols.refitted=if(!any(grepl("refitted",names(res)))) NULL
+                                                     else
+                                                         data.frame(samplename=names(res$allTracks),
+                                                                    purity=sapply(res$allSolutions.refitted.auto,function(x) .mytry(x$purity)),
+                                                                    ploidy=sapply(res$allSolutions.refitted.auto,function(x) .mytry(x$ploidy))))))
     res
 }
