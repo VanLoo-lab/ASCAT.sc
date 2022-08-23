@@ -106,7 +106,7 @@ run_methylation_array <- function(idat_dir,
                 logr=logr,
                 annotions.probes=annot,
                 bins=anno,
-                gamma=gamma,
+                gamma=GAMMA,
                 timetofit=timetofit)
     if(predict_refit)
         res <- predictRefit_all(res, gamma=GAMMA)
