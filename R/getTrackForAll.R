@@ -13,18 +13,17 @@ getTrackForAll <- function(bamfile,
 			   isUnmappedQuery=NA,
 			   mapqFilter=30,
                            doSmooth=TRUE,
-                           doSeg=TRUE,
-                           multisegs=NULL)
+                           doSeg=TRUE)
 {
     if(is.null(lSe))
     {
-        print("get Start-End of segments")
+        print("   ## get Start-End of segments")
         lSe <- lapply(allchr,function(chr) getStartsEnds(window,paste0(chr)))
     }
     ## ##################################################
     if(is.null(lCT))
     {
-        print("get Coverage Track")
+        print("   ## get Coverage Track")
         lCT <- lapply(allchr, function(chr) getCoverageTrack(bamPath=bamfile,
                                                              chr=paste0(chr),
                                                              lSe[[chr]]$starts,
@@ -37,34 +36,29 @@ getTrackForAll <- function(bamfile,
     }
     if(is.null(lGCT))
     {
-        print("get GC content")
+        print("   ## get GC content")
         lGCT <- lapply(allchr,function(chr) gcTrack(chr,lSe[[chr]]$starts,lSe[[chr]]$ends))
     }
     ## ##################################################
     if(doSmooth)
     {
-        print("correct for GC content")
+        print("   ## correct for GC content")
         lCTS <- smoothCoverageTrack(lCT=lCT,lSe=lSe,lGCT=lGCT, lNormals=lNormals)
         names(lCTS) <- allchr
         gc()
     }
     ## ##################################################
-    print("segment Tracks")
-    if(is.null(multisegs))
-        lSegs <- lapply(1:length(lCTS),function(x)
-        {
-            require(DNAcopy)
-            segments<- segmentTrack(lCTS[[x]]$smoothed,
-                                    chr=paste0(x),
-                                    sd=sdNormalise,
-                                    lSe[[x]]$starts,
-                                    lSe[[x]]$ends,
-                                    ALPHA=segmentation_alpha)
-        })
-    else
+    print("   ## segment Tracks")
+    require(DNAcopy)
+    lSegs <- lapply(1:length(lCTS),function(x)
     {
-        lSegs <- applySegs(lCTS, segs)
-    }
+        segments<- segmentTrack(lCTS[[x]]$smoothed,
+                                chr=paste0(x),
+                                sd=sdNormalise,
+                                lSe[[x]]$starts,
+                                lSe[[x]]$ends,
+                                ALPHA=segmentation_alpha)
+    })
     names(lSegs) <- paste0(1:length(lCT))
     tracks <- list(lCTS=lCTS,lSegs=lSegs)
     return(tracks)

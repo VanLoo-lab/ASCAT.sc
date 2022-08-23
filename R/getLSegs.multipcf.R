@@ -9,6 +9,7 @@ getLSegs.multipcf <- function(allTracks,
 {
     ## #############################################################
     require(parallel)
+    require(copynumber)
     ## #############################################################
     smoothAll <- function(lCTS, lSe, lGCT, lNormals, allchr, MC.CORES)
     {
@@ -28,7 +29,6 @@ getLSegs.multipcf <- function(allTracks,
     ## #############################################################
     runMultiPCF <- function(allT, penalties, nchr, mc.cores=1)
     {
-        require(copynumber)
         chr_pcfed <- mclapply(1:nchr,function(i)
         {
             cat(".")

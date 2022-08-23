@@ -1,4 +1,4 @@
-predictRefit_all <- function(res)
+predictRefit_all <- function(res, gamma=1)
 {
     preds <- lapply(res$allProfiles, function(x) try(predictRefit(x)))
     res$allProfiles.refitted.auto <- list()
@@ -12,10 +12,12 @@ predictRefit_all <- function(res)
                     res$allSolutions.refitted.auto[[i]] <- try(refitProfile_shift(track=res$allTracks.processed[[i]],
                                                                                   solution=res$allSolutions[[i]],
                                                                                   CHRS=res$chr,
+                                                                                  gamma=gamma,
                                                                                   shift=if(preds[i]==0) 1 else -1),silent=F)
                     res$allProfiles.refitted.auto[[i]] <- try(getProfile(fitProfile(res$allTracks.processed[[i]],
                                                                                     purity=res$allSolutions.refitted.auto[[i]]$purity,
                                                                                     ploidy=res$allSolutions.refitted.auto[[i]]$ploidy,
+                                                                                    gamma=gamma,
                                                                                     ismale=if(res$sex[i]=="male") T else F),
                                                                          CHRS=res$chr),silent=F)
                 }
@@ -25,6 +27,7 @@ predictRefit_all <- function(res)
                 res$allProfiles.refitted.auto[[i]] <- try(getProfile(fitProfile(res$allTracks.processed[[i]],
                                                                                 purity=res$allSolutions.refitted.auto[[i]]$purity,
                                                                                 ploidy=res$allSolutions.refitted.auto[[i]]$ploidy,
+                                                                                gamma=gamma,
                                                                                 ismale=if(res$sex[i]=="male") T else F),
                                                                      CHRS=res$chr),silent=F)
             }

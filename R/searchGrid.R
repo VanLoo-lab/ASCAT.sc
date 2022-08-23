@@ -33,7 +33,7 @@ searchGrid <- function (tracksSingle,
         isX <- unlist(lapply(1:length(tracksSingle$lSegs), function(i) {
             out <- tracksSingle$lSegs[[i]]$output
             isx <- unlist(lapply(1:nrow(out), function(x) {
-                if(out$chrom%in%c("X","23", "chrX","chr23")) return(TRUE)
+                if(out$chrom[1]%in%c("X","23", "chrX","chr23")) return(TRUE)
                 return(FALSE)
             }))
         }))

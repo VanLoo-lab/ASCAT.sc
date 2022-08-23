@@ -1,5 +1,5 @@
 run_sc_sequencing <- function(tumour_bams,
-                              fasta,
+                              res=NULL,
                               allchr=paste0("",c(1:22,"X")),
                               sex=c("female","male","female"),
                               chrstring_bam="",
@@ -12,60 +12,96 @@ run_sc_sequencing <- function(tumour_bams,
                               print_results=TRUE,
                               build=c("hg19","hg38"),
                               MC.CORES=1,
+                              barcodes_10x=NULL,
                               outdir="./",
+                              probs_filters=.1,
+                              path_to_phases=NULL,
+                              list_ac_counts_paths=NULL,
+                              sc_filters=FALSE,
                               projectname="project",
+                              smooth_sc=FALSE,
                               multipcf=FALSE)
 {
     require(parallel)
     require(Rsamtools)
     require(Biostrings)
+    require(DNAcopy)
+    require(copynumber)
     binsize <- as.numeric(binsize)
-    print("## load bins for genome build")
+    print(paste0("## load Bins for Genome Build: ", build))
     START_WINDOW <- 30000
+    if(is.null(res))
+        res <- list()
     if(build=="hg19")
     {
         data("lSe_filtered_30000.hg19",package="ASCAT.sc")
         data("lGCT_filtered_30000.hg19",package="ASCAT.sc")
         if(!all(allchr%in%names(lSe.hg19.filtered)))
             stop(paste0("allchr should be in the form: ",names(lSe.hg19.filtered)[1],"; not: ",allchr[1],"..."))
-        lSe <- lapply(allchr, function(chr) lSe.hg19.filtered[[chr]])
-        names(lSe) <- allchr
-        names(lGCT.hg19.filtered) <- names(lSe)
-        lGCT <- lapply(allchr, function(chr) lGCT.hg19.filtered[[chr]])
+        res$lSe <- lapply(allchr, function(chr) lSe.hg19.filtered[[chr]])
+        names(res$lSe) <- allchr
+        names(lGCT.hg19.filtered) <- names(res$lSe)
+        res$lGCT <- lapply(allchr, function(chr) lGCT.hg19.filtered[[chr]])
     }
     if(build=="hg38")
     {
         data("lSe_filtered_30000.hg38",package="ASCAT.sc")
         data("lGCT_filtered_30000.hg38",package="ASCAT.sc")
-        lSe <- lapply(allchr, function(chr) lSe.hg38.filtered[[chr]])
-        names(lSe) <- allchr
-        names(lGCT.hg38.filtered) <- names(lSe)
-        lGCT <- lapply(allchr, function(chr) lGCT.hg38.filtered[[chr]])
-        names(lGCT) <- names(lSe)
+        res$lSe <- lapply(allchr, function(chr) lSe.hg38.filtered[[chr]])
+        names(res$lSe) <- allchr
+        names(lGCT.hg38.filtered) <- names(res$lSe)
+        res$lGCT <- lapply(allchr, function(chr) lGCT.hg38.filtered[[chr]])
+        names(res$lGCT) <- names(res$lSe)
+        if(chrstring_bam=="")
+            names(res$lGCT) <- names(res$lSe) <- gsub("chr","",names(res$lSe))
     }
-    print("## calculate target bin size")
-    nlGCT <- treatGCT(lGCT,window=ceiling(binsize/START_WINDOW))
-    nlSe <- treatlSe(lSe,window=ceiling(binsize/START_WINDOW))
-    print("## get all tracks from tumour bams")
-    timetoread_tumours <- system.time(allTracks <- mclapply(tumour_bams,function(bamfile)
+    print("## calculate Target Bin size")
+    res$nlGCT <- treatGCT(res$lGCT,window=ceiling(binsize/START_WINDOW))
+    res$nlSe <- treatlSe(res$lSe,window=ceiling(binsize/START_WINDOW))
+    if(is.null(res) | !any(names(res)=="allTracks"))
     {
-        lCTS.tumour <- lapply(allchr, function(chr) getCoverageTrack(bamPath=bamfile,
-                                                                     chr=chr,
-                                                                     lSe[[chr]]$starts,
-                                                                     lSe[[chr]]$ends,
-                                                                     mapqFilter=30))
-        list(lCTS.tumour=lCTS.tumour,
-             nlCTS.tumour=treatTrack(lCTS=lCTS.tumour,
-                                     window=ceiling(binsize/START_WINDOW)))
-    },mc.cores=MC.CORES))
+        if(!is.null(barcodes_10x))
+        {
+            print("## get Tracks from 10X-like bam")
+            timetoread_tumours <- system.time(res$allTracks <- getTrackForAll.10XBAM(bamfile=tumour_bams[1],
+                                                                                     barcodes=barcodes_10x,
+                                                                                     allchr=allchr,
+                                                                                     chrstring="",
+                                                                                     lSe=res$lSe,
+                                                                                     doSeg=FALSE))
+            nms <- names(res$allTracks)
+            res$allTracks <- lapply(nms, function(x)
+                list(lCTS.tumour=res$allTracks[[x]],
+                     nlCTS.tumour=treatTrack(lCTS=res$allTracks[[x]],
+                                             window=ceiling(binsize/START_WINDOW)))
+                )
+            names(res$allTracks) <- nms
+            sex <- rep(sex,length(res$allTracks))
+        }
+        if(is.null(barcodes_10x))
+        {
+            print("## get Tracks from Tumour bams")
+            timetoread_tumours <- system.time(res$allTracks <- mclapply(tumour_bams,function(bamfile)
+            {
+                lCTS.tumour <- lapply(allchr, function(chr) getCoverageTrack(bamPath=bamfile,
+                                                                             chr=chr,
+                                                                             res$lSe[[chr]]$starts,
+                                                                             res$lSe[[chr]]$ends,
+                                                                             mapqFilter=30))
+                list(lCTS.tumour=lCTS.tumour,
+                     nlCTS.tumour=treatTrack(lCTS=lCTS.tumour,
+                                             window=ceiling(binsize/START_WINDOW)))
+            },mc.cores=MC.CORES))
+        }
+    }
     if(multipcf)
     {
-        print("## calculating multipcf - multi-sample mode - do not use if samples from different tumours")
-        timetoprocessed <- system.time(allTracks.processed <- getLSegs.multipcf(allTracks=lapply(allTracks, function(x)
+        print("## calculate Multipcf - multi-sample mode - do not use if samples from different tumours")
+        timetoprocessed <- system.time(res$allTracks.processed <- getLSegs.multipcf(allTracks=lapply(res$allTracks, function(x)
                                                                                                 {list(lCTS=x$nlCTS.tumour)}),
-                                                                                lCTS=lapply(allTracks,function(x) x$nlCTS.tumour),
-                                                                                lSe=nlSe,
-                                                                                lGCT=nlGCT,
+                                                                                lCTS=lapply(res$allTracks,function(x) x$nlCTS.tumour),
+                                                                                lSe=res$nlSe,
+                                                                                lGCT=res$nlGCT,
                                                                                 lNormals=NULL,
                                                                                 allchr=allchr,
                                                                                 segmentation_alpha=segmentation_alpha,
@@ -73,15 +109,14 @@ run_sc_sequencing <- function(tumour_bams,
     }
     else
     {
-        print("## smooth all tracks")
-        timetoprocessed <- system.time(allTracks.processed <- mclapply(1:length(allTracks), function(x)
+        print("## smooth Tracks")
+        timetoprocessed <- system.time(res$allTracks.processed <- mclapply(1:length(res$allTracks), function(x)
         {
-            cat(".")
             getTrackForAll(bamfile=NULL,
                            window=NULL,
-                           lCT=allTracks[[x]][[2]],
-                           lSe=nlSe,
-                           lGCT=nlGCT,
+                           lCT=res$allTracks[[x]][[2]],
+                           lSe=res$nlSe,
+                           lGCT=res$nlGCT,
                            lNormals=NULL,
                            allchr=allchr,
                            sdNormalise=0,
@@ -89,41 +124,85 @@ run_sc_sequencing <- function(tumour_bams,
         },mc.cores=MC.CORES))
         cat("\n")
     }
-    names(allTracks.processed) <- names(allTracks) <- gsub("(.*)/(.*)","\\2",tumour_bams)
-    print("## fit purity and ploidy for all tracks")
-    timetofit <- system.time(allSols <- mclapply(1:length(allTracks.processed), function(x)
+    if(is.null(barcodes))
+        names(res$allTracks.processed) <- names(res$allTracks) <- gsub("(.*)/(.*)","\\2",tumour_bams)
+    else
+        names(res$allTracks.processed) <- names(res$allTracks)
+    print("## fit Purity/Ploidy")
+    timetofit <- system.time(res$allSols <- mclapply(1:length(res$allTracks.processed), function(x)
     {
-        sol <- try(searchGrid(allTracks.processed[[x]],
+        sol <- try(searchGrid(res$allTracks.processed[[x]],
                               purs = purs,
                               ploidies = ploidies,
                               maxTumourPhi=maxtumourpsi,
                               ismale=if(sex[x]=="male") T else F),silent=F)
     },mc.cores=MC.CORES))
-    print("## get all fitted cna profiles")
-    allProfiles <- mclapply(1:length(allTracks.processed), function(x)
+    print("## get Fitted Cna Profiles")
+    res$allProfiles <- mclapply(1:length(res$allTracks.processed), function(x)
     {
-        try(getProfile(fitProfile(allTracks.processed[[x]],
-                                  purity=allSols[[x]]$purity,
-                                  ploidy=allSols[[x]]$ploidy,
+        try(getProfile(fitProfile(res$allTracks.processed[[x]],
+                                  purity=res$allSols[[x]]$purity,
+                                  ploidy=res$allSols[[x]]$ploidy,
                                   ismale=if(sex[x]=="male") T else F),
                        CHRS=allchr),silent=F)
     },mc.cores=MC.CORES)
-    names(allProfiles) <- names(allSols) <- names(allTracks)
-    print("## return all results")
-    res <- list(allTracks.processed=allTracks.processed,
-                allTracks=allTracks,
-                allSolutions=allSols,
-                allProfiles=allProfiles,
+    names(res$allProfiles) <- names(res$allSols) <- names(res$allTracks)
+    print("## compile Results")
+    res <- list(allTracks.processed=res$allTracks.processed,
+                allTracks=res$allTracks,
+                allSolutions=res$allSols,
+                allProfiles=res$allProfiles,
                 chr=paste0(chrstring_bam,allchr),
+                purs=purs,
+                ploidies=ploidies,
+                maxtumourpsi=maxtumourpsi,
+                build=build,
+                binsize=binsize,
                 sex=sex,
-                lSe=nlSe,
-                lGCT=nlGCT,
+                segmentation_alpha=segmentation_alpha,
+                multipcf=multipcf,
+                lSe=res$nlSe,
+                lGCT=res$nlGCT,
                 timetoread_tumours=timetoread_tumours,
                 timetoprocessed=timetoprocessed,
                 timetofit=timetofit)
     if(predict_refit)
+    {
+        print("## predict Refit")
         res <- predictRefit_all(res)
+    }
     if(print_results)
+    {
+        print("## print Results")
         res <- printResults_all(res, outdir=outdir, projectname=projectname)
+    }
+    if(sc_filters)
+    {
+        print("## get Filters")
+        res<- getFilters(res,
+                         probs=probs_filters,
+                         outdir=outdir,
+                         projectname=projectname)
+    }
+    if(!is.null(list_ac_counts_paths) & !is.null(path_to_phases))
+    {
+        print("## get Allele-specific CNA")
+        res <- getAS_CNA(res,
+                         path_to_phases=path_to_phases,
+                         list_ac_counts_paths=list_ac_counts_paths,
+                         purs=purs,
+                         ploidies=ploidies,
+                         outdir=outdir,
+                         projectname=projectname,
+                         mc.cores=MC.CORES)
+    }
+    if(smooth_sc & any(grepl("smoothed",names(res))))
+    {
+        print("## smooth Across Single-Cells/Nulcei")
+        res <- getAS_CNA_smoothed(res,
+                                  mc.cores=MC.CORES)
+    }
+    if(smooth_sc & !any(grepl("smoothed",names(res))))
+        print("Warning: Smoothing is only possible for allele-specific copy numbers")
     res
 }

@@ -96,7 +96,6 @@ run_targeted_sequencing <- function(tumour_bams,
              nlCTS.tumour=treatTrack(lCTS=lCTS.tumour,
                                      window=ceiling(binsize/START_WINDOW)))
     },mc.cores=MC.CORES))
-    multisegs <- NULL
     if(multipcf)
     {
         print("## calculating multipcf - multi-sample mode - do not use if samples from different tumours")
@@ -124,8 +123,7 @@ run_targeted_sequencing <- function(tumour_bams,
                            lNormals=lCTS.normal.combined,
                            allchr=allchr,
                            sdNormalise=0,
-                           segmentation_alpha=segmentation_alpha,
-                           multisegs=multisegs)
+                           segmentation_alpha=segmentation_alpha)
         },mc.cores=MC.CORES))
         cat("\n")
     }

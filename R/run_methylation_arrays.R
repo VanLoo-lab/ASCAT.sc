@@ -81,6 +81,7 @@ run_methylation_array <- function(idat_dir,
                               purs = purs,
                               ploidies = ploidies,
                               maxTumourPhi=maxtumourpsi,
+                              gamma=GAMMA,
                               ismale=F),silent=F)
     },mc.cores=MC.CORES))
     ## ##################################################
@@ -90,6 +91,7 @@ run_methylation_array <- function(idat_dir,
         try(getProfile(fitProfile(allTracks.processed[[x]],
                                   purity=allSols[[x]]$purity,
                                   ploidy=allSols[[x]]$ploidy,
+                                  gamma=GAMMA,
                                   ismale=F),
                        CHRS=allchr),silent=F)
     },mc.cores=MC.CORES)
@@ -104,9 +106,10 @@ run_methylation_array <- function(idat_dir,
                 logr=logr,
                 annotions.probes=annot,
                 bins=anno,
+                gamma=gamma,
                 timetofit=timetofit)
     if(predict_refit)
-        res <- predictRefit_all(res)
+        res <- predictRefit_all(res, gamma=GAMMA)
     if(print_results)
         res <- printResults_all(res,  outdir=outdir, projectname=projectname)
     ## ##################################################
