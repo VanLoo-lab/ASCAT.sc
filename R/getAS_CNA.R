@@ -60,7 +60,8 @@ getAS_CNA <- function(res,
         phasing <- lapply(phasing_paths,function(x) as.data.frame(data.table::fread(x)))
         phases <- lapply(phasing,function(x)
         {
-            x <- x[x[,10]%in%c("0|1","1|0"),]
+            ##x <- x[x[,10]%in%c("0|1","1|0"),]
+            x <- x[grep("0\\|1|1\\|0",x[, 10]), ]
             phase <- gsub("(.*)\\|(.*)","\\1",x[,10])
             phases1 <- x[,"REF"]
             phases1[phase=="1"] <- x[phase=="1","ALT"]

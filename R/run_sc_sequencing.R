@@ -124,7 +124,7 @@ run_sc_sequencing <- function(tumour_bams,
         },mc.cores=MC.CORES))
         cat("\n")
     }
-    if(is.null(barcodes))
+    if(is.null(barcodes_10x))
         names(res$allTracks.processed) <- names(res$allTracks) <- gsub("(.*)/(.*)","\\2",tumour_bams)
     else
         names(res$allTracks.processed) <- names(res$allTracks)
