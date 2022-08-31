@@ -5,6 +5,8 @@ shallow-coverage (sc), and targeted sequencing, as well as methylation arrays
 
 ## Install
 
+First download the zip file on disk and then build and install with the following commands
+
 > R CMD BUILD --no-build-vignettes ASCAT.sc/ 
 
 > R CMD INSTALL ASCAT.sc_1.0.tar.gz 
@@ -12,9 +14,16 @@ shallow-coverage (sc), and targeted sequencing, as well as methylation arrays
 
 > R CMD build --no-build-vignettes ASCAT.sc/ 
 
-> R CMD install ASCAT.sc_1.0.tar.gz 
+> R CMD install ASCAT.sc_0.1.tar.gz 
 <br>
 
+Alternatively, you can install with devtools in an R session:
+
+> devtools::install_github("VanLoo-lab/ASCAT.sc", build_opts = c("--no-build-vignettes"))
+
+Make sure to install dependencies before installing (this might take a while):
+
+> BiocManager::install(c("GenomicRanges", "Biostrings", "DNAcopy", "minfi", "conumee", "Rsamtools", "xgboost"))
 
 ## Usage
 
