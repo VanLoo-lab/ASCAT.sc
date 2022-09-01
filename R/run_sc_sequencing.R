@@ -195,14 +195,15 @@ run_sc_sequencing <- function(tumour_bams,
                          outdir=outdir,
                          projectname=projectname,
                          mc.cores=MC.CORES)
+        names(res$allProfiles_AS) <- names(res$allProfiles)
     }
-    if(smooth_sc & any(grepl("smoothed",names(res))))
+    if(smooth_sc & any(grepl("_AS",names(res))))
     {
         print("## smooth Across Single-Cells/Nulcei")
         res <- getAS_CNA_smoothed(res,
                                   mc.cores=MC.CORES)
     }
-    if(smooth_sc & !any(grepl("smoothed",names(res))))
+    if(smooth_sc & !any(grepl("_AS",names(res))))
         print("Warning: Smoothing is only possible for allele-specific copy numbers")
     res
 }
