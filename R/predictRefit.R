@@ -1,6 +1,6 @@
 predictRefit <- function(prof)
 {
-    require(xgboost)
+    suppressPackageStartupMessages(require(xgboost))
     ##data("predict_refit_xgb_object_pcawg",package="ASCAT.sc")
     predict_refit_xgb_pcawg <- xgb.load(list.files(system.file('extdata',
                                                                package = 'ASCAT.sc'),

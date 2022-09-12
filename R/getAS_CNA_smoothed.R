@@ -163,7 +163,7 @@ getAS_CNA_smoothed <- function(res,
     {
         cat(".")
         baf <- sapply(lProfs,function(x) x[index,"BAF"])
-        ntot <- sapply(lProfs,function(x) x[index,"ntot"])
+        ntot <- sapply(lProfs,function(x) x[index,"ntot_fixed"])
         fitted <- fitIntegers.2D(baf, ntot, iter=100, INDEX=index)
     },mc.cores=mc.cores)
     newlProfs <- lapply(1:length(lProfs),function(x)

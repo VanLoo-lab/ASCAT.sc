@@ -9,8 +9,8 @@ getAS_CNA <- function(res,
                       mc.cores=1,
                       steps=NULL)
 {
-    require(GenomicRanges)
-    require(data.table)
+    suppressPackageStartupMessages(require(GenomicRanges))
+    suppressPackageStartupMessages(require(data.table))
     searchGrid  <-  function (baf,
                               logr,
                               sizes,
@@ -86,7 +86,7 @@ getAS_CNA <- function(res,
         nmsPH1 <- ac..[,"phase1"]
         nmsPH2 <- ac..[,"phase2"]
         letters <- c("A","C","G","T")
-        letters_index <- 4:7
+        letters_index <- sapply(paste0("Count_",letters),function(x) which(colnames(ac..)%in%x))
         names(letters_index) <-letters
         ind1 <- letters_index[nmsPH1]
         ind2 <- letters_index[nmsPH2]
@@ -94,8 +94,10 @@ getAS_CNA <- function(res,
         ind2 <- cbind(seq_along(ind2), ind2)
         df <- data.frame(chr=ac..[,1],
                          pos=ac..[,2],
-                         counts1=ac..[ind1],
-                         counts2=ac..[ind2])
+                         counts1=as.numeric(as.character(ac..[ind1])),
+                         counts2=as.numeric(as.character(ac..[ind2])))
+        df <- df[rowSums(df[,3:4])>0,]
+        df
     }
 
     getHet <- function(snp1,snp2)
@@ -120,6 +122,11 @@ getAS_CNA <- function(res,
 
     fitBinom.1dist <- function(counts, depths, steps=NULL)
     {
+        if(any(depths<counts))
+        {
+            print("Anomaly: total counts smaller than genotype counts - verify allele count files")
+            depths[depths>counts] <- counts[depths>counts] ##should never happen
+        }
         if(is.null(steps))
             steps <- if(length(counts)%/%3>10) 5 else 3
         nonas <- !is.na(counts) & !is.na(depths)
@@ -130,8 +137,8 @@ getAS_CNA <- function(res,
         lcounts <- split(counts,haploblocks)
         ldepths <- split(depths,haploblocks)
         lcounts <- lapply(1:length(lcounts), function(x) if(rnorm(1)<0) ldepths[[x]]-lcounts[[x]] else lcounts[[x]])
-        counts=sapply(lcounts,sum)
-        depths=sapply(ldepths,sum)
+        counts <- sapply(lcounts,sum)
+        depths <- sapply(ldepths,sum)
         values <- seq(.5,1,0.001)
         llh <- sapply(values,function(x)
         {
@@ -287,7 +294,7 @@ getAS_CNA <- function(res,
         phases <- readPhases(path_to_phases[[1]])
     }
     print("## derive Allele-specific Profiles")
-    res$allProfiles_AS <- mclapply(1:length(res$allTracks.processed), function(x)
+    res$allProfiles_AS <- parallel::mclapply(1:length(res$allTracks.processed), function(x)
     {
         getAS_CNA_sample(track=res$allTracks.processed[[x]],
                          profile=res$allProfiles[[x]],

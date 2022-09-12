@@ -8,8 +8,8 @@ getLSegs.multipcf <- function(allTracks,
                               MC.CORES=1)
 {
     ## #############################################################
-    require(parallel)
-    require(copynumber)
+    suppressPackageStartupMessages(require(parallel))
+    suppressPackageStartupMessages(require(copynumber))
     ## #############################################################
     smoothAll <- function(lCTS, lSe, lGCT, lNormals, allchr, MC.CORES)
     {

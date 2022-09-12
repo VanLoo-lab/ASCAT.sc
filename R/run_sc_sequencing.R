@@ -19,14 +19,15 @@ run_sc_sequencing <- function(tumour_bams,
                               list_ac_counts_paths=NULL,
                               sc_filters=FALSE,
                               projectname="project",
+                              steps=NULL,
                               smooth_sc=FALSE,
                               multipcf=FALSE)
 {
-    require(parallel)
-    require(Rsamtools)
-    require(Biostrings)
-    require(DNAcopy)
-    require(copynumber)
+    suppressPackageStartupMessages(require(parallel))
+    suppressPackageStartupMessages(require(Rsamtools))
+    suppressPackageStartupMessages(require(Biostrings))
+    suppressPackageStartupMessages(require(DNAcopy))
+    suppressPackageStartupMessages(require(copynumber))
     binsize <- as.numeric(binsize)
     print(paste0("## load Bins for Genome Build: ", build))
     START_WINDOW <- 30000
@@ -194,6 +195,7 @@ run_sc_sequencing <- function(tumour_bams,
                          ploidies=ploidies,
                          outdir=outdir,
                          projectname=projectname,
+                         steps=steps,
                          mc.cores=MC.CORES)
     }
     if(smooth_sc & any(grepl("smoothed",names(res))))

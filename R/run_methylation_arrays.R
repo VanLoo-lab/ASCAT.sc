@@ -11,8 +11,8 @@ run_methylation_array <- function(idat_dir,
                                   print_results=TRUE,
                                   MC.CORES=1)
 {
-    require(minfi)
-    require(conumee)
+    suppressPackageStartupMessages(require(minfi))
+    suppressPackageStartupMessages(require(conumee))
     print("## read idat directory")
     rgSet <- read.metharray.exp(idat_dir); gc();
     print("## preprocess raw data - extract unmeth/meth signal unprocessed")

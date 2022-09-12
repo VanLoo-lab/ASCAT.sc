@@ -11,8 +11,8 @@ getCoverageTrack.10XBAM <- function (bamPath,
                                      barcodes=NULL,
                                      tag=c("CB","CR"))
 {
-    require(Rsamtools)
-    require(GenomicRanges)
+    suppressPackageStartupMessages(require(Rsamtools))
+    suppressPackageStartupMessages(require(GenomicRanges))
     sbp <- ScanBamParam(flag = scanBamFlag(isDuplicate=isDuplicate,
                                            isSecondaryAlignment=isSecondaryAlignment,
                                            isNotPassingQualityControls=isNotPassingQualityControls,

@@ -4,7 +4,7 @@ function(cT,
                                  ends,
                                  chr)
 {
-    require(DNAcopy)
+    suppressPackageStartupMessages(require(DNAcopy))
     segments<- segmentTrack(counts,
                             chr,
                             starts,
