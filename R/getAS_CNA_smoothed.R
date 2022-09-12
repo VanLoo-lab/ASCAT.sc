@@ -150,7 +150,7 @@ getAS_CNA_smoothed <- function(res,
     }
 
     lProfs <- res$allProfiles_AS
-    if(grepl("filters",names(res)))
+    if(any(grepl("filters",names(res))))
     {
         nms <- names(lProfs)
         lProfs <- lapply(which(res$filters), function(x)
