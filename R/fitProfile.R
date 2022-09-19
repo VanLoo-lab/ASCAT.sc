@@ -14,15 +14,18 @@ fitProfile <- function(tracksSingle,
         means <- lapply(1:nrow(out), function(x) {
             isIn <- tracksSingle$lCTS[[i]]$start >= out$loc.start[x] &
                 tracksSingle$lCTS[[i]]$start <= out$loc.end[x]
-            if (sum(isIn) < 2)
+            if (sum(isIn) < 1)
                 return(list(roundmu = NA, mu = NA, sd = NA, start = out$loc.start[x],
                             end = out$loc.end[x],
                             num.mark=out$num.mark[x],
                             num.mark.in=sum(isIn)))
             mu <- median(tracksSingle$lCTS[[i]]$smoothed[isIn],
                          na.rm = T)
-            sd <- mad(tracksSingle$lCTS[[i]]$smoothed[isIn],
-                      na.rm = T)
+            if (sum(isIn) < 2)
+                sd <- NA
+            else
+                sd <- mad(tracksSingle$lCTS[[i]]$smoothed[isIn],
+                          na.rm = T)
             list(roundmu = transform_bulk2tumour(mu,
                                                  purity,
                                                  ploidy,
