@@ -5,6 +5,7 @@ segmentTrack <- function (covtrack,
                           sd = 0,
                           min.width = 5,
                           ALPHA=0.01,
+                          SBDRY=NULL,
                           smooth=T)
 {
     require(DNAcopy)
@@ -14,6 +15,9 @@ segmentTrack <- function (covtrack,
                data.type = "logratio")
     if(smooth)
         cna <- smooth.CNA(cna)
-    capture.output(cna <- segment(cna, min.width = min.width,alpha=ALPHA))
+    if(is.null(SBDRY))
+        capture.output(cna <- segment(cna, min.width = min.width,alpha=ALPHA))
+    else
+        capture.output(cna <- segment(cna, min.width = min.width,alpha=ALPHA, sbdry=SBDRY))
     cna
 }

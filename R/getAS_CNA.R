@@ -11,7 +11,7 @@ getAS_CNA <- function(res,
 {
     suppressPackageStartupMessages(require(GenomicRanges))
     suppressPackageStartupMessages(require(data.table))
-    searchGrid  <-  function (baf,
+    .searchGrid  <-  function (baf,
                               logr,
                               sizes,
                               purs=seq(.90,.99,.01),
@@ -188,8 +188,6 @@ getAS_CNA <- function(res,
                             logr=as.numeric(prof[,"logr"]),
                             logr.sd=as.numeric(prof[,"logr.sd"]),
                             fitted=as.numeric(prof[,"total_copy_number"]),
-                            ntot_free=as.numeric(NA),
-                            ntot_fixed=as.numeric(NA),
                             q05=as.numeric(NA),
                             BAF=as.numeric(NA),
                             q95=as.numeric(NA),
@@ -223,12 +221,12 @@ getAS_CNA <- function(res,
                                                                                                 rowSums(df[inds, c(3,4)]))
         }
         nona <- !is.na(nprof[,"BAF"])
-        sG <- searchGrid(as.numeric(nprof[nona,"BAF"]),
+        sG <- .searchGrid(as.numeric(nprof[nona,"BAF"]),
                          as.numeric(nprof[nona,"logr"]),
                          as.numeric(nprof[nona,"endpos"])-as.numeric(nprof[nona,"startpos"]),
                          purs=purs,
                          ploidies=ploidies)
-        sG.fixed <- searchGrid(nprof[nona,"BAF"],
+        sG.fixed <- .searchGrid(nprof[nona,"BAF"],
                                nprof[nona,"logr"],
                                nprof[nona,"endpos"]-nprof[nona,"startpos"],
                                purs=purity,

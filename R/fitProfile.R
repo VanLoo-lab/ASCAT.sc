@@ -12,11 +12,13 @@ fitProfile <- function(tracksSingle,
     meansSeg <- lapply(1:NN, function(i) {
         out <- tracksSingle$lSegs[[i]]$output
         means <- lapply(1:nrow(out), function(x) {
-            isIn <- tracksSingle$lCTS[[i]]$start > out$loc.start[x] &
+            isIn <- tracksSingle$lCTS[[i]]$start >= out$loc.start[x] &
                 tracksSingle$lCTS[[i]]$start <= out$loc.end[x]
             if (sum(isIn) < 2)
                 return(list(roundmu = NA, mu = NA, sd = NA, start = out$loc.start[x],
-                            end = out$loc.end[x]))
+                            end = out$loc.end[x],
+                            num.mark=out$num.mark[x],
+                            num.mark.in=sum(isIn)))
             mu <- median(tracksSingle$lCTS[[i]]$smoothed[isIn],
                          na.rm = T)
             sd <- mad(tracksSingle$lCTS[[i]]$smoothed[isIn],
@@ -31,7 +33,9 @@ fitProfile <- function(tracksSingle,
                  mu = mu,
                  sd = sd,
                  start = out$loc.start[x],
-                 end = out$loc.end[x])
+                 end = out$loc.end[x],
+                 num.mark=out$num.mark[x],
+                 num.mark.in=sum(isIn))
         })
     })
 }

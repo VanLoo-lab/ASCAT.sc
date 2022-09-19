@@ -1,8 +1,8 @@
 segmentCoverageTrack <-
-function(cT,
-                                 starts,
-                                 ends,
-                                 chr)
+    function(cT,
+             starts,
+             ends,
+             chr)
 {
     suppressPackageStartupMessages(require(DNAcopy))
     segments<- segmentTrack(counts,

@@ -31,6 +31,21 @@ run_sc_sequencing <- function(tumour_bams,
     binsize <- as.numeric(binsize)
     print(paste0("## load Bins for Genome Build: ", build))
     START_WINDOW <- 30000
+    data("SBDRYs_precomputed",package="ASCAT.sc")
+    if(!as.character(segmentation_alpha)%in%names(SBDRYs))
+    {
+        nperms <- 10000;
+        max.ones <- floor(nperms * segmentation_alpha) + 1
+        SBDRY <- DNAcopy::getbdry(eta=0.05, nperm=nperms, max.ones=max.ones)
+    }
+    else
+    {
+        SBDRY <- SBDRYs[[as.character(segmentation_alpha)]]
+    }
+    if(binsize<30000)
+    {
+        print("Current minimun bin size is 30000 - resetting to 30000")
+    }
     if(is.null(res))
         res <- list()
     if(build=="hg19")
@@ -48,10 +63,11 @@ run_sc_sequencing <- function(tumour_bams,
     {
         data("lSe_filtered_30000.hg38",package="ASCAT.sc")
         data("lGCT_filtered_30000.hg38",package="ASCAT.sc")
-        res$lSe <- lapply(allchr, function(chr) lSe.hg38.filtered[[chr]])
+        allchr. <- paste0("chr",gsub(chrstring_bam,"",allchr))
+        res$lSe <- lapply(allchr., function(chr) lSe.hg38.filtered[[chr]])
         names(res$lSe) <- allchr
         names(lGCT.hg38.filtered) <- names(res$lSe)
-        res$lGCT <- lapply(allchr, function(chr) lGCT.hg38.filtered[[chr]])
+        res$lGCT <- lapply(allchr., function(chr) lGCT.hg38.filtered[[chr]])
         names(res$lGCT) <- names(res$lSe)
         if(chrstring_bam=="")
             names(res$lGCT) <- names(res$lSe) <- gsub("chr","",names(res$lSe))
@@ -59,30 +75,45 @@ run_sc_sequencing <- function(tumour_bams,
     print("## calculate Target Bin size")
     res$nlGCT <- treatGCT(res$lGCT,window=ceiling(binsize/START_WINDOW))
     res$nlSe <- treatlSe(res$lSe,window=ceiling(binsize/START_WINDOW))
-    if(is.null(res) | !any(names(res)=="allTracks"))
+    if(!any(names(res)=="binsize")) res$binsize <- binsize
+    if(!is.null(barcodes_10x))
     {
-        if(!is.null(barcodes_10x))
+        if(!any(names(res)=="allTracks"))
         {
             print("## get Tracks from 10X-like bam")
-            timetoread_tumours <- system.time(res$allTracks <- getTrackForAll.10XBAM(bamfile=tumour_bams[1],
-                                                                                     barcodes=barcodes_10x,
-                                                                                     allchr=allchr,
-                                                                                     chrstring="",
-                                                                                     lSe=res$lSe,
-                                                                                     doSeg=FALSE))
-            nms <- names(res$allTracks)
-            res$allTracks <- lapply(nms, function(x)
-                list(lCTS.tumour=res$allTracks[[x]],
-                     nlCTS.tumour=treatTrack(lCTS=res$allTracks[[x]],
-                                             window=ceiling(binsize/START_WINDOW)))
-                )
-            names(res$allTracks) <- nms
-            sex <- rep(sex,length(res$allTracks))
+            res$timetoread_tumours <- system.time(res$allTracks <- getTrackForAll.10XBAM(bamfile=tumour_bams[1],
+                                                                                         barcodes=barcodes_10x,
+                                                                                         allchr=allchr,
+                                                                                         chrstring="",
+                                                                                         lSe=res$lSe,
+                                                                                         doSeg=FALSE))
         }
-        if(is.null(barcodes_10x))
+        nms <- names(res$allTracks)
+        res$allTracks <- lapply(nms, function(x)
+            list(lCTS.tumour=res$allTracks[[x]],
+                 nlCTS.tumour=treatTrack(lCTS=res$allTracks[[x]],
+                                         window=ceiling(binsize/START_WINDOW)))
+            )
+        names(res$allTracks) <- nms
+        sex <- rep(sex,length(res$allTracks))
+    }
+    if(is.null(barcodes_10x))
+    {
+        if(any(names(res)=="allTracks") & res$binsize!=binsize)
+        {
+            print("## adjust Tracks for bin size ")
+            res$timetoread_tumours <- system.time(res$allTracks <- mclapply(names(res$allTracks),function(bamfile)
+            {
+                lCTS.tumour <- res$allTracks[[bamfile]]$lCTS.tumour
+                list(lCTS.tumour=lCTS.tumour,
+                     nlCTS.tumour=treatTrack(lCTS=lCTS.tumour,
+                                             window=ceiling(binsize/START_WINDOW)))
+            },mc.cores=MC.CORES))
+        }
+        if(!any(names(res)=="allTracks"))
         {
             print("## get Tracks from Tumour bams")
-            timetoread_tumours <- system.time(res$allTracks <- mclapply(tumour_bams,function(bamfile)
+            res$timetoread_tumours <- system.time(res$allTracks <- mclapply(tumour_bams,function(bamfile)
             {
                 lCTS.tumour <- lapply(allchr, function(chr) getCoverageTrack(bamPath=bamfile,
                                                                              chr=chr,
@@ -93,44 +124,48 @@ run_sc_sequencing <- function(tumour_bams,
                      nlCTS.tumour=treatTrack(lCTS=lCTS.tumour,
                                              window=ceiling(binsize/START_WINDOW)))
             },mc.cores=MC.CORES))
+            names(res$allTracks) <- basename(tumour_bams)
         }
     }
     if(multipcf)
     {
         print("## calculate Multipcf - multi-sample mode - do not use if samples from different tumours")
-        timetoprocessed <- system.time(res$allTracks.processed <- getLSegs.multipcf(allTracks=lapply(res$allTracks, function(x)
-                                                                                                {list(lCTS=x$nlCTS.tumour)}),
-                                                                                lCTS=lapply(res$allTracks,function(x) x$nlCTS.tumour),
-                                                                                lSe=res$nlSe,
-                                                                                lGCT=res$nlGCT,
-                                                                                lNormals=NULL,
-                                                                                allchr=allchr,
-                                                                                segmentation_alpha=segmentation_alpha,
-                                                                                MC.CORES=MC.CORES))
+        res$timetoprocessed <- system.time(res$allTracks.processed <- getLSegs.multipcf(allTracks=lapply(res$allTracks, function(x)
+        {list(lCTS=x$nlCTS.tumour)}),
+        lCTS=lapply(res$allTracks,function(x) x$nlCTS.tumour),
+        lSe=res$nlSe,
+        lGCT=res$nlGCT,
+        lNormals=NULL,
+        allchr=allchr,
+        segmentation_alpha=segmentation_alpha,
+        MC.CORES=MC.CORES))
     }
     else
     {
-        print("## smooth Tracks")
-        timetoprocessed <- system.time(res$allTracks.processed <- mclapply(1:length(res$allTracks), function(x)
+        if(!any("allTracks.processed"%in%names(res)) | res$binsize!=binsize)
         {
-            getTrackForAll(bamfile=NULL,
-                           window=NULL,
-                           lCT=res$allTracks[[x]][[2]],
-                           lSe=res$nlSe,
-                           lGCT=res$nlGCT,
-                           lNormals=NULL,
-                           allchr=allchr,
-                           sdNormalise=0,
-                           segmentation_alpha=segmentation_alpha)
-        },mc.cores=MC.CORES))
-        cat("\n")
+            print("## smooth Tracks")
+            res$timetoprocessed <- system.time(res$allTracks.processed <- mclapply(1:length(res$allTracks), function(x)
+            {
+                getTrackForAll(bamfile=NULL,
+                               window=NULL,
+                               lCT=res$allTracks[[x]][[2]],
+                               lSe=res$nlSe,
+                               lGCT=res$nlGCT,
+                               lNormals=NULL,
+                               allchr=allchr,
+                               sdNormalise=0,
+                               SBDRY=SBDRY,
+                               segmentation_alpha=segmentation_alpha)
+            },mc.cores=MC.CORES))
+        }
     }
     if(is.null(barcodes_10x))
-        names(res$allTracks.processed) <- names(res$allTracks) <- gsub("(.*)/(.*)","\\2",tumour_bams)
+        names(res$allTracks.processed) <- names(res$allTracks) <- basename(tumour_bams)
     else
         names(res$allTracks.processed) <- names(res$allTracks)
     print("## fit Purity/Ploidy")
-    timetofit <- system.time(res$allSols <- mclapply(1:length(res$allTracks.processed), function(x)
+    res$timetofit <- system.time(res$allSols <- mclapply(1:length(res$allTracks.processed), function(x)
     {
         sol <- try(searchGrid(res$allTracks.processed[[x]],
                               purs = purs,
@@ -153,7 +188,8 @@ run_sc_sequencing <- function(tumour_bams,
                 allTracks=res$allTracks,
                 allSolutions=res$allSols,
                 allProfiles=res$allProfiles,
-                chr=paste0(chrstring_bam,allchr),
+                chr=allchr,
+                chrstring_bam=chrstring_bam,
                 purs=purs,
                 ploidies=ploidies,
                 maxtumourpsi=maxtumourpsi,
@@ -164,9 +200,9 @@ run_sc_sequencing <- function(tumour_bams,
                 multipcf=multipcf,
                 lSe=res$nlSe,
                 lGCT=res$nlGCT,
-                timetoread_tumours=timetoread_tumours,
-                timetoprocessed=timetoprocessed,
-                timetofit=timetofit)
+                timetoread_tumours=res$timetoread_tumours,
+                timetoprocessed=res$timetoprocessed,
+                timetofit=res$timetofit)
     if(predict_refit)
     {
         print("## predict Refit")

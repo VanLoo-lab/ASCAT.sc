@@ -7,7 +7,7 @@ printResults_all <- function(res,
     pdf(paste0(outdir,"/profiles_",projectname,".pdf"),width=15,height=4)
     for(i in 1:length(res$allTracks.processed))
     {
-        try({cat(".")
+        try({
             plotSolution(res$allTracks.processed[[i]],
                          purity=res$allSolutions[[i]]$purity,
                          ploidy=res$allSolutions[[i]]$ploidy,
@@ -27,7 +27,6 @@ printResults_all <- function(res,
         pdf(paste0(outdir,"/profiles_",projectname,"_refitted.pdf"),width=15,height=4)
         for(i in 1:length(res$allTracks.processed))
         {
-            cat(".")
             try({
                 plotSolution(res$allTracks.processed[[i]],
                              purity=res$allSolutions.refitted.auto[[i]]$purity,

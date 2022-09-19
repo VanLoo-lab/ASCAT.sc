@@ -15,7 +15,6 @@ getLSegs.multipcf <- function(allTracks,
     {
         lCTSs <- parallel::mclapply(lCTS, function(lCT)
         {
-            cat(".")
             lCTS <- smoothCoverageTrack(lCT=lCT,lSe=lSe,lGCT=lGCT, lNormals=lNormals)
             names(lCTS) <- allchr
             lCTS
@@ -31,7 +30,6 @@ getLSegs.multipcf <- function(allTracks,
     {
         chr_pcfed <- mclapply(1:nchr,function(i)
         {
-            cat(".")
             tmpdata <- data.frame("chr"=rep(i,nrow(allT$lCTS[[1]][[i]])),
                                   pos=round(allT$lCTS[[1]][[i]][,"start"]+allT$lCTS[[1]][[i]][,"width"]/2),
                                   do.call("cbind",lapply(allT$lCTS,function(x)
