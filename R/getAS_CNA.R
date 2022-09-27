@@ -120,13 +120,8 @@ getAS_CNA <- function(res,
         }))
     }
 
-    fitBinom.1dist <- function(counts, depths, steps=NULL)
+    fitBinom.1dist <- function(counts, depths, steps=NULL, maxdepth=1000)
     {
-        if(any(depths<counts))
-        {
-            print("Anomaly: total counts smaller than genotype counts - verify allele count files")
-            depths[depths>counts] <- counts[depths>counts] ##should never happen
-        }
         if(is.null(steps))
             steps <- if(length(counts)%/%3>10) 5 else 3
         nonas <- !is.na(counts) & !is.na(depths)
@@ -139,6 +134,8 @@ getAS_CNA <- function(res,
         lcounts <- lapply(1:length(lcounts), function(x) if(rnorm(1)<0) ldepths[[x]]-lcounts[[x]] else lcounts[[x]])
         counts <- sapply(lcounts,sum)
         depths <- sapply(ldepths,sum)
+        counts[depths>maxdepth] <- round(counts[depths>maxdepth]/depths[depths>maxdepth]*maxdepth)
+        depths[depths>maxdepth] <- maxdepth
         values <- seq(.5,1,0.001)
         llh <- sapply(values,function(x)
         {
@@ -238,7 +235,7 @@ getAS_CNA <- function(res,
             newvec
         }
         nprof[,"ntot_free"] <- transform_bulk2tumour(nprof[,"logr"],sG$purity,sG$ploidy)
-        nprof[,"ntot_fixed"] <- transform_bulk2tumour(nprof[,"logr"],sG$purity,sG$ploidy)
+        nprof[,"ntot_fixed"] <- transform_bulk2tumour(nprof[,"logr"],sG.fixed$purity,sG.fixed$ploidy)
         list(nprof.free=cbind(nprof,
                               nA=round(nprof[,"fitted"]*nprof[,"BAF"]),
                               nB=nprof[,"fitted"]-round(nprof[,"fitted"]*nprof[,"BAF"]),

@@ -16,7 +16,7 @@ smoothCoverageTrack <- function(lCT,
     if(method[1]=="lowess")
         smoothT <- lowess(allGC,allRec,f=2/3,iter=10)
     if(method[1]=="loess")
-        smoothT <- loess(allRec~allGC)
+        smoothT <- myloess(LL=length(allRec),allRec~allGC)
     for(i in 1:length(lCT))
     {
         lCT[[i]] <- cbind(lCT[[i]],smoothT$fitted[starts[i]:ends[i]],
