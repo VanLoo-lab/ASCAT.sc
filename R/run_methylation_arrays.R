@@ -22,6 +22,7 @@ run_methylation_array <- function(idat_dir,
     ## ##################################################
     totalintensity <- getMeth(data)+getUnmeth(data)+1; gc();
     annot <- as.data.frame(getAnnotation(data)); rm("data"); gc();
+    annot[,"chr"] <- gsub("chr","",as.character(annot[,"chr"]))
     annot <- annot[as.character(annot[,"chr"])%in%as.character(allchr),]
     ## ##################################################
     ## order chromosome, starts and ends of probes
@@ -37,7 +38,7 @@ run_methylation_array <- function(idat_dir,
     ## ##################################################
     print("## derive PoN-normalised logr")
     ## log PoN-fitted intensity values of all probes for all samples
-    logr <- log2(sapply(1:ncol(totalintensity),function(x)
+    if(!is.null(res))logr <- log2(sapply(1:ncol(totalintensity),function(x)
     {
         cat(".")
         notalreadyinpanel <- !colnames(totalintensityNormal)%in%colnames(totalintensity)[x]

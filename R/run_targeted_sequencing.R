@@ -1,6 +1,5 @@
 run_targeted_sequencing <- function(tumour_bams,
                                     bed_file,
-                                    fasta,
                                     allchr=paste0("",c(1:22,"X")),
                                     sex=c("female","male","female"),
                                     chrstring_bed="",
@@ -21,12 +20,12 @@ run_targeted_sequencing <- function(tumour_bams,
                                     projectname="project",
                                     multipcf=FALSE)
 {
-    require(parallel)
-    require(Rsamtools)
-    require(Biostrings)
+    suppressPackageStartupMessages(require(parallel))
+    suppressPackageStartupMessages(require(Rsamtools))
+    suppressPackageStartupMessages(require(Biostrings))
+    suppressPackageStartupMessages(require(DNAcopy))
+    suppressPackageStartupMessages(require(copynumber))
     binsize <- as.numeric(binsize)
-    ##print("## load genome track")
-    ##dna <- getRefGenome(fasta=fasta, CHRS=allchr)
     print("## load bins for genome build")
     START_WINDOW <- 30000
     if(build=="hg19")
@@ -36,9 +35,10 @@ run_targeted_sequencing <- function(tumour_bams,
         if(!all(allchr%in%names(lSe.hg19.filtered)))
             stop(paste0("allchr should be in the form: ",names(lSe.hg19.filtered)[1],"; not: ",allchr[1],"..."))
         lSe <- lapply(allchr, function(chr) lSe.hg19.filtered[[chr]])
-        names(lSe) <- allchr
-        names(lGCT.hg19.filtered) <- names(lSe)
+        names(lGCT.hg19.filtered) <- names(lSe.hg19.filtered)
+        names(lSe) <- paste0(chrstring_bam,allchr)
         lGCT <- lapply(allchr, function(chr) lGCT.hg19.filtered[[chr]])
+        names(lGCT) <- names(lSe)
     }
     if(build=="hg38")
     {
@@ -49,6 +49,8 @@ run_targeted_sequencing <- function(tumour_bams,
         names(lGCT.hg38.filtered) <- names(lSe)
         lGCT <- lapply(allchr, function(chr) lGCT.hg38.filtered[[chr]])
         names(lGCT) <- names(lSe)
+        if(chrstring_bam=="")
+            names(res$lGCT) <- names(res$lSe) <- gsub("chr","",names(res$lSe))
     }
     print("## read in bed file")
     bed <- ts_treatBed(read.table(bed_file,
@@ -87,7 +89,7 @@ run_targeted_sequencing <- function(tumour_bams,
     print("## get all tracks from tumour bams")
     timetoread_tumours <- system.time(allTracks <- mclapply(tumour_bams,function(bamfile)
     {
-        lCTS.tumour <- lapply(allchr, function(chr) getCoverageTrack(bamPath=bamfile,
+        lCTS.tumour <- lapply(paste0(chrstring_bam,allchr), function(chr) getCoverageTrack(bamPath=bamfile,
                                                                      chr=chr,
                                                                      lSe[[chr]]$starts,
                                                                      lSe[[chr]]$ends,
@@ -154,9 +156,18 @@ run_targeted_sequencing <- function(tumour_bams,
                 allProfiles=allProfiles,
                 lCTS.normal=lCTS.normal,
                 nlCTS.normal=nlCTS.normal,
+                chr=allchr,
+                chrstring_bam=chrstring_bam,
+                sex=sex,
                 lSe=nlSe,
+                purs=purs,
+                ploidies=ploidies,
+                maxtumourpsi=maxtumourpsi,
                 lExclude=lExclude,
+                multipcf=multipcf,
                 lGCT=nlGCT,
+                build=build,
+                binsize=binsize,
                 timetoread_normals=timetoread_normals,
                 timetoread_tumours=timetoread_tumours,
                 timetoprocessed=timetoprocessed,
