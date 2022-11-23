@@ -72,7 +72,7 @@ run_targeted_sequencing <- function(tumour_bams,
         print("## get all tracks from normal bams")
         timetoread_normals <- system.time(lCTS.normal <- mclapply(normal_bams,function(bamfile)
         {
-            lCTS.normal <- lapply(allchr, function(chr) getCoverageTrack(bamPath=bamfile,
+            lCTS.normal <- lapply(paste0(chrstring_bam,allchr), function(chr) getCoverageTrack(bamPath=bamfile,
                                                                          chr=chr,
                                                                          lSe[[chr]]$starts,
                                                                          lSe[[chr]]$ends,
@@ -81,7 +81,7 @@ run_targeted_sequencing <- function(tumour_bams,
                  nlCTS.normal=treatTrack(lCTS=lCTS.normal,
                                         window=ceiling(binsize/START_WINDOW)))
         },mc.cores=MC.CORES))
-        lCTS.normal.combined <- combineDiploid(lCTS.normal[[2]])
+        lCTS.normal.combined <- combineDiploid(lapply(lCTS.normal,function(x) x[[2]]))
     }
     print("## calculate target bin size")
     nlGCT <- treatGCT(lGCT,window=ceiling(binsize/START_WINDOW))

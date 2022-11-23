@@ -19,7 +19,7 @@ fitProfile <- function(tracksSingle,
                             end = out$loc.end[x],
                             num.mark=out$num.mark[x],
                             num.mark.in=sum(isIn)))
-            mu <- median(tracksSingle$lCTS[[i]]$smoothed[isIn],
+            mu <- mean(tracksSingle$lCTS[[i]]$smoothed[isIn],
                          na.rm = T)
             if (sum(isIn) < 2)
                 sd <- NA

@@ -38,7 +38,7 @@ run_methylation_array <- function(idat_dir,
     ## ##################################################
     print("## derive PoN-normalised logr")
     ## log PoN-fitted intensity values of all probes for all samples
-    if(!is.null(res))logr <- log2(sapply(1:ncol(totalintensity),function(x)
+    logr <- log2(sapply(1:ncol(totalintensity),function(x)
     {
         cat(".")
         notalreadyinpanel <- !colnames(totalintensityNormal)%in%colnames(totalintensity)[x]
