@@ -63,7 +63,7 @@ run_methylation_array <- function(idat_dir,
         input <- meth_bin(.logr,
                           starts=starts,
                           ends=ends,
-                          chrs=chrs,
+                          chrs=paste0("chr",chrs),
                           anno@bins)
         allTracks.processed[[samp]] <- getTrackForAll.bins(input[[1]],
                                                            input[[4]],
