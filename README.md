@@ -34,6 +34,7 @@ As the files are big, you might want to download the package
 install from R:
 
 > R CMD build ASCAT.scDataMeth
+
 > R CMD install ASCAT.scDataMeth_0.1.tar.gz
 
 Make sure to install dependencies before installing (this might take a while):
