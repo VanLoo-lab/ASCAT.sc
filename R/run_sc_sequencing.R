@@ -23,6 +23,7 @@ run_sc_sequencing <- function(tumour_bams,
                               smooth_sc=FALSE,
                               multipcf=FALSE)
 {
+    checkArguments_scs(c(as.list(environment())))
     suppressPackageStartupMessages(require(parallel))
     suppressPackageStartupMessages(require(Rsamtools))
     suppressPackageStartupMessages(require(Biostrings))
@@ -44,7 +45,7 @@ run_sc_sequencing <- function(tumour_bams,
     }
     if(binsize<30000)
     {
-        print("Current minimun bin size is 30000 - resetting to 30000")
+        print("Current minimum bin size is 30000 - resetting to 30000")
     }
     if(is.null(res))
         res <- list()

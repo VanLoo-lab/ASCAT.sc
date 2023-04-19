@@ -1,4 +1,11 @@
-getTrackForAll.bins <- function (logr, CHRS, STARTS, ENDS, allchr=ALLCHR)
+getTrackForAll.bins <- function (logr,
+                                 CHRS,
+                                 STARTS,
+                                 ENDS,
+                                 allchr=ALLCHR.,
+                                 segmentation_alpha=0.001,
+                                 min.width=5,
+                                 SBDRY=NULL)
 {
     lT <- lapply(allchr, function(chr)
     {
@@ -21,10 +28,12 @@ getTrackForAll.bins <- function (logr, CHRS, STARTS, ENDS, allchr=ALLCHR)
                                  sd = 0,
                                  lSe[[x]]$starts,
                                  lSe[[x]]$ends,
-                                 ALPHA=0.001,
-                                 smooth=F)
+                                 transform=TRUE,
+                                 ALPHA=segmentation_alpha,
+                                 min.width=min.width,
+                                 SBDRY=SBDRY)
     })
-    names(lSegs) <- paste0(1:length(lT))
+    names(lSegs) <- names(lT) <- allchr
     tracks <- list(lCTS = lT, lSegs = lSegs)
     return(tracks)
 }
