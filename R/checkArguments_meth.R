@@ -7,7 +7,7 @@ checkArguments_meth <- function(args)
              "chr","sex","logr","segmentation_alpha",
              "min.width","annotations.probes","bins","gamma")
     nfiles <- length(dir(args$idat_dir,pattern="idat$"))
-    if(nfiles==0 & !is.null(idat_dir)) stop("No files found in directory")
+    if(nfiles==0 & !is.null(args$idat_dir)) stop("No files found in directory")
     if(!is.null(args$res))
     {
         if(!all(nms%in%names(args$res)))
