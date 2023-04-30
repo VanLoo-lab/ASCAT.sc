@@ -26,7 +26,7 @@ run_methylation_array <- function(idat_dir,
         chrX <- apply(tt[annot[,1]=="X",],2,function(x) median(log2(x),na.rm=T))
         chrY <- apply(tt[annot[,1]=="Y",],2,function(x) median(log2(x),na.rm=T))
         autos <- apply(tt[!annot[,1]%in%c("X","Y"),],2,function(x) median(log2(x),na.rm=T))
-        sex <- ifelse(chrX-autos>0,ifelse(chrY-autos< -1, "female",NA), ifelse(chrY-autos< -1, NA,"male"))
+        sex <- ifelse(chrX-autos>-.2,ifelse(chrY-autos< -1, "female",NA), ifelse(chrY-autos< -1, NA,"male"))
         sex[is.na(sex)] <- "female" ## default sex
         sex[chrY-autos> -1] <- "male"
         sex
@@ -90,10 +90,14 @@ run_methylation_array <- function(idat_dir,
             {
                 data("pon.450K",package="ASCAT.scDataMeth")
                 data("pon.tcga",package="ASCAT.scDataMeth")
+                totalintensityNormal <- cbind(meth_pon[rownames(annot),],pon.tcga[rownames(annot),])
             }
-            if(platform=="epicv1") data("pon.epicv1",package="ASCAT.scDataMeth")
+            if(platform=="epicv1")
+            {
+                data("pon.epicv1",package="ASCAT.scDataMeth")
+                totalintensityNormal <- meth_pon[rownames(annot),]
+            }
             ## ##################################################
-            totalintensityNormal <- cbind(meth_pon[rownames(annot),],pon.tcga[rownames(annot),])
             sexPON <- .inferSex(totalintensityNormal,annot)
             id_normals <- colnames(totalintensityNormal)[sexPON=="female"]
             totalintensityNormalF <- totalintensityNormal[,colnames(totalintensityNormal)%in%id_normals]; gc();
