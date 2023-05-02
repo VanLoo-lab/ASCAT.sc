@@ -2,6 +2,7 @@ run_methylation_array <- function(idat_dir,
                                   res=NULL,
                                   rgSet=NULL,
                                   id_normals=NULL,
+                                  sex=NULL,
                                   purs = seq(0.1, 1, 0.01),
                                   ploidies = seq(1.7,5, 0.01),
                                   allchr=c(1:22),
@@ -104,7 +105,8 @@ run_methylation_array <- function(idat_dir,
             id_normals <- colnames(totalintensityNormal)[sexPON=="male"]
             totalintensityNormalM <- totalintensityNormal[,colnames(totalintensityNormal)%in%id_normals]; gc();
             ## ##################################################
-            sex <- .inferSex(totalintensity,annot)
+            if(is.null(sex))
+                sex <- .inferSex(totalintensity,annot)
             print("## derive PoN-normalised logr - %%%")
             logr <- sapply(1:ncol(totalintensity),function(x)
             {
