@@ -5,9 +5,10 @@ checkArguments_scs <- function(args)
              "allTracks",
              "allSolutions",
              "allProfiles",
-             "purs","ploidies","maxtumourpsi",
-             "chr","sex","logr","segmentation_alpha",
-             "min.width","annotations.probes","bins","gamma")
+             "purs",
+             "ploidies","maxtumourpsi",
+             "chr","sex",
+             "segmentation_alpha")
     if(!is.null(args$res))
         if(!all(nms%in%names(args$res)))
             stop(paste("Malformed res object - missing elements",nms[!nms%in%names(args$res)],collapse=" "))

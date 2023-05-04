@@ -291,6 +291,7 @@ getAS_CNA <- function(res,
     print("## derive Allele-specific Profiles")
     res$allProfiles_AS <- parallel::mclapply(1:length(res$allTracks.processed), function(x)
     {
+        cat(".")
         getAS_CNA_sample(track=res$allTracks.processed[[x]],
                          profile=res$allProfiles[[x]],
                          ac_counts_paths=list_ac_counts_paths[[x]],
