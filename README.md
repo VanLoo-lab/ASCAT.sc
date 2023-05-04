@@ -25,12 +25,10 @@ Alternatively, you can install with devtools in an R session:
 
 The methylation mode now depends on pre-compiled bad loci and panel of
 normal data for 450K and Epicv1 arrays (~0.5GB),
-which are in the R data package *ASCAT.scDataMeth*:
+which are in the R data package *ASCAT.scDataMeth*
 
-> devtools::install_github("galder-max/ASCAT.scDataMeth")
-
-As the files are big, you might want to download the package
-(https://github.com/galder-max/ASCAT.scDataMeth) as a zip file and
+As the files are big and bandwidth is limited, you might want to download the package
+(https://drive.google.com/drive/folders/1zDu5-WEYq3OQ8qSZANBOMYTw-H-LNWTU?usp=share_link) as a zip file and
 install from R:
 
 > R CMD build ASCAT.scDataMeth
