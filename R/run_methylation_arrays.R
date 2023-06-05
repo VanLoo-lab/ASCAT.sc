@@ -15,6 +15,7 @@ run_methylation_array <- function(idat_dir,
                                   projectname="project",
                                   predict_refit=TRUE,
                                   print_results=TRUE,
+                                  force=TRUE,
                                   MC.CORES=1)
 {
     checkArguments_meth(c(as.list(environment())))
@@ -49,7 +50,7 @@ run_methylation_array <- function(idat_dir,
     }
     ## ##################################################
     if(is.null(rgSet) & is.null(res))
-        suppressWarnings(rgSet <- read.metharray.exp(idat_dir)); gc();
+        suppressWarnings(rgSet <- read.metharray.exp(idat_dir, force=force)); gc();
     print("## preprocess raw data - extract unmeth/meth signal unprocessed")
     if(is.null(res))
     {

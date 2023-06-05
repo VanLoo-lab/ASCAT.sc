@@ -19,7 +19,7 @@ segmentTrack <- function (covtrack,
                    maploc = starts,
                    data.type = "logratio")
     if(transform)
-        cna <- CNA((2^covtrack)^(2/3),
+        cna <- CNA(sqrt(2^covtrack +3/8),
                    chr = rep(chr, length(covtrack)),
                    maploc = starts,
                    data.type = "logratio")

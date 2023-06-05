@@ -12,6 +12,7 @@ printResults_all <- function(res,
                          purity=res$allSolutions[[i]]$purity,
                          ploidy=res$allSolutions[[i]]$ploidy,
                          gamma=GAMMA,
+                         ismale=if(!is.null(res$sex)) res$sex[i]=="male" else "female",
                          sol=res$allSolutions[[i]])
             title(names(res$allTracks)[i])
         })
@@ -31,6 +32,7 @@ printResults_all <- function(res,
                 plotSolution(res$allTracks.processed[[i]],
                              purity=res$allSolutions.refitted.auto[[i]]$purity,
                              ploidy=res$allSolutions.refitted.auto[[i]]$ploidy,
+                             ismale=if(!is.null(res$sex)) res$sex[i]=="male" else "female",
                              gamma=GAMMA,
                              sol=res$allSolutions[[i]])
                 title(paste0(names(res$allTracks)[i],"-refitted"))
