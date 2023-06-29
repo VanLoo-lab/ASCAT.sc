@@ -13,6 +13,7 @@ run_sc_sequencing <- function(tumour_bams,
                               build=c("hg19","hg38"),
                               MC.CORES=1,
                               barcodes_10x=NULL,
+                              normal_bams=NULL,
                               outdir="./",
                               probs_filters=.1,
                               path_to_phases=NULL,
@@ -21,7 +22,8 @@ run_sc_sequencing <- function(tumour_bams,
                               projectname="project",
                               steps=NULL,
                               smooth_sc=FALSE,
-                              multipcf=FALSE)
+                              multipcf=FALSE,
+                              normalize=FALSE)
 {
     checkArguments_scs(c(as.list(environment())))
     suppressPackageStartupMessages(require(parallel))
@@ -100,6 +102,27 @@ run_sc_sequencing <- function(tumour_bams,
     }
     if(is.null(barcodes_10x))
     {
+        if(!is.null(normal_bams[1]) & is.null(res$nlCTS.normal))
+        {
+            print("## get all tracks from normal bams")
+            timetoread_normals <- system.time(res$lCTS.normal <- mclapply(normal_bams,function(bamfile)
+            {
+                lCTS.normal <- lapply(paste0(chrstring_bam,allchr), function(chr) getCoverageTrack(bamPath=bamfile,
+                                                                                                   chr=chr,
+                                                                                                   lSe[[chr]]$starts,
+                                                                                                   lSe[[chr]]$ends,
+                                                                                                   mapqFilter=30))
+                list(lCTS.normal=lCTS.normal,
+                     nlCTS.normal=treatTrack(lCTS=lCTS.normal,
+                                             window=ceiling(binsize/START_WINDOW)))
+            },mc.cores=MC.CORES))
+            res$nlCTS.normal <- combineDiploid(lapply(res$lCTS.normal,function(x) x[[2]]))
+        }
+        else
+        {
+            res$nlCTS.normal <- NULL
+            res$timetoread_normals <- NULL
+        }
         if(any(names(res)=="allTracks") & res$binsize!=binsize)
         {
             print("## adjust Tracks for bin size ")
@@ -139,6 +162,7 @@ run_sc_sequencing <- function(tumour_bams,
         lNormals=NULL,
         allchr=allchr,
         segmentation_alpha=segmentation_alpha,
+        normalize=normalize,
         MC.CORES=MC.CORES))
     }
     else

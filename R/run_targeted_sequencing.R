@@ -106,7 +106,7 @@ run_targeted_sequencing <- function(tumour_bams,
                                                                                 lCTS=lapply(allTracks,function(x) x$nlCTS.tumour),
                                                                                 lSe=nlSe,
                                                                                 lGCT=nlGCT,
-                                                                                lNormals=lNormals,
+                                                                                lNormals=lCTS.normal.combined,
                                                                                 allchr=allchr,
                                                                                 segmentation_alpha=segmentation_alpha,
                                                                                 MC.CORES=MC.CORES))
