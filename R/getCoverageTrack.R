@@ -18,7 +18,7 @@ getCoverageTrack <- function(bamPath,
                         which = GRanges(paste0(CHRSTRING, chr),
                                         IRanges(starts,ends)),
                         mapqFilter=mapqFilter)
-    coverageTrack <- countBam(bamPath, param = sbp)
+    suppressWarnings(coverageTrack <- countBam(bamPath, param = sbp))
     coverageTrack$records <- coverageTrack$records
     return(coverageTrack)
 }
