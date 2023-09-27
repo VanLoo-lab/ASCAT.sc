@@ -1,4 +1,4 @@
-combineDiploid <- function(lCT,lNormals)
+combineDiploid <- function(lNormals)
 {
     nlNormals <- lNormals[[1]]
     if(length(lNormals)>1)

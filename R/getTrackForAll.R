@@ -13,6 +13,7 @@ getTrackForAll <- function(bamfile,
 			   isUnmappedQuery=NA,
 			   mapqFilter=30,
                            doSmooth=TRUE,
+                           SBDRY=NULL,
                            doSeg=TRUE)
 {
     if(is.null(lSe))
@@ -57,6 +58,7 @@ getTrackForAll <- function(bamfile,
                                 sd=sdNormalise,
                                 lSe[[x]]$starts,
                                 lSe[[x]]$ends,
+                                SBDRY=SBDRY,
                                 ALPHA=segmentation_alpha)
     })
     names(lSegs) <- paste0(1:length(lCT))

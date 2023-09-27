@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 meth_winsorise_ascat <- function(x, musmooth=F, window=9)
+=======
+meth_winsorise_ascat <- function(x)
+>>>>>>> d619bd95c4c64791b532ea98ba54d68877ef031b
 {
     .madWins <- function(x,tau,k)
     {
@@ -45,9 +49,15 @@ meth_winsorise_ascat <- function(x, musmooth=F, window=9)
         }
         return(list(ywin=xwin))
     }
+<<<<<<< HEAD
     if(musmooth) x <- caTools::runmean(x,k=window)
     lrwins = vector(mode="numeric",length=length(x))
     lrwins[is.na(x)] = NA
     lrwins[!is.na(x)] = .madWins(x[!is.na(x)],4,50)$ywin
+=======
+    lrwins = vector(mode="numeric",length=length(x))
+    lrwins[is.na(x)] = NA
+    lrwins[!is.na(x)] = .madWins(x[!is.na(x)],6,50)$ywin
+>>>>>>> d619bd95c4c64791b532ea98ba54d68877ef031b
     lrwins
 }

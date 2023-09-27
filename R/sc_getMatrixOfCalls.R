@@ -1,3 +1,4 @@
+
 sc_getMatrixOfCalls <- function(listTracks, lSolutions, lSe)
 {
     allcalls <- lapply(1:length(listTracks),function(x) sc_getCalls(listTracks[[x]],

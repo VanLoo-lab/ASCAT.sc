@@ -21,6 +21,20 @@ Alternatively, you can install with devtools in an R session:
 
 > devtools::install_github("VanLoo-lab/ASCAT.sc", build_opts = c("--no-build-vignettes"))
 
+### Dependencies 
+
+The methylation mode now depends on pre-compiled bad loci and panel of
+normal data for 450K and Epicv1 arrays (~0.5GB),
+which are in the R data package *ASCAT.scDataMeth*
+
+As the files are big and bandwidth is limited, you might want to download the package
+(https://drive.google.com/drive/folders/1zDu5-WEYq3OQ8qSZANBOMYTw-H-LNWTU?usp=share_link) as a zip file and
+install from R:
+
+> R CMD build ASCAT.scDataMeth
+
+> R CMD install ASCAT.scDataMeth_0.1.tar.gz
+
 Make sure to install dependencies before installing (this might take a while):
 
 > BiocManager::install(c("GenomicRanges", "Biostrings", "DNAcopy", "minfi", "conumee", "Rsamtools", "xgboost"))

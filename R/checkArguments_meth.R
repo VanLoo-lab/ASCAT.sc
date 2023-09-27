@@ -11,7 +11,11 @@ checkArguments_meth <- function(args)
     if(!is.null(args$res))
     {
         if(!all(nms%in%names(args$res)))
+<<<<<<< HEAD
             stop(paste0("Malformed res object - missing elements ",nms[!nms%in%names(args$res)]))
+=======
+            stop(paste0("Malformed res object - missing elements",nms[!nms%in%names(args$res)]))
+>>>>>>> d619bd95c4c64791b532ea98ba54d68877ef031b
     }
     if(!dir.exists(args$outdir))
         stop("Output directory outdir does not exist")

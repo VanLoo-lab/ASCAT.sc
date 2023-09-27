@@ -11,7 +11,7 @@ getAS_CNA <- function(res,
 {
     suppressPackageStartupMessages(require(GenomicRanges))
     suppressPackageStartupMessages(require(data.table))
-    searchGrid  <-  function (baf,
+    .searchGrid  <-  function (baf,
                               logr,
                               sizes,
                               purs=seq(.90,.99,.01),
@@ -120,13 +120,8 @@ getAS_CNA <- function(res,
         }))
     }
 
-    fitBinom.1dist <- function(counts, depths, steps=NULL)
+    fitBinom.1dist <- function(counts, depths, steps=NULL, maxdepth=1000)
     {
-        if(any(depths<counts))
-        {
-            print("Anomaly: total counts smaller than genotype counts - verify allele count files")
-            depths[depths>counts] <- counts[depths>counts] ##should never happen
-        }
         if(is.null(steps))
             steps <- if(length(counts)%/%3>10) 5 else 3
         nonas <- !is.na(counts) & !is.na(depths)
@@ -139,6 +134,8 @@ getAS_CNA <- function(res,
         lcounts <- lapply(1:length(lcounts), function(x) if(rnorm(1)<0) ldepths[[x]]-lcounts[[x]] else lcounts[[x]])
         counts <- sapply(lcounts,sum)
         depths <- sapply(ldepths,sum)
+        counts[depths>maxdepth] <- round(counts[depths>maxdepth]/depths[depths>maxdepth]*maxdepth)
+        depths[depths>maxdepth] <- maxdepth
         values <- seq(.5,1,0.001)
         llh <- sapply(values,function(x)
         {
@@ -188,8 +185,6 @@ getAS_CNA <- function(res,
                             logr=as.numeric(prof[,"logr"]),
                             logr.sd=as.numeric(prof[,"logr.sd"]),
                             fitted=as.numeric(prof[,"total_copy_number"]),
-                            ntot_free=as.numeric(NA),
-                            ntot_fixed=as.numeric(NA),
                             q05=as.numeric(NA),
                             BAF=as.numeric(NA),
                             q95=as.numeric(NA),
@@ -223,12 +218,12 @@ getAS_CNA <- function(res,
                                                                                                 rowSums(df[inds, c(3,4)]))
         }
         nona <- !is.na(nprof[,"BAF"])
-        sG <- searchGrid(as.numeric(nprof[nona,"BAF"]),
+        sG <- .searchGrid(as.numeric(nprof[nona,"BAF"]),
                          as.numeric(nprof[nona,"logr"]),
                          as.numeric(nprof[nona,"endpos"])-as.numeric(nprof[nona,"startpos"]),
                          purs=purs,
                          ploidies=ploidies)
-        sG.fixed <- searchGrid(nprof[nona,"BAF"],
+        sG.fixed <- .searchGrid(nprof[nona,"BAF"],
                                nprof[nona,"logr"],
                                nprof[nona,"endpos"]-nprof[nona,"startpos"],
                                purs=purity,
@@ -240,7 +235,7 @@ getAS_CNA <- function(res,
             newvec
         }
         nprof[,"ntot_free"] <- transform_bulk2tumour(nprof[,"logr"],sG$purity,sG$ploidy)
-        nprof[,"ntot_fixed"] <- transform_bulk2tumour(nprof[,"logr"],sG$purity,sG$ploidy)
+        nprof[,"ntot_fixed"] <- transform_bulk2tumour(nprof[,"logr"],sG.fixed$purity,sG.fixed$ploidy)
         list(nprof.free=cbind(nprof,
                               nA=round(nprof[,"fitted"]*nprof[,"BAF"]),
                               nB=nprof[,"fitted"]-round(nprof[,"fitted"]*nprof[,"BAF"]),
@@ -296,6 +291,7 @@ getAS_CNA <- function(res,
     print("## derive Allele-specific Profiles")
     res$allProfiles_AS <- parallel::mclapply(1:length(res$allTracks.processed), function(x)
     {
+        cat(".")
         getAS_CNA_sample(track=res$allTracks.processed[[x]],
                          profile=res$allProfiles[[x]],
                          ac_counts_paths=list_ac_counts_paths[[x]],

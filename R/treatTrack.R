@@ -14,7 +14,6 @@ treatTrack <- function(lCTS, window)
                           nucleotides=sapply(1:length(starts),function(x) sum(df[starts[x]:ends[x],"nucleotides"])))
         ndf
     })
-    cat(".")
     names(nlCTS) <- names(lCTS)
     nlCTS
 }

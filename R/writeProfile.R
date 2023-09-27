@@ -5,7 +5,7 @@ writeProfile <- function(prof, samplename, outdir)
                 sep="\t",
                 col.names=T,
                 row.names=F,
-                file=paste0(outdir,
+                file=paste0(outdir,"/",
                             samplename,
                             ".ASCAT.scprofile.txt"))
 }
