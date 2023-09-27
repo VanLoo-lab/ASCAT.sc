@@ -52,14 +52,11 @@ run_targeted_sequencing <- function(tumour_bams,
         names(lGCT) <- names(lSe)
         if(chrstring_bam=="")
             names(res$lGCT) <- names(res$lSe) <- gsub("chr","",names(res$lSe))
-<<<<<<< HEAD
     }
     if(build=="mm39")
     {
         data("lSe_unfiltered_5000.mm39",package="ASCAT.sc")
         data("lGCT_unfiltered_5000.mm39",package="ASCAT.sc")
-=======
->>>>>>> d619bd95c4c64791b532ea98ba54d68877ef031b
     }
     print("## read in bed file")
     bed <- ts_treatBed(read.table(bed_file,
@@ -91,10 +88,7 @@ run_targeted_sequencing <- function(tumour_bams,
                                         window=ceiling(binsize/START_WINDOW)))
         },mc.cores=MC.CORES))
         lCTS.normal.combined <- combineDiploid(lapply(lCTS.normal,function(x) x[[2]]))
-<<<<<<< HEAD
         lNormals <- lapply(lCTS.normal,function(x) x$nlCTS.normal)
-=======
->>>>>>> d619bd95c4c64791b532ea98ba54d68877ef031b
     }
     print("## calculate target bin size")
     nlGCT <- treatGCT(lGCT,window=ceiling(binsize/START_WINDOW))
@@ -114,7 +108,6 @@ run_targeted_sequencing <- function(tumour_bams,
     if(multipcf)
     {
         print("## calculating multipcf - multi-sample mode - do not use if samples from different tumours")
-<<<<<<< HEAD
         timetoprocessed <- system.time(
             allTracks.processed <- getLSegs.multipcf(allTracks=lapply(allTracks, function(x) {list(lCTS=x$nlCTS.tumour)}),
                                                      lCTS=lapply(allTracks,function(x) x$nlCTS.tumour),
@@ -124,17 +117,6 @@ run_targeted_sequencing <- function(tumour_bams,
                                                      allchr=allchr,
                                                      segmentation_alpha=segmentation_alpha,
                                                      MC.CORES=MC.CORES))
-=======
-        timetoprocessed <- system.time(allTracks.processed <- getLSegs.multipcf(allTracks=lapply(allTracks, function(x)
-                                                                                                {list(lCTS=x$nlCTS.tumour)}),
-                                                                                lCTS=lapply(allTracks,function(x) x$nlCTS.tumour),
-                                                                                lSe=nlSe,
-                                                                                lGCT=nlGCT,
-                                                                                lNormals=lCTS.normal.combined,
-                                                                                allchr=allchr,
-                                                                                segmentation_alpha=segmentation_alpha,
-                                                                                MC.CORES=MC.CORES))
->>>>>>> d619bd95c4c64791b532ea98ba54d68877ef031b
     }
     else
     {

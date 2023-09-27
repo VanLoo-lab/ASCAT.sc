@@ -7,27 +7,16 @@ run_methylation_array <- function(idat_dir,
                                   ploidies = seq(1.7,4, 0.01),
                                   allchr=c(1:22, "X", "Y"),
                                   maxtumourpsi=5,
-<<<<<<< HEAD
                                   segmentation_alpha=0.001,
                                   min.width=5,
                                   outdir="./",
                                   conumee=FALSE,
                                   platform=c("450K","epicv1", "epicv2"),
-=======
-                                  segmentation_alpha=0.0001,
-                                  min.width=5,
-                                  outdir="./",
-                                  conumee=FALSE,
-                                  platform=c("450K","Epicv1"),
->>>>>>> d619bd95c4c64791b532ea98ba54d68877ef031b
                                   projectname="project",
                                   predict_refit=TRUE,
                                   print_results=TRUE,
                                   force=TRUE,
-<<<<<<< HEAD
                                   smooth=TRUE,
-=======
->>>>>>> d619bd95c4c64791b532ea98ba54d68877ef031b
                                   MC.CORES=1)
 {
     checkArguments_meth(c(as.list(environment())))
@@ -62,7 +51,6 @@ run_methylation_array <- function(idat_dir,
     }
     ## ##################################################
     if(is.null(rgSet) & is.null(res))
-<<<<<<< HEAD
     {
         suppressWarnings(rgSet <- read.metharray.exp(idat_dir, force=force)); gc();
         if(platform=="epicv2")
@@ -104,41 +92,6 @@ run_methylation_array <- function(idat_dir,
         totalintensity <- totalintensity[rownames(annot),]
     }
     if(!conumee)
-=======
-        suppressWarnings(rgSet <- read.metharray.exp(idat_dir, force=force)); gc();
-    print("## preprocess raw data - extract unmeth/meth signal unprocessed")
-    if(is.null(res))
-    {
-        data <- preprocessRaw(rgSet); rm("rgSet"); gc();
-        ## ##################################################
-        totalintensity <- getMeth(data)+getUnmeth(data)+1; gc();
-        ## ##################################################
-        ## get probe annotation filtered for bad loci
-        annot <- as.data.frame(getAnnotation(data)); gc();
-        annot[,"chr"] <- gsub("chr","",as.character(annot[,"chr"]))
-        annot <- annot[as.character(annot[,"chr"])%in%gsub("chr","",as.character(allchr)),]
-        if(platform=="epicv1") data("badloci.epicv1",package="ASCAT.scDataMeth")
-        if(platform=="450K")
-        {
-            data("badloci.450K",package="ASCAT.scDataMeth")
-            data("badloci.tcga.450K",package="ASCAT.scDataMeth")
-            data("badloci.tcga.450K_segs",package="ASCAT.scDataMeth")
-            annot <- annot[!rownames(annot)%in%get(paste0("logr.pon.tcga")) ,]
-            annot <- annot[!rownames(annot)%in%get(paste0("bad.loci.tcga_segs")) | annot[,"chr"]%in%c("Y","chrY"),]
-        }
-        annot <- annot[!rownames(annot)%in%get(paste0("badloci.",platform)) ,]
-        ## ##################################################
-        ## order chromosome, starts and ends of probes
-        annot <- annot[order(annot[,"chr"],annot[,"pos"],decreasing=F),]
-        starts <- as.numeric(as.character(annot[,"pos"]))
-        ends <- as.numeric(as.character(annot[,"pos"]))
-        chrs <- as.character(annot[,"chr"])
-        ## ##################################################
-        ## Final ordered total intensities for all and normal
-        totalintensity <- totalintensity[rownames(annot),]
-    }
-    if(is.null(id_normals) & !conumee)
->>>>>>> d619bd95c4c64791b532ea98ba54d68877ef031b
     {
         if(is.null(res))
         {
@@ -155,7 +108,6 @@ run_methylation_array <- function(idat_dir,
                 data("pon.epicv1",package="ASCAT.scDataMeth")
                 totalintensityNormal <- meth_pon[rownames(annot),]
             }
-<<<<<<< HEAD
             if(platform=="epicv2")
             {
                 data("pon.epicv2",package="ASCAT.scDataMeth")
@@ -166,8 +118,6 @@ run_methylation_array <- function(idat_dir,
                 totalintensityNormal <- cbind(totalintensityNormal,
                                               totalintensity[,colnames(totalintensity)%in%id_normals])
             }
-=======
->>>>>>> d619bd95c4c64791b532ea98ba54d68877ef031b
             ## ##################################################
             sexPON <- .inferSex(totalintensityNormal,annot)
             id_normals <- colnames(totalintensityNormal)[sexPON=="female"]
@@ -177,7 +127,6 @@ run_methylation_array <- function(idat_dir,
             ## ##################################################
             if(is.null(sex))
                 sex <- .inferSex(totalintensity,annot)
-<<<<<<< HEAD
             ## ##################################################
             print("## derive PoN-normalised logr - %%%")
             logr <- meth_getLogR(totalintensity,
@@ -187,32 +136,6 @@ run_methylation_array <- function(idat_dir,
                                  annot,
                                  GAMMA); gc();
             ## ##################################################
-=======
-            print("## derive PoN-normalised logr - %%%")
-            logr <- sapply(1:ncol(totalintensity),function(x)
-            {
-                if(sex[x]=="male") totalintensityNormal <- totalintensityNormalM
-                if(sex[x]=="female") totalintensityNormal <- totalintensityNormalF
-                notalreadyinpanel <- !colnames(totalintensityNormal)%in%colnames(totalintensity)[x]
-                TTI <- totalintensity[,x]
-                cat(".")
-                predicted <- lm(y~.-1,
-                                data=data.frame(y=TTI,
-                                                X=totalintensityNormal[,notalreadyinpanel]))$fitted.values
-                predicted[predicted<1] <- 1
-                logr <- log2(totalintensity[,x]/predicted)
-                if(sex[x]=="male")
-                {
-                    logr[annot[,1]=="X"] <- logr[annot[,1]=="X"]-median(logr[annot[,1]%in%c(1:22)])-GAMMA
-                    logr[annot[,1]=="Y"] <- logr[annot[,1]=="Y"]-median(logr[annot[,1]%in%c(1:22)])-GAMMA
-                }
-                if(sex[x]=="female")
-                    logr[annot[,1]=="Y"] <- logr[annot[,1]=="Y"]-3.718385
-                logr
-            })
-            cat("\n")
-            colnames(logr) <- colnames(totalintensity); gc();
->>>>>>> d619bd95c4c64791b532ea98ba54d68877ef031b
         }
         else
         {
@@ -322,11 +245,7 @@ run_methylation_array <- function(idat_dir,
                 logr=logr,
                 segmentation_alpha=segmentation_alpha,
                 min.width=min.width,
-<<<<<<< HEAD
                 annotations.probes=annot,
-=======
-                annotions.probes=annot,
->>>>>>> d619bd95c4c64791b532ea98ba54d68877ef031b
                 bins=anno,
                 gamma=GAMMA,
                 timetofit=timetofit)

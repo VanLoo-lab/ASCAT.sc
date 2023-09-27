@@ -23,7 +23,6 @@ getTrackForAll.bins <- function (logr,
     })
     lSegs <- lapply(1:length(lT), function(x) {
         require(DNAcopy)
-<<<<<<< HEAD
         segments <- segmentTrack_pcf(lT[[x]]$smoothed,
                                      chr = paste0(x),
                                      sd = 0,
@@ -34,17 +33,6 @@ getTrackForAll.bins <- function (logr,
                                      ALPHA=segmentation_alpha,
                                      min.width=min.width,
                                      SBDRY=SBDRY)
-=======
-        segments <- segmentTrack(lT[[x]]$smoothed,
-                                 chr = paste0(x),
-                                 sd = 0,
-                                 lSe[[x]]$starts,
-                                 lSe[[x]]$ends,
-                                 transform=TRUE,
-                                 ALPHA=segmentation_alpha,
-                                 min.width=min.width,
-                                 SBDRY=SBDRY)
->>>>>>> d619bd95c4c64791b532ea98ba54d68877ef031b
     })
     names(lSegs) <- names(lT) <- allchr
     tracks <- list(lCTS = lT, lSegs = lSegs)
