@@ -1,6 +1,5 @@
 run_targeted_sequencing <- function(tumour_bams,
                                     bed_file,
-                                    fasta,
                                     allchr=paste0("",c(1:22,"X")),
                                     sex=c("female","male","female"),
                                     chrstring_bed="",
@@ -13,22 +12,23 @@ run_targeted_sequencing <- function(tumour_bams,
                                     segmentation_alpha=0.01,
                                     normal_bams=NULL,
                                     nlCTS.normal=NULL,
-                                    build=c("hg19","hg38"),
+                                    build=c("hg19","hg38",  "mm39"),
                                     predict_refit=TRUE,
                                     print_results=TRUE,
                                     MC.CORES=1,
                                     outdir="./",
                                     projectname="project",
-                                    multipcf=FALSE)
+                                    multipcf=FALSE,
+                                    combine_normals=FALSE)
 {
-    require(parallel)
-    require(Rsamtools)
-    require(Biostrings)
+    suppressPackageStartupMessages(require(parallel))
+    suppressPackageStartupMessages(require(Rsamtools))
+    suppressPackageStartupMessages(require(Biostrings))
+    suppressPackageStartupMessages(require(DNAcopy))
+    suppressPackageStartupMessages(require(copynumber))
     binsize <- as.numeric(binsize)
-    ##print("## load genome track")
-    ##dna <- getRefGenome(fasta=fasta, CHRS=allchr)
     print("## load bins for genome build")
-    START_WINDOW <- 30000
+    if(!build=="mm39") START_WINDOW <- 30000 else START_WINDOW <- 5000
     if(build=="hg19")
     {
         data("lSe_filtered_30000.hg19",package="ASCAT.sc")
@@ -36,9 +36,10 @@ run_targeted_sequencing <- function(tumour_bams,
         if(!all(allchr%in%names(lSe.hg19.filtered)))
             stop(paste0("allchr should be in the form: ",names(lSe.hg19.filtered)[1],"; not: ",allchr[1],"..."))
         lSe <- lapply(allchr, function(chr) lSe.hg19.filtered[[chr]])
-        names(lSe) <- allchr
-        names(lGCT.hg19.filtered) <- names(lSe)
+        names(lGCT.hg19.filtered) <- names(lSe.hg19.filtered)
+        names(lSe) <- paste0(chrstring_bam,allchr)
         lGCT <- lapply(allchr, function(chr) lGCT.hg19.filtered[[chr]])
+        names(lGCT) <- names(lSe)
     }
     if(build=="hg38")
     {
@@ -49,6 +50,13 @@ run_targeted_sequencing <- function(tumour_bams,
         names(lGCT.hg38.filtered) <- names(lSe)
         lGCT <- lapply(allchr, function(chr) lGCT.hg38.filtered[[chr]])
         names(lGCT) <- names(lSe)
+        if(chrstring_bam=="")
+            names(res$lGCT) <- names(res$lSe) <- gsub("chr","",names(res$lSe))
+    }
+    if(build=="mm39")
+    {
+        data("lSe_unfiltered_5000.mm39",package="ASCAT.sc")
+        data("lGCT_unfiltered_5000.mm39",package="ASCAT.sc")
     }
     print("## read in bed file")
     bed <- ts_treatBed(read.table(bed_file,
@@ -70,7 +78,7 @@ run_targeted_sequencing <- function(tumour_bams,
         print("## get all tracks from normal bams")
         timetoread_normals <- system.time(lCTS.normal <- mclapply(normal_bams,function(bamfile)
         {
-            lCTS.normal <- lapply(allchr, function(chr) getCoverageTrack(bamPath=bamfile,
+            lCTS.normal <- lapply(paste0(chrstring_bam,allchr), function(chr) getCoverageTrack(bamPath=bamfile,
                                                                          chr=chr,
                                                                          lSe[[chr]]$starts,
                                                                          lSe[[chr]]$ends,
@@ -79,7 +87,8 @@ run_targeted_sequencing <- function(tumour_bams,
                  nlCTS.normal=treatTrack(lCTS=lCTS.normal,
                                         window=ceiling(binsize/START_WINDOW)))
         },mc.cores=MC.CORES))
-        lCTS.normal.combined <- combineDiploid(lCTS.normal[[2]])
+        lCTS.normal.combined <- combineDiploid(lapply(lCTS.normal,function(x) x[[2]]))
+        lNormals <- lapply(lCTS.normal,function(x) x$nlCTS.normal)
     }
     print("## calculate target bin size")
     nlGCT <- treatGCT(lGCT,window=ceiling(binsize/START_WINDOW))
@@ -87,7 +96,7 @@ run_targeted_sequencing <- function(tumour_bams,
     print("## get all tracks from tumour bams")
     timetoread_tumours <- system.time(allTracks <- mclapply(tumour_bams,function(bamfile)
     {
-        lCTS.tumour <- lapply(allchr, function(chr) getCoverageTrack(bamPath=bamfile,
+        lCTS.tumour <- lapply(paste0(chrstring_bam,allchr), function(chr) getCoverageTrack(bamPath=bamfile,
                                                                      chr=chr,
                                                                      lSe[[chr]]$starts,
                                                                      lSe[[chr]]$ends,
@@ -99,15 +108,15 @@ run_targeted_sequencing <- function(tumour_bams,
     if(multipcf)
     {
         print("## calculating multipcf - multi-sample mode - do not use if samples from different tumours")
-        timetoprocessed <- system.time(allTracks.processed <- getLSegs.multipcf(allTracks=lapply(allTracks, function(x)
-                                                                                                {list(lCTS=x$nlCTS.tumour)}),
-                                                                                lCTS=lapply(allTracks,function(x) x$nlCTS.tumour),
-                                                                                lSe=nlSe,
-                                                                                lGCT=nlGCT,
-                                                                                lNormals=lNormals,
-                                                                                allchr=allchr,
-                                                                                segmentation_alpha=segmentation_alpha,
-                                                                                MC.CORES=MC.CORES))
+        timetoprocessed <- system.time(
+            allTracks.processed <- getLSegs.multipcf(allTracks=lapply(allTracks, function(x) {list(lCTS=x$nlCTS.tumour)}),
+                                                     lCTS=lapply(allTracks,function(x) x$nlCTS.tumour),
+                                                     lSe=nlSe,
+                                                     lGCT=nlGCT,
+                                                     lNormals=if(combine_normals) lCTS.normal.combined else lNormals,
+                                                     allchr=allchr,
+                                                     segmentation_alpha=segmentation_alpha,
+                                                     MC.CORES=MC.CORES))
     }
     else
     {
@@ -120,7 +129,7 @@ run_targeted_sequencing <- function(tumour_bams,
                            lCT=allTracks[[x]][[2]],
                            lSe=nlSe,
                            lGCT=nlGCT,
-                           lNormals=lCTS.normal.combined,
+                           lNormals=if(combine_normals) lCTS.normal.combined else lNormals,
                            allchr=allchr,
                            sdNormalise=0,
                            segmentation_alpha=segmentation_alpha)
@@ -154,9 +163,18 @@ run_targeted_sequencing <- function(tumour_bams,
                 allProfiles=allProfiles,
                 lCTS.normal=lCTS.normal,
                 nlCTS.normal=nlCTS.normal,
+                chr=allchr,
+                chrstring_bam=chrstring_bam,
+                sex=sex,
                 lSe=nlSe,
+                purs=purs,
+                ploidies=ploidies,
+                maxtumourpsi=maxtumourpsi,
                 lExclude=lExclude,
+                multipcf=multipcf,
                 lGCT=nlGCT,
+                build=build,
+                binsize=binsize,
                 timetoread_normals=timetoread_normals,
                 timetoread_tumours=timetoread_tumours,
                 timetoprocessed=timetoprocessed,
