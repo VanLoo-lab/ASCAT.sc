@@ -39,6 +39,14 @@ Make sure to install dependencies before installing (this might take a while):
 
 > BiocManager::install(c("GenomicRanges", "Biostrings", "DNAcopy", "minfi", "conumee", "Rsamtools", "xgboost"))
 
+#### Epicv2
+
+Install the manifest and annotations:
+
+> BiocManager::install("jokergoo/IlluminaHumanMethylationEPICv2manifest")
+
+> BiocManager::install("jokergoo/IlluminaHumanMethylationEPICv2anno.20a1.hg38")
+
 ## Usage
 
 See vignettes for how-to pipelines.
