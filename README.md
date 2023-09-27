@@ -24,10 +24,10 @@ Alternatively, you can install with devtools in an R session:
 ### Dependencies 
 
 The methylation mode now depends on pre-compiled bad loci and panel of
-normal data for 450K and Epicv1 arrays (~0.5GB),
+normal data for 450K, Epicv1 (~0.5GB) and Epicv2 arrays,
 which are in the R data package *ASCAT.scDataMeth*
 
-As the files are big and bandwidth is limited, you might want to download the package
+As the files are big and github bandwidth is limited, you might want to download the package
 (https://drive.google.com/drive/folders/1zDu5-WEYq3OQ8qSZANBOMYTw-H-LNWTU?usp=share_link) as a zip file and
 install from R:
 
