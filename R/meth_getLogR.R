@@ -1,4 +1,10 @@
-meth_getLogR <- function(totalintensity, totalintensityNormalM, totalintensityNormalF, sex, annot, GAMMA)
+meth_getLogR <- function(totalintensity,
+                         totalintensityNormalM,
+                         totalintensityNormalF,
+                         sex,
+                         annot,
+                         GAMMA,
+                         MC.CORES)
 {
     getPredicted <- function(TTI, totalintensityNormal, notalreadyinpanel)
     {
@@ -18,7 +24,7 @@ meth_getLogR <- function(totalintensity, totalintensityNormalM, totalintensityNo
         logr <- log2(TTI/predicted)
         logr
     }
-    logr <- sapply(1:ncol(totalintensity),function(x)
+    logr <- do.call("cbind",mclapply(1:ncol(totalintensity),function(x)
     {
         if(sex[x]=="male") totalintensityNormal <- totalintensityNormalM
         if(sex[x]=="female") totalintensityNormal <- totalintensityNormalF
@@ -36,7 +42,7 @@ meth_getLogR <- function(totalintensity, totalintensityNormalM, totalintensityNo
         if(sex[x]=="female")
             logr[annot[,1]=="Y"] <- logr[annot[,1]=="Y"]-3.718385
         logr
-    })
+    },mc.cores=MC.CORES))
     cat("\n")
     colnames(logr) <- colnames(totalintensity); gc();
     logr

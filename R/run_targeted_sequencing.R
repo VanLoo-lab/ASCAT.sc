@@ -2,7 +2,6 @@ run_targeted_sequencing <- function(tumour_bams,
                                     bed_file,
                                     allchr=paste0("",c(1:22,"X")),
                                     sex=c("female","male","female"),
-                                    chrstring_bed="",
                                     chrstring_bam="",
                                     purs = seq(0.1, 1, 0.01),
                                     ploidies = seq(1.7,5, 0.01),
@@ -18,8 +17,7 @@ run_targeted_sequencing <- function(tumour_bams,
                                     MC.CORES=1,
                                     outdir="./",
                                     projectname="project",
-                                    multipcf=FALSE,
-                                    combine_normals=FALSE)
+                                    multipcf=FALSE)
 {
     suppressPackageStartupMessages(require(parallel))
     suppressPackageStartupMessages(require(Rsamtools))
@@ -57,6 +55,8 @@ run_targeted_sequencing <- function(tumour_bams,
     {
         data("lSe_unfiltered_5000.mm39",package="ASCAT.sc")
         data("lGCT_unfiltered_5000.mm39",package="ASCAT.sc")
+        names(lSe) <- allchr
+        names(lGCT) <- names(lSe)
     }
     print("## read in bed file")
     bed <- ts_treatBed(read.table(bed_file,
@@ -73,6 +73,7 @@ run_targeted_sequencing <- function(tumour_bams,
     lCTS.normal <- NULL
     lCTS.normal.combined <- NULL
     timetoread_normals <- NULL
+    isPON <- FALSE
     if(!is.null(normal_bams[1]) & is.null(nlCTS.normal))
     {
         print("## get all tracks from normal bams")
@@ -88,6 +89,7 @@ run_targeted_sequencing <- function(tumour_bams,
                                         window=ceiling(binsize/START_WINDOW)))
         },mc.cores=MC.CORES))
         lCTS.normal.combined <- combineDiploid(lapply(lCTS.normal,function(x) x[[2]]))
+        isPON <- TRUE
         lNormals <- lapply(lCTS.normal,function(x) x$nlCTS.normal)
     }
     print("## calculate target bin size")
@@ -113,7 +115,7 @@ run_targeted_sequencing <- function(tumour_bams,
                                                      lCTS=lapply(allTracks,function(x) x$nlCTS.tumour),
                                                      lSe=nlSe,
                                                      lGCT=nlGCT,
-                                                     lNormals=if(combine_normals) lCTS.normal.combined else lNormals,
+                                                     lNormals=lNormals,
                                                      allchr=allchr,
                                                      segmentation_alpha=segmentation_alpha,
                                                      MC.CORES=MC.CORES))
@@ -129,7 +131,7 @@ run_targeted_sequencing <- function(tumour_bams,
                            lCT=allTracks[[x]][[2]],
                            lSe=nlSe,
                            lGCT=nlGCT,
-                           lNormals=if(combine_normals) lCTS.normal.combined else lNormals,
+                           lNormals=lNormals,
                            allchr=allchr,
                            sdNormalise=0,
                            segmentation_alpha=segmentation_alpha)
@@ -144,7 +146,8 @@ run_targeted_sequencing <- function(tumour_bams,
                               purs = purs,
                               ploidies = ploidies,
                               maxTumourPhi=maxtumourpsi,
-                              ismale=if(sex[x]=="male") T else F),silent=F)
+                              ismale=if(sex[x]=="male") T else F,
+                              isPON=isPON),silent=F)
     },mc.cores=MC.CORES))
     print("## get all fitted cna profiles")
     allProfiles <- mclapply(1:length(allTracks.processed), function(x)
@@ -175,6 +178,7 @@ run_targeted_sequencing <- function(tumour_bams,
                 lGCT=nlGCT,
                 build=build,
                 binsize=binsize,
+                isPON=isPON,
                 timetoread_normals=timetoread_normals,
                 timetoread_tumours=timetoread_tumours,
                 timetoprocessed=timetoprocessed,

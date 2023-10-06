@@ -9,7 +9,7 @@ segmentTrack_pcf <- function (covtrack,
                               SBDRY=NULL,
                               smooth=TRUE)
 {
-    require(copynumber)
+    suppressPackageStartupMessages(require(copynumber))
     covtrack <- covtrack * rnorm(length(covtrack),
                                  mean = 1,
                                  sd = sd)

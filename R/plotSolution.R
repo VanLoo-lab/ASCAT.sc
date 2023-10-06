@@ -30,7 +30,7 @@ plotSolution <- function(tracksSingle,
                                        purity,
                                        ploidy,
                                        gamma=gamma, ismale=ismale, isPON=isPON, isX=i==23),
-                 col = rgb(0.7, 0.7, 0.7, 0.6))
+                 col = rgb(0.2, 0.2, 0.2, 0.2))
         segments(tracksSingle$lSegs[[i]]$output$loc.start/1e+06 + breaks[i],
                  transform_bulk2tumour(sapply(meansSeg[[i]], function(x) x$mu),
                                        purity,

@@ -13,7 +13,8 @@ predictRefit_all <- function(res, gamma=1)
                                                                                   solution=res$allSolutions[[i]],
                                                                                   CHRS=res$chr,
                                                                                   gamma=gamma,
-                                                                                  shift=if(preds[i]==0) 1 else -1),silent=F)
+                                                                                  shift=if(preds[i]==0) 1 else -1,
+                                                                                  isPON=res$isPON),silent=F)
                     res$allProfiles.refitted.auto[[i]] <- try(getProfile(fitProfile(res$allTracks.processed[[i]],
                                                                                     purity=res$allSolutions.refitted.auto[[i]]$purity,
                                                                                     ploidy=res$allSolutions.refitted.auto[[i]]$ploidy,

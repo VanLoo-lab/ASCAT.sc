@@ -134,7 +134,8 @@ run_methylation_array <- function(idat_dir,
                                  totalintensityNormalF,
                                  sex,
                                  annot,
-                                 GAMMA); gc();
+                                 GAMMA,
+                                 MC.CORES); gc();
             ## ##################################################
         }
         else

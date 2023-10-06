@@ -1,6 +1,6 @@
 ts_getExcludeFromBedfile <- function(bed,chr)
 {
-    subset <- gsub("chr","",bed[,1])==chr
+    subset <- gsub("chr","",bed[,1])==gsub("chr","",chr)
     if(sum(subset)>0)
         return(list(starts=bed[subset,2],
                     ends=bed[subset,3]))

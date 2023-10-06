@@ -305,7 +305,7 @@ getAS_CNA <- function(res,
                          path_to_phases=if(length(path_to_phases)>1) path_to_phases[[x]] else NULL,
                          steps=steps)
     },mc.cores=mc.cores)
-    print("## plot Allele-specific Profiles")
+    print("## write to disk and plot Allele-specific Profiles")
     pdf(paste0(outdir,"/all_as_cna_profiles_",projectname,".pdf"),width=15,height=5)
     tnull <- lapply(1:length(res$allProfiles_AS), function(x)
     {
@@ -313,6 +313,9 @@ getAS_CNA <- function(res,
             plot_AS_profile(res$allProfiles_AS[[x]]$nprof.fixed)
             title(paste0(names(res$allTracks)[x]," - bam",x) ,cex=.5)
         })
+        write.table(res$allProfiles_AS[[x]]$nprof.fixed,
+                    sep="\t",col.names=T,row.names=F,quote=F,
+                    file=paste0(outdir,"/as_cna_profile_",names(res$allTracks)[x],"_bam",x,".txt"))
     })
     dev.off()
     res

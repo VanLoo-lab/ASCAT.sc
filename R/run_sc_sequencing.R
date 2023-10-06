@@ -77,6 +77,7 @@ run_sc_sequencing <- function(tumour_bams,
     print("## calculate Target Bin size")
     res$nlGCT <- treatGCT(res$lGCT,window=ceiling(binsize/START_WINDOW))
     res$nlSe <- treatlSe(res$lSe,window=ceiling(binsize/START_WINDOW))
+    if(is.null(res$isPON)) res$isPON <- FALSE
     if(!any(names(res)=="binsize")) res$binsize <- binsize
     if(!is.null(barcodes_10x))
     {
@@ -116,10 +117,14 @@ run_sc_sequencing <- function(tumour_bams,
                                              window=ceiling(binsize/START_WINDOW)))
             },mc.cores=MC.CORES))
             res$nlCTS.normal <- combineDiploid(lapply(res$lCTS.normal,function(x) x[[2]]))
+            res$lNormals <- lapply(res$lCTS.normal,function(x) x$nlCTS.normal)
+            res$isPON <- TRUE
         }
         else
         {
+            res$isPON <- FALSE
             res$nlCTS.normal <- NULL
+            res$lNormals <- NULL
             res$timetoread_normals <- NULL
         }
         if(any(names(res)=="allTracks") & res$binsize!=binsize)
@@ -158,7 +163,7 @@ run_sc_sequencing <- function(tumour_bams,
         lCTS=lapply(res$allTracks,function(x) x$nlCTS.tumour),
         lSe=res$nlSe,
         lGCT=res$nlGCT,
-        lNormals=NULL,
+        lNormals=res$lNormals,
         allchr=allchr,
         segmentation_alpha=segmentation_alpha,
         normalize=normalize,
@@ -176,7 +181,7 @@ run_sc_sequencing <- function(tumour_bams,
                                lCT=res$allTracks[[x]][[2]],
                                lSe=res$nlSe,
                                lGCT=res$nlGCT,
-                               lNormals=NULL,
+                               lNormals=res$lNormals,
                                allchr=allchr,
                                sdNormalise=0,
                                SBDRY=SBDRY,
@@ -195,7 +200,8 @@ run_sc_sequencing <- function(tumour_bams,
                               purs = purs,
                               ploidies = ploidies,
                               maxTumourPhi=maxtumourpsi,
-                              ismale=if(sex[x]=="male") T else F),silent=F)
+                              ismale=if(sex[x]=="male") T else F,
+                              isPON=res$isPON),silent=F)
     },mc.cores=MC.CORES))
     print("## get Fitted Cna Profiles")
     res$allProfiles <- mclapply(1:length(res$allTracks.processed), function(x)
@@ -224,6 +230,7 @@ run_sc_sequencing <- function(tumour_bams,
                 multipcf=multipcf,
                 lSe=res$nlSe,
                 lGCT=res$nlGCT,
+                isPON=res$isPON,
                 timetoread_tumours=res$timetoread_tumours,
                 timetoprocessed=res$timetoprocessed,
                 timetofit=res$timetofit)

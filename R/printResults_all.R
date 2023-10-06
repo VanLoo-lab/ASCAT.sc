@@ -70,5 +70,6 @@ printResults_all <- function(res,
     try(write.table(res$summary$allSols.refitted,
                     file=paste0(outdir,"/summary_",projectname,"_refitted.txt"),
                     sep="\t",quote=F,col.names=T,row.names=T))
+    save(res, file=paste0(outdir,"/result_object_",projectname,".Rda"))
     res
 }

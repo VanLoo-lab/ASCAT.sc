@@ -7,6 +7,7 @@ getTrackForAll.bins <- function (logr,
                                  min.width=5,
                                  SBDRY=NULL)
 {
+    suppressPackageStartupMessages(require(DNAcopy))
     lT <- lapply(allchr, function(chr)
     {
         cond <- CHRS==paste0("chr",chr)
@@ -22,7 +23,6 @@ getTrackForAll.bins <- function (logr,
         list(starts=STARTS[cond],ends=ENDS[cond])
     })
     lSegs <- lapply(1:length(lT), function(x) {
-        require(DNAcopy)
         segments <- segmentTrack_pcf(lT[[x]]$smoothed,
                                      chr = paste0(x),
                                      sd = 0,

@@ -24,5 +24,13 @@ getProfile <- function(profile, CHRS=c(1:22))
                       "total_copy_number_logr",
                       "logr",
                       "logr.sd")
+    tt <- data.frame(chromosome=as.character(tt[,"chromosome"]),
+                     start=as.numeric(tt[,"start"]),
+                     end=as.numeric(tt[,"end"]),
+                     num.mark=as.numeric(tt[,"num.mark"]),
+                     total_copy_number=as.numeric(tt[,"total_copy_number"]),
+                     total_copy_number_logr=as.numeric(tt[,"total_copy_number_logr"]),
+                     logr=as.numeric(tt[,"logr"]),
+                     logr.sd=as.numeric(tt[,"logr.sd"]))
     tt
 }
