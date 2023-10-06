@@ -55,7 +55,9 @@ run_targeted_sequencing <- function(tumour_bams,
     {
         data("lSe_unfiltered_5000.mm39",package="ASCAT.sc")
         data("lGCT_unfiltered_5000.mm39",package="ASCAT.sc")
-        names(lSe)[1:length(allchr)] <- allchr
+        names(lGCT)[1:length(allchr)] <- names(lSe)[1:length(allchr)] <- allchr
+        lSe <- lapply(allchr,function(x) lSe[[x]])
+        lGCT <- lapply(allchr,function(x) lGCT[[x]])
         names(lGCT) <- names(lSe)
     }
     print("## read in bed file")
