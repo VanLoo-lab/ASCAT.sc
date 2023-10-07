@@ -6,6 +6,8 @@ run_any_refitProfile <- function(res,
                                  chr2,
                                  ind2,
                                  n2,
+                                 outdir,
+                                 print=T,
                                  CHRS=c(1:22,"X","Y"),
                                  gridpur=seq(-.05,.05,.01),
                                  gridpl=seq(-.1,.2,.01))
@@ -37,5 +39,8 @@ run_any_refitProfile <- function(res,
                                                                                ismale=res$sex[sample_indice]=="male",
                                                                                isPON=res$isPON),
                           CHRS=res$chr)
+    writeProfile(res$allProfiles.refitted.manual[[sample_indice]],
+                 samplename=paste0(names(res$allTracks.processed)[sample_indice],"-manual_refit"),
+                 outdir=outdir)
     res
 }
