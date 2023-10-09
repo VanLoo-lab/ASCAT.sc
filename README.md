@@ -44,6 +44,8 @@ BiocManager::install("jokergoo/IlluminaHumanMethylationEPICv2anno.20a1.hg38")
 
 Go to [Wiki](https://github.com/VanLoo-lab/ASCAT.sc/wiki) pages.
 
+Vignettes are now obsolete, but remain a good way to understand the
+different steps of the pipelines.
 
 ## Cell-line profiles
 
