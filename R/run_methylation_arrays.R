@@ -53,7 +53,7 @@ run_methylation_array <- function(idat_dir,
     if(is.null(rgSet) & is.null(res))
     {
         suppressWarnings(rgSet <- read.metharray.exp(idat_dir, force=force)); gc();
-        if(platform=="epicv2")
+        if(platform[1]=="epicv2")
         {
             annotation(rgSet)["array"] = "IlluminaHumanMethylationEPICv2"
             annotation(rgSet)["annotation"] = "20a1.hg38"
@@ -70,9 +70,9 @@ run_methylation_array <- function(idat_dir,
         annot <- as.data.frame(getAnnotation(data)); gc();
         annot[,"chr"] <- gsub("chr","",as.character(annot[,"chr"]))
         annot <- annot[as.character(annot[,"chr"])%in%gsub("chr","",as.character(allchr)),]
-        if(platform=="epicv1") data("badloci.epicv1",package="ASCAT.scDataMeth")
-        if(platform=="epicv2") data("badloci.epicv2",package="ASCAT.scDataMeth")
-        if(platform=="450K")
+        if(platform[1]=="epicv1") data("badloci.epicv1",package="ASCAT.scDataMeth")
+        if(platform[1]=="epicv2") data("badloci.epicv2",package="ASCAT.scDataMeth")
+        if(platform[1]=="450K")
         {
             data("badloci.450K",package="ASCAT.scDataMeth")
             data("badloci.tcga.450K",package="ASCAT.scDataMeth")
@@ -80,7 +80,7 @@ run_methylation_array <- function(idat_dir,
             annot <- annot[!rownames(annot)%in%get(paste0("logr.pon.tcga")) ,]
             annot <- annot[!rownames(annot)%in%get(paste0("bad.loci.tcga_segs")) | annot[,"chr"]%in%c("Y","chrY"),]
         }
-        annot <- annot[!rownames(annot)%in%get(paste0("badloci.",platform)) ,]
+        annot <- annot[!rownames(annot)%in%get(paste0("badloci.",platform[1])) ,]
         ## ##################################################
         ## order chromosome, starts and ends of probes
         annot <- annot[order(annot[,"chr"],annot[,"pos"],decreasing=F),]
@@ -97,18 +97,18 @@ run_methylation_array <- function(idat_dir,
         {
             ## ##################################################
             ## prepare panel of normal (PON) - separate males and females
-            if(platform=="450K")
+            if(platform[1]=="450K")
             {
                 data("pon.450K",package="ASCAT.scDataMeth")
                 data("pon.tcga",package="ASCAT.scDataMeth")
                 totalintensityNormal <- cbind(meth_pon[rownames(annot),],pon.tcga[rownames(annot),])
             }
-            if(platform=="epicv1")
+            if(platform[1]=="epicv1")
             {
                 data("pon.epicv1",package="ASCAT.scDataMeth")
                 totalintensityNormal <- meth_pon[rownames(annot),]
             }
-            if(platform=="epicv2")
+            if(platform[1]=="epicv2")
             {
                 data("pon.epicv2",package="ASCAT.scDataMeth")
                 totalintensityNormal <- meth_pon[rownames(annot),]

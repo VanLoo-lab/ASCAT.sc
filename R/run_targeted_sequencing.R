@@ -88,7 +88,7 @@ run_targeted_sequencing <- function(tumour_bams,
                                                                          mapqFilter=30))
             list(lCTS.normal=lCTS.normal,
                  nlCTS.normal=treatTrack(lCTS=lCTS.normal,
-                                        window=ceiling(binsize/START_WINDOW)))
+                                         window=ceiling(binsize/START_WINDOW)))
         },mc.cores=MC.CORES))
         lCTS.normal.combined <- combineDiploid(lapply(lCTS.normal,function(x) x[[2]]))
         isPON <- TRUE
