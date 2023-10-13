@@ -26,7 +26,7 @@ which are in the R data package *ASCAT.scDataMeth*.
 
 As the files are big and github bandwidth is limited, you can download
 the package as a zip file
-[here]((https://drive.google.com/drive/folders/1zDu5-WEYq3OQ8qSZANBOMYTw-H-LNWTU?usp=share_link))
+[here](https://drive.google.com/drive/folders/1zDu5-WEYq3OQ8qSZANBOMYTw-H-LNWTU?usp=share_link)
 and build/install for R as follows:
 
 > R CMD build ASCAT.scDataMeth
