@@ -249,6 +249,7 @@ run_methylation_array <- function(idat_dir,
                 min.width=min.width,
                 annotations.probes=annot,
                 bins=anno,
+                isPON=FALSE,
                 gamma=GAMMA,
                 timetofit=timetofit)
     if(predict_refit)
