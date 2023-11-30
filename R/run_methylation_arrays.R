@@ -17,6 +17,7 @@ run_methylation_array <- function(idat_dir,
                                   print_results=TRUE,
                                   force=TRUE,
                                   smooth=TRUE,
+                                  gamma=0.55,
                                   MC.CORES=1)
 {
     checkArguments_meth(c(as.list(environment())))
@@ -35,7 +36,7 @@ run_methylation_array <- function(idat_dir,
         sex
     }
     ## ##################################################
-    GAMMA <- .55 ## platform non-linearity parameter - do not change
+    GAMMA <- gamma ## platform non-linearity parameter - do not change
     anno <- NULL ## initialise bins (not used if conumee=FALSE)
     ## ##################################################
     data("SBDRYs_precomputed",package="ASCAT.sc")
