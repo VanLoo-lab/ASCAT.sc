@@ -23,7 +23,9 @@ run_sc_sequencing <- function(tumour_bams,
                               steps=NULL,
                               smooth_sc=FALSE,
                               multipcf=FALSE,
-                              normalize=FALSE)
+                              normalize=FALSE,
+                              lExclude=NULL,
+                              sc_exclude_badbins=FALSE)
 {
     checkArguments_scs(c(as.list(environment())))
     suppressPackageStartupMessages(require(parallel))
@@ -234,6 +236,11 @@ run_sc_sequencing <- function(tumour_bams,
                 timetoread_tumours=res$timetoread_tumours,
                 timetoprocessed=res$timetoprocessed,
                 timetofit=res$timetofit)
+    if(sc_exclude_badbins)
+    {
+        print("## exclude Bad bins")
+        res <- sc_excludeBadBins(res)
+    }
     if(predict_refit)
     {
         print("## predict Refit")

@@ -82,6 +82,7 @@ run_methylation_array <- function(idat_dir,
             annot <- annot[!rownames(annot)%in%get(paste0("bad.loci.tcga_segs")) | annot[,"chr"]%in%c("Y","chrY"),]
         }
         annot <- annot[!rownames(annot)%in%get(paste0("badloci.",platform[1])) ,]
+        annot <- annot[rownames(annot)%in%rownames(totalintensity),]
         ## ##################################################
         ## order chromosome, starts and ends of probes
         annot <- annot[order(annot[,"chr"],annot[,"pos"],decreasing=F),]
@@ -249,6 +250,7 @@ run_methylation_array <- function(idat_dir,
                 min.width=min.width,
                 annotations.probes=annot,
                 bins=anno,
+                isPON=FALSE,
                 gamma=GAMMA,
                 timetofit=timetofit)
     if(predict_refit)

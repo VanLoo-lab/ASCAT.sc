@@ -1,0 +1,4 @@
+sc_excludeBadBins <- function()
+{
+
+}

@@ -21,8 +21,8 @@ meth_winsorise_ascat <- function(x)
         }
         .psi <- function(xwin, zplus, zminus)
         {
-            xwin[xwin < -zminus] <- NA
-            xwin[xwin > zplus] <- NA
+            xwin[xwin < -zminus] <- zminus
+            xwin[xwin > zplus] <- zplus
             return(xwin)
         }
         .winsorise <- function(d, xhat)
