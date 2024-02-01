@@ -67,7 +67,7 @@ plotSolution <- function(tracksSingle,
          y = max(ylim),
          ##if(is.null(allchr)) names(breaks)[2:length(breaks)] else allchr,
          labels=labels,
-         cex = 0.4)
+         cex = 0.6)
     dpb <- median(unlist(lapply(tracksSingle$lCTS,function(x) x$records)),na.rm=T)
     dpb <- if(all(tracksSingle$lCTS[[1]]$records==tracksSingle$lCTS[[1]]$smoothed)) NA else dpb
     mtext(side = 3,
