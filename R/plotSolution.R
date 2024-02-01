@@ -10,6 +10,7 @@ plotSolution <- function(tracksSingle,
                          allchr=NULL,
                          colFit=rgb(0.756, 0.494, 0.756),
                          col2=rgb(0.2, 0.2, 0.2, 0.2),
+                         colLine= rgb(0.6, 0.6, 0.6, 0.4),
                          ...)
 {
     meansSeg <- fitProfile(tracksSingle,purity,ploidy,gamma=gamma, ismale=ismale, isPON=isPON)
@@ -54,10 +55,10 @@ plotSolution <- function(tracksSingle,
     abline(v = breaks,
            lwd = 1,
            lty = 2,
-           col = rgb(0.6, 0.6, 0.6, 0.4))
+           col = colLine)
     abline(h=1:50, lwd = 1,
            lty = 2,
-           col = rgb(0.6, 0.6, 0.6, 0.2))
+           col = colLine)
     labels <- allchr
     if(is.null(allchr))
         labels <- if(is.null(names(tracksSingle$lCTS))) names(breaks)[2:length(breaks)]
