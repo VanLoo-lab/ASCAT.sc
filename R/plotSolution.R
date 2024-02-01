@@ -9,6 +9,7 @@ plotSolution <- function(tracksSingle,
                          isPON=F,
                          allchr=NULL,
                          colFit=rgb(0.756, 0.494, 0.756),
+                         col2=rgb(0.2, 0.2, 0.2, 0.2),
                          ...)
 {
     meansSeg <- fitProfile(tracksSingle,purity,ploidy,gamma=gamma, ismale=ismale, isPON=isPON)
@@ -30,7 +31,7 @@ plotSolution <- function(tracksSingle,
                                        purity,
                                        ploidy,
                                        gamma=gamma, ismale=ismale, isPON=isPON, isX=i==23),
-                 col = rgb(0.2, 0.2, 0.2, 0.2))
+                 col = col2)
         segments(tracksSingle$lSegs[[i]]$output$loc.start/1e+06 + breaks[i],
                  transform_bulk2tumour(sapply(meansSeg[[i]], function(x) x$mu),
                                        purity,
@@ -42,7 +43,7 @@ plotSolution <- function(tracksSingle,
                                        ploidy,
                                        gamma=gamma, ismale=ismale, isPON=isPON, isX=i==23),
                  lwd = lwdSeg,
-                 col = rgb(0.4, 0.4, 0.4, 0.4))
+                 col = colFit)
         segments(tracksSingle$lSegs[[i]]$output$loc.start/1e+06 + breaks[i],
                  round(sapply(meansSeg[[i]], function(x) x$roundmu)),
                  tracksSingle$lSegs[[i]]$output$loc.end/1e+06 + breaks[i],
