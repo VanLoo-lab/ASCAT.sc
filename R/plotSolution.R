@@ -44,7 +44,7 @@ plotSolution <- function(tracksSingle,
                                        ploidy,
                                        gamma=gamma, ismale=ismale, isPON=isPON, isX=i==23),
                  lwd = lwdSeg,
-                 col = colFit)
+                 col = rgb(0.4, 0.4, 0.4, 0.4))
         segments(tracksSingle$lSegs[[i]]$output$loc.start/1e+06 + breaks[i],
                  round(sapply(meansSeg[[i]], function(x) x$roundmu)),
                  tracksSingle$lSegs[[i]]$output$loc.end/1e+06 + breaks[i],
