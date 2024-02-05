@@ -9,8 +9,6 @@ plotSolution <- function(tracksSingle,
                          isPON=F,
                          allchr=NULL,
                          colFit=rgb(0.756, 0.494, 0.756),
-                         col2=rgb(0.2, 0.2, 0.2, 0.2),
-                         colLine= rgb(0.6, 0.6, 0.6, 0.4),
                          ...)
 {
     meansSeg <- fitProfile(tracksSingle,purity,ploidy,gamma=gamma, ismale=ismale, isPON=isPON)
@@ -32,7 +30,7 @@ plotSolution <- function(tracksSingle,
                                        purity,
                                        ploidy,
                                        gamma=gamma, ismale=ismale, isPON=isPON, isX=i==23),
-                 col = col2)
+                 col = rgb(0.2, 0.2, 0.2, 0.2))
         segments(tracksSingle$lSegs[[i]]$output$loc.start/1e+06 + breaks[i],
                  transform_bulk2tumour(sapply(meansSeg[[i]], function(x) x$mu),
                                        purity,
@@ -55,10 +53,10 @@ plotSolution <- function(tracksSingle,
     abline(v = breaks,
            lwd = 1,
            lty = 2,
-           col = colLine)
+           col = rgb(0.6, 0.6, 0.6, 0.4))
     abline(h=1:50, lwd = 1,
            lty = 2,
-           col = colLine)
+           col = rgb(0.6, 0.6, 0.6, 0.2))
     labels <- allchr
     if(is.null(allchr))
         labels <- if(is.null(names(tracksSingle$lCTS))) names(breaks)[2:length(breaks)]
@@ -67,7 +65,7 @@ plotSolution <- function(tracksSingle,
          y = max(ylim),
          ##if(is.null(allchr)) names(breaks)[2:length(breaks)] else allchr,
          labels=labels,
-         cex = 0.6)
+         cex = 0.4)
     dpb <- median(unlist(lapply(tracksSingle$lCTS,function(x) x$records)),na.rm=T)
     dpb <- if(all(tracksSingle$lCTS[[1]]$records==tracksSingle$lCTS[[1]]$smoothed)) NA else dpb
     mtext(side = 3,
