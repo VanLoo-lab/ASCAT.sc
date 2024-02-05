@@ -1,3 +1,3 @@
 library(shiny)
 
-run_PloidyModifier <- function(){runApp(app.rda)}
+run_PloidyModifier <- function(){runApp("data/app.rda")}
