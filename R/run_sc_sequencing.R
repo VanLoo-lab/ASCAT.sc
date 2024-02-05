@@ -77,7 +77,6 @@ run_sc_sequencing <- function(tumour_bams,
             names(res$lGCT) <- names(res$lSe) <- gsub("chr","",names(res$lSe))
     }
     print("## calculate Target Bin size")
-    print(paste0("window: ",ceiling(binsize/START_WINDOW)))
     res$nlGCT <- treatGCT(res$lGCT,window=ceiling(binsize/START_WINDOW))
     res$nlSe <- treatlSe(res$lSe,window=ceiling(binsize/START_WINDOW))
     if(is.null(res$isPON)) res$isPON <- FALSE
