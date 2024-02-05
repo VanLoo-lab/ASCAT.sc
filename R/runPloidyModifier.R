@@ -1,3 +1,3 @@
 library(shiny)
 
-run_PloidyModifier <- function(){runApp("../PloidyModifier")}
+run_PloidyModifier <- function(){runApp("../PloidyModifier/")}
