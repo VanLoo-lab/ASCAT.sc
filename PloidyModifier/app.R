@@ -5,22 +5,22 @@ library(shinythemes)
 library(shinyWidgets)
 library(shinycssloaders)
 library(shinydlplot)
-library(periscope)
 library(shinyjs)
 library(gridExtra)
 library(shinyalert)
 library(shinydashboard)
 library(shinyFiles)
 library(spsComps)
-#library(stringr)
-#library("rlist")
+library(spatstat.geom)
+library(dipsaus)
+
 
 reslocal <- NULL
 
 pathrdata <- NULL
 rdata <- NULL
 coords <- NULL
-
+localOpt <- NULL
 
 options(spinner.color="#f06313", spinner.color.background="#ffffff", spinner.size=1)
 
@@ -45,11 +45,11 @@ getSamples <- function() {
 #######################################################################
 
 ui <- navbarPage(id="nav_page",
-  title="ASCAT.scFit",  theme = shinytheme("united"),
+  title="ASCAT.scFit",   theme = shinytheme("united"),
                  tabPanel("Welcome",
                           busy_start_up(
                             loader = tags$img(
-                              src = "Research.gif",
+                              src = "Loader.gif",
                               width = 400
                             ),
                             text = "Loading ...",
@@ -59,21 +59,32 @@ ui <- navbarPage(id="nav_page",
                             mode = "auto"
                           ),
                           tags$head(
-                            tags$style(HTML("
-            code {
+                            tags$style(HTML(
+                              ".hover-effect {color: #FFFFFF ; border-radius: 30px; height:150px; width:300px; background-color: #3e0533; border-color: #6a0144; padding:5px; font-size:4vh; border-width: 5px;  opacity: 0.90;
+                              }",
+           ".hover-effect:hover {color: #FFFFFF ; border-radius: 30px; background-color: #3e0533; border-color: #6a0144; padding:5px; font-size:5vh; border-width: 5px;
+                        opacity: 1;}",
+           ".button-container {
+             width: 300px;}",
+           ".click-effect:active {
+      color: #FFFFFF ; border-radius: 30px; background-color: #3e0533; border-color: #6a0144; padding:5px; font-size:5vh; border-width: 5px;
+                        opacity: 1;
+    
+    }",
+          "code {
                 display:block;
                 padding:9.5px;
                 margin: auto;
-                width: 1600px;
-                height: 450px;
+                width: 1100px;
+                height: 500px;
                 font-size:14px;
-                color: #833e03;
-                line-height:5px;
+                color: #3e0533;
+                line-height:4px;
                 word-break:break-all;
                 word-wrap:break-word;
                 white-space:pre-wrap;
-                background-color:#fae6d4;
-                border:4px solid #833e03;
+                background-color:#FFFFFF;
+                border:6px solid #3e0533;
                 border-radius:4px; 
             }",
                 "pre {
@@ -114,30 +125,39 @@ ui <- navbarPage(id="nav_page",
                 ######################### WELCOME TAB ################################
                 
                 #######################################################################
-                
-                 div(style = "height:70px"), h1(strong("ASCAT.sc Ploidy Modifier",style={'color: #ba4a00; font-family: Georgia ,serif; text-shadow:
+                img(src='WelcomeImage.png', align = "center", style="width:100%; max-width:100%; position: absolute; z-index:-1;"),
+                 div(style = "height:70px"),  
+                # ba4a00
+                h1(strong("ASCAT.sc Ploidy Modifier",style={'color: #5b016a; font-family: arial black ,sans-serif; text-shadow:
   # # 0 0 7px #fff,
   # # 0 0 10px #fff,
   # # 0 0 21px #fff,
-  # # 0 0 42px ##ba4a00,
-  # # 0 0 82px ##ba4a00;  font-size: 70px'}), align="center"), br(),  fluidRow(column(6, offset=3, align="center", img(src = "edit.png", height = 50, width = 50))), br(),
-                 
-                 code(h2(strong("Manual refitting for ASCAT.sc profiles"), align="center", style={'color: #833e03; font-family: Georgia'}), 
-                      h4(strong("Please choose the ASCAT.sc rdata object to load. Each sample in the object can be viewed and modified. \n Please note that large datasets might take a while to load.", style={'font-family: Arial'}), align="center"),
-                      h4(strong("The purity & ploidy of the whole sample can be changed by clicking on the sunrise plot.\n You can additionally shift the sample ploidy, or modify the copy number of 2 different segments either by numeric input or directly on the Modifier Station profile.", style={'font-family: Arial'}),align="center"),
-                      h4(strong("Once you are happy with the results, you can save all the profiles in text format, or save the entire ASCAT.sc rdata object.", style={'font-family: Arial'}), align="center")),
-                     br(),  fluidRow(column(6, align="center", offset=3, 
+  # # 0 0 42px ##5b016a,
+  # # 0 0 82px ##5b016a;  font-size: 80px'}), align="center"), br(), br(), br(),
+                 fluidRow(column(6, offset = 3, align="center", dropdown(code(h4(strong("1. Choose the data", style={'font-family: Arial'}), align = "left"),
+                    p("Please choose the ASCAT.sc rdata object to load. Each sample in the object can be viewed and modified.", align = "left"),  
+                    p("Please note that large datasets might take a while to load.", align = "left"),
+                   h4(strong("2. Modify the profiles \n ", style={'font-family: Arial; align-text: left'}), align = "left"),
+                   p("The purity & ploidy of the whole sample can be changed by clicking on the sunrise plot.", align = "left"), 
+                   p("You can additionally shift the sample ploidy, or modify the copy number of 2 different segments.", align = "left"),
+                   p("Modifications can be done either by numeric input or directly on the Modifier Station plot.", align = "left"),
+                  h4(strong("3. Save the modified profiles ", style={'font-family: Arial'}), align = "left"),
+                  p("Once you are happy with the results, you can save all the profiles in text format, or save the entire ASCAT.sc rdata object.", align = "left")),
+                                                                         size= "lg", circle= FALSE, status = "info", label = "Help", width = "1200px", inputId="help"))),
+                     br(), div(style = "height:50px"),
+                fluidRow(column(6, align="center", offset=3, 
                                             shinyFilesButton("get_file", "Load data" ,
                                                              title = "Choose the ASCAT.sc rdata object to load", multiple = FALSE,
-                                                             buttonType = "info", class = NULL)
+                                                             buttonType = "primary", class = NULL, style = "width:60px, height: 50px")
                                             
-                     ), br(), br(), br(),
+                     ), br(), br(), br(),div(style = "height:200px"),
                      fluidRow(column(6, align="center", offset = 3,
-                                 actionButton("start",
+                                    
+                                     actionButtonStyled("start",
                                               label="Start",
-                                              style="color: #FFFFFF ; background-color: #833e03; border-color: #833e03; padding:40px; font-size:100%; border-width: 3px",
-                                              buttonType = "info"
-                                              ))
+                                              class="hover-effect click-effect",
+                                              width = "300px"
+                                             ))
                                 
                                  )
                
@@ -149,7 +169,7 @@ ui <- navbarPage(id="nav_page",
   
   #######################################################################
   
-  tabPanel("Modifier",  shinyWidgets::useShinydashboard(),
+  tabPanel("Modifier",  shinyWidgets::useShinydashboard(), 
                 fluidRow(box(width=12, title="Original", status="warning", solidHeader=TRUE, 
                               column(width=8,withSpinner(plotOutput("profile"),type=3)),
                               column(width=4,plotOutput("sunrise1")))
@@ -177,16 +197,16 @@ ui <- navbarPage(id="nav_page",
                 
                 column(width = 2, offset = 1,
                        dropdownButton(tags$h3("Choose ploidy and purity on the sunrise graph"),
-                                      h4("To change the ploidy and purity of the whole sample directly on the Working station profile, please click the point on the sunrise plot corresponding to the desired ploidy/purity values, then click on 'Apply'"),
-                                      actionButton("sunrise", label = "Apply", style="color: #FFFFFF ; background-color: #ba4a00; border-color: #ba4a00; font-size:100%; border-width: 3px"),
-                                      size= "lg", circle= FALSE, status = "info", label = "Modify purity & ploidy", width = "450px"
+                                      h4("To change the ploidy and purity of the whole sample directly on the Working station profile, please click the point on the sunrise plot corresponding to the desired ploidy/purity values. When 'Automatic optima' is enabled; the closest optimal purity/ploidy pair will be selected."),
+                                      checkboxInput("optima", "Automatic optima", TRUE),
+                                       size= "lg", circle= FALSE, status = "info", label = "Modify purity & ploidy", width = "450px"
                        )
                        
                 ),
                 
                 column(width = 5,  
                        dropdown(tags$h3("Choose a different way to modify the profile:"),
-                                      #h4("Choose a different way to modify the profile"),
+                                      
                                 dropdownButton(tags$h3("Modify the copy number of 2 segments"),br(),
                                                selectInput(
                                                  "Chr1",
@@ -227,7 +247,7 @@ ui <- navbarPage(id="nav_page",
                                       ),
                                 br(),
                                       dropdownButton(tags$h3("Shift ploidy on graph"),
-                                                     h4("To shift the ploidy of the whole sample directly on the Working station profile, please click on a segment, then on its desired y axis position, then click on 'Apply'"),
+                                                     h4("To shift the ploidy of the whole sample directly on the Working station profile, please click on a point with the y axis position corresponding to the desired ploidy value, then click on 'Apply'"),
                                                      actionButton("shift_graph", label = "Apply", style="color: #FFFFFF ; background-color: #ba4a00; border-color: #ba4a00; font-size:100%; border-width: 3px"),
                                                      size= "lg", circle= FALSE, status = "info", right= TRUE,label = "Shift ploidy on graph", width = "450px",up=TRUE
                                       ),
@@ -251,6 +271,7 @@ ui <- navbarPage(id="nav_page",
 
 
 server <- function(input, output, session) {
+  
   vals <- reactiveVal()
   volumes = getVolumes()
   coords <- reactiveValues(x=NULL,y=NULL)
@@ -270,7 +291,7 @@ server <- function(input, output, session) {
   sampleName <- reactive({
     input$samples
   })
-  
+  optValue <- reactive({input$optima})
   result <- reactive({ reslocal })
   
   shiftv <- reactive({
@@ -357,9 +378,10 @@ server <- function(input, output, session) {
                                                                    gamma=.55,
                                                                    sol=reslocal$allSolutions[[1]]))
       })
-      
+     
       output$sunrise1 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.auto[[1]]))})
-      output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[1]]))}) 
+      output$sunrise2 <- renderPlot({isolate( localOpt <<- plotSunrise(reslocal$allSolutions.refitted.manual[[1]], localMinima=TRUE))}) 
+     
       
       removeModal()
       },
@@ -389,7 +411,7 @@ server <- function(input, output, session) {
                                                           gamma=.55,
                                                           sol=reslocal$allSolutions[[index]]))})
       
-      output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.auto[[index]]))})
+      output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.auto[[index]], localMinima=TRUE))})
       reslocal$allProfiles.refitted.manual[[index]] <<-  reslocal$allProfiles.refitted.auto[[index]] 
       reslocal$allSolutions.refitted.manual[[index]] <<-  reslocal$allSolutions.refitted.auto[[index]] 
       
@@ -413,7 +435,7 @@ server <- function(input, output, session) {
       "result_manualfitting.Rda"
     },
     content = function(file) {
-      #resnew <- result()
+     
       showModal(modalDialog(div(tags$b("Loading...", style = "color: steelblue;")), footer=NULL))
       on.exit(removeModal())
       
@@ -466,13 +488,14 @@ server <- function(input, output, session) {
 
   #########################################################################
   
-  observeEvent(input$sunrise,{
+ 
+  observeEvent(input$sunrise2_click,{
     vals <- as.numeric(chrs())
     
     
     if(! is.null(chrs())){
       index <- getIndex(sampleName())
-      input$sunrise2_click
+      
       purity <- NULL
       ploidy <- NULL
       
@@ -489,10 +512,30 @@ server <- function(input, output, session) {
          
           purity <- coords$y
           ploidy <- coords$x
-          
+         
+          if (optValue()){
+            best <- 1
+            dist <- crossdist(ploidy, purity, localOpt$bao[best, 2]/ncol(errs), 1-localOpt$bao[best, 1]/nrow(errs))
+            
+            for (i in 1:nrow(localOpt$bao)){
+              
+              dist2 <- crossdist(ploidy, purity, localOpt$bao[i, 2]/ncol(errs), 1-localOpt$bao[i, 1]/nrow(errs))
+              if (dist >= dist2){
+                
+                dist <- dist2
+                best <- i
+              }
+              
+            }
+            
+            ploidy <- localOpt$bao[best, 2]/ncol(errs)
+            purity <- 1-localOpt$bao[best, 1]/nrow(errs)
+            
+          }
           
           ploidy <- as.numeric(colnames(errs)[as.numeric(ploidy)*ncol(errs)])
           purity <- as.numeric(rownames(errs)[(1-as.numeric(purity))*nrow(errs)])
+         
           
           reslocal$allProfiles.refitted.manual[[index]] <<- getProfile(fitProfile(tracksSingle = reslocal$allTracks.processed[[index]], purity, ploidy, ismale=reslocal$sex[index]=="male"))
          
@@ -505,8 +548,8 @@ server <- function(input, output, session) {
                                                               purity=purity,
                                                               ploidy=ploidy,
                                                               gamma=.55))})
-          
-          output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]]))})
+        
+          output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
           coords$y <<- NULL
           coords$x <<- NULL
              },
@@ -588,7 +631,7 @@ server <- function(input, output, session) {
                                                               gamma=.55,
                                                               sol=reslocal$allSolutions[[index]]))})
           
-          output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]]))})
+          output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
           coords$y <<- NULL
           coords$x <<- NULL
           },
@@ -649,7 +692,7 @@ server <- function(input, output, session) {
                                                           gamma=.55,
                                                           sol=reslocal$allSolutions[[index]]))})
       
-      output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]]))})
+      output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
      
         },
       error=function(e) {
@@ -685,7 +728,7 @@ server <- function(input, output, session) {
         {
           index <- getIndex(sampleName())
           
-          ypos <- as.numeric(round(coords$y[2], digits=0))
+          ypos <- as.numeric(round(coords$y[1], digits=0))
           ploidy <- round(as.numeric(reslocal$allSolutions.refitted.manual[[index]]$ploidy), digits=0)
           
           shiftp <- ypos - ploidy
@@ -713,7 +756,7 @@ server <- function(input, output, session) {
                                                               gamma=.55,
                                                               sol=reslocal$allSolutions[[index]]))})
           
-          output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]]))})
+          output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
           coords$y <<- NULL
           coords$x <<- NULL
           
@@ -750,53 +793,48 @@ server <- function(input, output, session) {
       index <- getIndex(sampleName())
       
       
-      tryCatch(
+      withCallingHandlers(
         {
           rescopy <- reslocal
           rescopy$allSolutions.refitted.auto <- rescopy$allSolutions.refitted.manual
           rescopy$allProfiles.refitted.auto <- rescopy$allProfiles.refitted.manual
           
           shiftp <- as.numeric(shiftv())
-          rescopy <- run_any_refitProfile_shift(rescopy,
-                                           sample_indice=index,
-                                           shift=shiftp,
-                                           CHRS=c(1:22,"X","Y"),
-                                           outdir="./www",
-                                           gridpur=seq(-.05,.05,.01),
-                                           gridpl=seq(-.1,.2,.01))
           
-          rescopy$allSolutions.refitted.auto <- reslocal$allSolutions.refitted.auto
-          rescopy$allProfiles.refitted.auto <- reslocal$allProfiles.refitted.auto
+        
+            rescopy <- run_any_refitProfile_shift(rescopy,
+                                                  sample_indice=index,
+                                                  shift=shiftp,
+                                                  CHRS=c(1:22,"X","Y"),
+                                                  outdir="./www",
+                                                  gridpur=seq(-.05,.05,.01),
+                                                  gridpl=seq(-.1,.2,.01))
+            
+            rescopy$allSolutions.refitted.auto <- reslocal$allSolutions.refitted.auto
+            rescopy$allProfiles.refitted.auto <- reslocal$allProfiles.refitted.auto
+            
+            reslocal <<- rescopy
+            
+            output$profile2 <- renderPlot({plotSolution(reslocal$allTracks.processed[[index]],
+                                                                purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
+                                                                ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
+                                                                ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                                gamma=.55,
+                                                                sol=reslocal$allSolutions[[index]])})
+            
+            output$sunrise2 <- renderPlot({plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE)})
           
-          reslocal <<- rescopy
-          output$profile2 <- renderPlot({isolate(plotSolution(reslocal$allTracks.processed[[index]],
-                                                              purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
-                                                              ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
-                                                              ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                                                              gamma=.55,
-                                                              sol=reslocal$allSolutions[[index]]))})
-          
-          output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]]))})
-         
         },
         error=function(e) {
-          message('An Error Occurred')
-          print(e)
-          shinyalert("Error", "Cannot fit profile. Please choose different values", type = "error")
+           shinyalert("Error", "Cannot fit profile. Please choose different values", type = "error")
         },
-        warning=function(w) {w} )
-        #   message('A Warning Occurred')
-        #   print(w)
-        #   shinyalert("Warning", "New solution is ambiguous: reverted to old one", type = "error")
-        # 
+        warning=function(w) {
          
- 
-      # if(inherits(out, "warning")){
-      #   message(out$message)
-      #   print("done")
-      #   shinyalert("Warning", "New solution is ambiguous: reverted to old one", type = "error")
-      #   
-      # } 
+          shinyalert("Warning", "Cannot fit profile. Please choose different values", type = "error")
+        }
+      )
+     
+   
     }
     else{
       return (NULL)
@@ -815,7 +853,7 @@ server <- function(input, output, session) {
     if(! is.null(sampleName())){
       index <- getIndex(sampleName())
     
-               ################## if previous manual fitting ######################
+              
        output$profile <- renderImage({
          outfile <- tempfile(fileext='.png')
          
@@ -844,10 +882,9 @@ server <- function(input, output, session) {
                                                                     sol=reslocal$allSolutions[[index]]))
        })
        output$sunrise1 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.auto[[index]]))})
-       output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]]))})
-      
-  
-
+       output$sunrise2 <- renderPlot({isolate( localOpt <<- plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
+       
+       localOpt <<- localOpt$bao
      
   }
     else{
