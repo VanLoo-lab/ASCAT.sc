@@ -22,4 +22,4 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
-ShinyAppDir: inst/PloidyModifier
+ShinyAppDir: PloidyModifier
