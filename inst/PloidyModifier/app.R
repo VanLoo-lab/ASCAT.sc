@@ -1,19 +1,14 @@
 library(shiny)
-library(ASCAT.sc)
 library(shinybusy)
 library(shinythemes)
 library(shinyWidgets)
 library(shinycssloaders)
-library(shinydlplot)
 library(shinyjs)
-library(gridExtra)
 library(shinyalert)
 library(shinydashboard)
 library(shinyFiles)
-library(spsComps)
 library(spatstat.geom)
 library(dipsaus)
-
 
 reslocal <- NULL
 

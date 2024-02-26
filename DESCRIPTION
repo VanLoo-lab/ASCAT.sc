@@ -17,7 +17,17 @@ Imports:
     xgboost,
     minfi,
     conumee,
-    shiny
+    shiny,
+    shinybusy,
+    shinythemes,
+    shinyWidgets,
+    shinycssloaders,
+    shinyjs,
+    shinyalert,
+    shinydashboard,
+    shinyFiles,
+    spatstat.geom,
+    dipsaus
 Suggests: 
     knitr,
     rmarkdown
