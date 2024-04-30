@@ -17,7 +17,8 @@ run_methylation_array <- function(idat_dir,
                                   print_results=TRUE,
                                   force=TRUE,
                                   smooth=TRUE,
-                                  MC.CORES=1)
+                                  MC.CORES=1,
+                                  rainbowChr=TRUE)
 {
     checkArguments_meth(c(as.list(environment())))
     require(ASCAT.scDataMeth)
@@ -255,7 +256,7 @@ run_methylation_array <- function(idat_dir,
     if(predict_refit)
         res <- predictRefit_all(res, gamma=GAMMA)
     if(print_results)
-        res <- printResults_all(res,  outdir=outdir, projectname=projectname)
+        res <- printResults_all(res,  outdir=outdir, projectname=projectname, rainbowChr=rainbowChr)
     ## ##################################################
     res
 }

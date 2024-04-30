@@ -10,10 +10,12 @@ plotSunrise <- function(solution, localMinima = FALSE, plotClust=FALSE)
     errs.max <- max(solution$errs[!is.infinite(solution$errs)])
     errs[is.infinite(errs)] <- errs.max
     errs <- errs/errs.max
+    errs <- errs[rev(seq_len(nrow(errs))), ]
+    
     .getCol <- function(x) {
-      vec <- c(sapply(seq(0, 1, length.out = 100), function(x) rgb(0.8,
-                                                                   0.1, 0, 1 - x)), sapply(seq(0, 1, length.out = 100),
-                                                                                           function(x) rgb(0, 0.1, 0.8, x)))
+      vec <- c(sapply(seq(0, 1, length.out = 100), function(x) rgb(0.85,
+                                                                   0.33, 0.33, 1 - x)), sapply(seq(0, 1, length.out = 100),
+                                                                                               function(x) rgb(0.18, 0.34, 0.6, x)))
       vec[pmax(1, pmin(200, round(x * 200)))]
     }
     im <- matrix(.getCol(as.vector(1 - errs)), dim(errs)[1],
@@ -44,7 +46,7 @@ plotSunrise <- function(solution, localMinima = FALSE, plotClust=FALSE)
                                                                                                     1, 0.1) * ncol(errs))]]), 2))
     axis(side = 2, at = seq(0.1, 1, 0.1), signif(as.numeric(rownames(errs)[(nrow(errs):1)[round(seq(0.1,
                                                                                                     1, 0.1) * nrow(errs))]]), 2))
-    text(0.8, 0.9, cex = 0.9, as.expression(bquote(paste("max ",
+    text(0.8, 0.1, cex = 0.9, as.expression(bquote(paste("max ",
                                                          phi[T], " hit"))), col = rgb(1, 1, 1))
     bao
     
@@ -57,4 +59,4 @@ plotSunrise <- function(solution, localMinima = FALSE, plotClust=FALSE)
     print(w)
   }
   )
-  }
+}

@@ -348,16 +348,16 @@ server <- function(input, output, session) {
         outfile <- tempfile(fileext='.png')
         
         
-        png(outfile, width=1200, height=400)
+        png(outfile, width=950, height=400)
         
         
         
         plotSolution(reslocal$allTracks.processed[[1]],
-                     purity=reslocal$allSolutions.refitted.auto[[1]]$purity,
-                     ploidy=reslocal$allSolutions.refitted.auto[[1]]$ploidy,
-                     ismale=if(!is.null(reslocal$sex)) reslocal$sex[[1]]=="male" else "female",
-                     gamma=.55,
-                     sol=reslocal$allSolutions[[1]])
+                       purity=reslocal$allSolutions.refitted.auto[[1]]$purity,
+                       ploidy=reslocal$allSolutions.refitted.auto[[1]]$ploidy,
+                       ismale=if(!is.null(reslocal$sex)) reslocal$sex[[1]]=="male" else "female",
+                       gamma=.55,
+                       sol=reslocal$allSolutions[[1]])
         
         dev.off()
         
@@ -504,7 +504,8 @@ server <- function(input, output, session) {
           errs.max <- max(solution$errs[!is.infinite(solution$errs)])
           errs[is.infinite(errs)] <- errs.max
           errs <- errs/errs.max
-         
+          errs <- errs[rev(seq_len(nrow(errs))), ]
+          
           purity <- coords$y
           ploidy <- coords$x
          
@@ -849,26 +850,28 @@ server <- function(input, output, session) {
       index <- getIndex(sampleName())
     
               
-       output$profile <- renderImage({
-         outfile <- tempfile(fileext='.png')
-         
-         
-         png(outfile, width=1200, height=400)
-         
-         
-         plotSolution(reslocal$allTracks.processed[[index]],
-                      purity=reslocal$allSolutions.refitted.auto[[index]]$purity,
-                      ploidy=reslocal$allSolutions.refitted.auto[[index]]$ploidy,
-                      ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                      gamma=.55,
-                      sol=reslocal$allSolutions[[index]])
-         
-         dev.off()
-         
-         
-         list(src = outfile,
-              alt = "Original profile")
-       }, deleteFile = TRUE)
+      output$profile <- renderImage({
+        
+        outfile <- tempfile(fileext='.png')
+        
+        
+        png(outfile, width=950, height=400)
+        
+        
+        
+        plotSolution(reslocal$allTracks.processed[[1]],
+                       purity=reslocal$allSolutions.refitted.auto[[1]]$purity,
+                       ploidy=reslocal$allSolutions.refitted.auto[[1]]$ploidy,
+                       ismale=if(!is.null(reslocal$sex)) reslocal$sex[[1]]=="male" else "female",
+                       gamma=.55,
+                       sol=reslocal$allSolutions[[1]])
+        
+        dev.off()
+        
+        
+        list(src = outfile,
+             alt = "Original profile")
+      }, deleteFile = TRUE)
        output$profile2 <- renderPlot({isolate(plot2 <- plotSolution(tracksSingle=reslocal$allTracks.processed[[index]],
                                                                     purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
                                                                     ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
