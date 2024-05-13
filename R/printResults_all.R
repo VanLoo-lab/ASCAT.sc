@@ -13,12 +13,12 @@ printResults_all <- function(res,
     
     
     try({
-      plotSolution(res$allTracks.processed[[i]],
+      suppressWarnings(plotSolution(res$allTracks.processed[[i]],
                    purity=res$allSolutions[[i]]$purity,
                    ploidy=res$allSolutions[[i]]$ploidy,
                    gamma=GAMMA,
                    ismale=if(!is.null(res$sex)) res$sex[i]=="male" else "female",
-                   sol=res$allSolutions[[i]], rainbowChr=rainbowChr)
+                   sol=res$allSolutions[[i]], rainbowChr=rainbowChr))
       title(names(res$allTracks)[i])
     })
     dev.off()
@@ -27,9 +27,10 @@ printResults_all <- function(res,
                    samplename=paste0(names(res$allTracks)[i],"_",projectname),
                    outdir=outdir)
     })
+  }
     zip(zipfile = paste0(outdir,"/profiles_",projectname,".zip"), files = paste0(outdir,"/profiles_",projectname))
     unlink(x=paste0(outdir,"/profiles_",projectname), recursive = TRUE)
-  }
+  
  
   createDirRefit <- paste0("mkdir ",outdir,"/profiles_",projectname,"_refitted")
   system(createDirRefit)
@@ -42,12 +43,12 @@ printResults_all <- function(res,
       png(paste0(outdir,"/profiles_",projectname,"_refitted/",names(res$allTracks)[i],".png"), width = 5500, height = 2496, res=300)
       
       try({
-        plotSolution(res$allTracks.processed[[i]],
+        suppressWarnings(plotSolution(res$allTracks.processed[[i]],
                      purity=res$allSolutions.refitted.auto[[i]]$purity,
                      ploidy=res$allSolutions.refitted.auto[[i]]$ploidy,
                      ismale=if(!is.null(res$sex)) res$sex[i]=="male" else "female",
                      gamma=GAMMA,
-                     sol=res$allSolutions[[i]], rainbowChr=rainbowChr)
+                     sol=res$allSolutions[[i]], rainbowChr=rainbowChr))
         title(paste0(names(res$allTracks)[i],"-refitted"))
       })
       dev.off()
