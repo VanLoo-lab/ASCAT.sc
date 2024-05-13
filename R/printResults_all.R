@@ -28,7 +28,7 @@ printResults_all <- function(res,
                    outdir=outdir)
     })
     zip(zipfile = paste0(outdir,"/profiles_",projectname,".zip"), files = paste0(outdir,"/profiles_",projectname))
-    
+    unlink(x=paste0(outdir,"/profiles_",projectname), recursive = TRUE)
   }
  
   createDirRefit <- paste0("mkdir ",outdir,"/profiles_",projectname,"_refitted")
@@ -58,7 +58,7 @@ printResults_all <- function(res,
       })
     }
     zip(zipfile = paste0(outdir,"/profiles_",projectname,"_refitted.zip"), files = paste0(outdir,"/profiles_",projectname,"_refitted"))
-    
+    unlink(x=paste0(outdir,"/profiles_",projectname,"_refitted"), recursive = TRUE)
     
   }
   .mytry <- function(x,retVal=NA,...)

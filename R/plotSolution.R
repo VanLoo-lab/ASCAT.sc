@@ -14,7 +14,7 @@ plotSolution <- function(tracksSingle,
   tracksSingle <- normaliseByPloidy(tracksSingle)
   breaks <- c(0, cumsum(sapply(tracksSingle$lSegs, function(x) max(x$output$loc.end))/1e+06))
   set.seed(10)
-  suppressWarnings(par(plt = c(0, 1, 0, 0.92), new = TRUE, fig = c(0, 1, 0, 1)))
+  par(plt = c(0, 1, 0, 0.92), new = TRUE, fig = c(0, 1, 0, 1))
   
   plot(0, 0, col = rgb(0, 0, 0, 0), xaxt = "n", yaxt = "n",
        xlim = c(0, max(breaks)-80), xlab = "",ylab="",frame = F, axes=FALSE, ylim=c(-1,10),...)
@@ -64,48 +64,56 @@ plotSolution <- function(tracksSingle,
              col = rgb(0.6, 0.8, 1, 0.4),
              pch = 16, cex=1)
     
-    segments(lSegs$loc.start/1e+06 + breaks[i] ,
-             transform_bulk2tumour(sapply(meansSeg[[i]], function(x) x$mu),
-                                   purity,
-                                   ploidy,
-                                   gamma=gamma, ismale=ismale, isPON=isPON, isX=i==23),
-             lSegs$loc.end/1e+06 + breaks[i],
-             transform_bulk2tumour(sapply(meansSeg[[i]], function(x) x$mu),
-                                   purity,
-                                   ploidy,
-                                   gamma=gamma, ismale=ismale, isPON=isPON, isX=i==23),
-             lwd = 2,
-             col = rgb(0.1, 0.1, 0.1, 0.4)
-    )
+    nonround <- transform_bulk2tumour(sapply(meansSeg[[i]], function(x) x$mu),
+                                      purity,
+                                      ploidy,
+                                      gamma=gamma, ismale=ismale, isPON=isPON, isX=i==23)
     
+    if (all(nonround >= 0) & all(nonround <= 8)){
+      
+      segments(lSegs$loc.start/1e+06 + breaks[i] ,
+               nonround,
+               lSegs$loc.end/1e+06 + breaks[i],
+               nonround,
+               lwd = 2,
+               col = rgb(0.1, 0.1, 0.1, 0.4)
+               
+      )
+    }
     #### Main copy number segments ####
     
-    if (rainbowChr){
-      
-      segments(lSegs$loc.start/1e+06 + breaks[i] + 2 ,
-               round(sapply(meansSeg[[i]], function(x) x$roundmu)),
-               lSegs$loc.end/1e+06 + breaks[i] + 2 ,
-               round(sapply(meansSeg[[i]], function(x) x$roundmu)),
-               lwd = 17,
-               col =clrs[i], lend=1)
-      
-      segments(lSegs$loc.start/1e+06 + breaks[i] + 2,
-               round(sapply(meansSeg[[i]], function(x) x$roundmu)),
-               lSegs$loc.end/1e+06 + breaks[i] + 2 ,
-               round(sapply(meansSeg[[i]], function(x) x$roundmu)),
-               lwd = 7,
-               col ="steelblue4", lend=1)
-      
-    }
+    cn <- round(sapply(meansSeg[[i]], function(x) x$roundmu))
     
-    else {
+    if (all(cn <= 8) & all(cn >= 0)){
       
-      segments(lSegs$loc.start/1e+06 + breaks[i] + 2,
-               round(sapply(meansSeg[[i]], function(x) x$roundmu)),
-               lSegs$loc.end/1e+06 + breaks[i] + 2 ,
-               round(sapply(meansSeg[[i]], function(x) x$roundmu)),
-               lwd = 17,
-               col ="steelblue4", lend=1)
+      if (rainbowChr){
+        
+        segments(lSegs$loc.start/1e+06 + breaks[i] + 2 ,
+                 cn,
+                 lSegs$loc.end/1e+06 + breaks[i] + 2 ,
+                 cn,
+                 lwd = 17,
+                 col =clrs[i], lend=1)
+        
+        segments(lSegs$loc.start/1e+06 + breaks[i] + 2,
+                 cn,
+                 lSegs$loc.end/1e+06 + breaks[i] + 2 ,
+                 cn,
+                 lwd = 7,
+                 col ="steelblue4", lend=1)
+        
+      }
+      
+      else {
+        
+        segments(lSegs$loc.start/1e+06 + breaks[i] + 2,
+                 cn,
+                 lSegs$loc.end/1e+06 + breaks[i] + 2 ,
+                 cn,
+                 lwd = 17,
+                 col ="steelblue4", lend=1)
+      }
+      
     }
     
     #### vertical breaks ####

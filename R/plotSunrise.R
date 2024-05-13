@@ -24,6 +24,10 @@ plotSunrise <- function(solution, localMinima = FALSE, plotClust=FALSE)
     points(which(colnames(errs) == solution$ploidy)/ncol(errs),
            1 - which(rownames(errs) == solution$purity)/nrow(errs),
            col = "chartreuse", pch = "X",cex = 1.5)
+    
+ 
+    ############## localMinima ##############
+    
     if (localMinima){
       bao <- findLocalMinima(errs)
       
@@ -41,6 +45,7 @@ plotSunrise <- function(solution, localMinima = FALSE, plotClust=FALSE)
       }
       
     }
+    ##########################################
     
     axis(side = 1, at = seq(0.1, 1, 0.1), signif(as.numeric(colnames(errs)[(1:ncol(errs))[round(seq(0.1,
                                                                                                     1, 0.1) * ncol(errs))]]), 2))

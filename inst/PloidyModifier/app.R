@@ -120,43 +120,49 @@ ui <- navbarPage(id="nav_page",
                 ######################### WELCOME TAB ################################
                 
                 #######################################################################
-                img(src='WelcomeImage.png', align = "center", style="width:100%; max-width:100%; position: absolute; z-index:-1;"),
-                 div(style = "height:70px"),  
-                # ba4a00
-                h1(strong("ASCAT.sc Ploidy Modifier",style={'color: #5b016a; font-family: arial black ,sans-serif; text-shadow:
+          img(src='WelcomeImage.png', align = "center", style="width:100%; max-width:100%; position: absolute; z-index:-1;"),
+          div(style = "height:70px"),  
+          # ba4a00
+          fluidRow(column(6, align="center",h1(strong("ASCAT.sc",style={'color: #5b016a; font-family: arial black ,sans-serif; text-shadow:
   # # 0 0 7px #fff,
   # # 0 0 10px #fff,
   # # 0 0 21px #fff,
   # # 0 0 42px ##5b016a,
-  # # 0 0 82px ##5b016a;  font-size: 80px'}), align="center"), br(), br(), br(),
-                 fluidRow(column(6, offset = 3, align="center", dropdown(code(h4(strong("1. Choose the data", style={'font-family: Arial'}), align = "left"),
-                    p("Please choose the ASCAT.sc rdata object to load. Each sample in the object can be viewed and modified.", align = "left"),  
-                    p("Please note that large datasets might take a while to load.", align = "left"),
-                   h4(strong("2. Modify the profiles \n ", style={'font-family: Arial; align-text: left'}), align = "left"),
-                   p("The purity & ploidy of the whole sample can be changed by clicking on the sunrise plot.", align = "left"), 
-                   p("You can additionally shift the sample ploidy, or modify the copy number of 2 different segments.", align = "left"),
-                   p("Modifications can be done either by numeric input or directly on the Modifier Station plot.", align = "left"),
-                  h4(strong("3. Save the modified profiles ", style={'font-family: Arial'}), align = "left"),
-                  p("Once you are happy with the results, you can save all the profiles in text format, or save the entire ASCAT.sc rdata object.", align = "left")),
-                                                                         size= "lg", circle= FALSE, status = "info", label = "Help", width = "1200px", inputId="help"))),
-                     br(), div(style = "height:50px"),
-                fluidRow(column(6, align="center", offset=3, 
-                                            shinyFilesButton("get_file", "Load data" ,
-                                                             title = "Choose the ASCAT.sc rdata object to load", multiple = FALSE,
-                                                             buttonType = "primary", class = NULL, style = "width:60px, height: 50px")
-                                            
-                     ), br(), br(), br(),div(style = "height:200px"),
-                     fluidRow(column(6, align="center", offset = 3,
-                                    
-                                     actionButtonStyled("start",
-                                              label="Start",
-                                              class="hover-effect click-effect",
-                                              width = "300px"
-                                             ))
-                                
-                                 )
-               
-                )),
+  # # 0 0 82px ##fff;  font-size: 80px'}))), column(6, align="center",
+                                                    h1(strong("Ploidy Modifier",style={'color: #5b016a; font-family: arial black ,sans-serif; text-shadow:
+  # # 0 0 7px #fff,
+  # # 0 0 10px #fff,
+  # # 0 0 21px #fff,
+  # # 0 0 42px ##5b016a,
+  # # 0 0 82px ##fff;  font-size: 80px'})))),
+          br(), br(), br(), div(style = "height:50px"),
+          fluidRow(column(6, align="center", dropdown(code(h4(strong("1. Choose the data", style={'font-family: Arial'}), align = "left"),
+                                                           p("Please choose the ASCAT.sc rdata object to load. Each sample in the object can be viewed and modified.", align = "left"),  
+                                                           p("Please note that large datasets might take a while to load.", align = "left"),
+                                                           h4(strong("2. Modify the profiles \n ", style={'font-family: Arial; align-text: left'}), align = "left"),
+                                                           p("The purity & ploidy of the whole sample can be changed by clicking on the sunrise plot.", align = "left"), 
+                                                           p("You can additionally shift the sample ploidy, or modify the copy number of 2 different segments.", align = "left"),
+                                                           p("Modifications can be done either by numeric input or directly on the Modifier Station plot.", align = "left"),
+                                                           h4(strong("3. Save the modified profiles ", style={'font-family: Arial'}), align = "left"),
+                                                           p("Once you are happy with the results, you can save all the profiles in text format, or save the entire ASCAT.sc rdata object.", align = "left")),
+                                                      size= "lg", circle= FALSE, status = "info", label = "Help", width = "1200px", inputId="help")),
+                   column(6, align="center", shinyFilesButton("get_file", "Load data" ,
+                                                              title = "Choose the ASCAT.sc rdata object to load", multiple = FALSE,
+                                                              buttonType = "primary", class = NULL, style = "width:60px, height: 50px")
+                          
+                   )),
+          br(), div(style = "height:100px"),
+          fluidRow(column(6, align="center", offset = 3,
+                          
+                          actionButtonStyled("start",
+                                             label="Start",
+                                             class="hover-effect click-effect",
+                                             width = "300px"
+                          ))
+                   
+                  )
+          
+                 ),
                  
   #######################################################################
   
@@ -167,7 +173,7 @@ ui <- navbarPage(id="nav_page",
   tabPanel("Modifier",  shinyWidgets::useShinydashboard(), 
                 fluidRow(box(width=12, title="Original", status="warning", solidHeader=TRUE, 
                               column(width=8,withSpinner(plotOutput("profile"),type=3)),
-                              column(width=4,plotOutput("sunrise1")))
+                              column(width=4,plotOutput("sunrise1", height='460px')))
                   
                  ),
                  useShinyjs(),
@@ -253,7 +259,7 @@ ui <- navbarPage(id="nav_page",
                 ), br(),
             
     
-                fluidRow(box(width=12, title="Modifier Working Station", status="warning", solidHeader=TRUE, column(width=8, withSpinner(plotOutput("profile2", click="profile2_click"),type=3)), column(width = 4, plotOutput("sunrise2", click = "sunrise2_click")))),
+                fluidRow(box(width=12, title="Modifier Working Station", status="warning", solidHeader=TRUE, column(width=8, withSpinner(plotOutput("profile2", click="profile2_click"),type=3)), column(width = 4, plotOutput("sunrise2", click = "sunrise2_click", height='460px')))),
                  fluidRow(column(width = 3,  offset=1, actionButton("discard", label = "Reset profile",  icon = icon("arrows-rotate",verify_fa = FALSE), style="color: #FFFFFF ; background-color: #ba4a00; border-color: #ba4a00; font-size:100%; border-width: 3px")),
                           column(width = 3, offset=1,  downloadButton("savetxt", label = "Save profiles", style="color: #FFFFFF ; background-color: #ba4a00; border-color: #ba4a00; font-size:100%; border-width: 3px")),
                                                     column(width = 3, offset=1, downloadButton("save", label = "Save .Rda", style="color: #FFFFFF ; background-color: #ba4a00; border-color: #ba4a00; font-size:100%; border-width: 3px"))), br(), br()))
@@ -363,7 +369,9 @@ server <- function(input, output, session) {
         
         
         list(src = outfile,
-             alt = "Original profile")
+             alt = "Original profile",
+             width = '100%',  
+             height = 400)
       }, deleteFile = TRUE)
      
       output$profile2 <- renderPlot({isolate(plot2 <- plotSolution(reslocal$allTracks.processed[[1]],
@@ -508,7 +516,7 @@ server <- function(input, output, session) {
           
           purity <- coords$y
           ploidy <- coords$x
-         
+          
           if (optValue()){
             best <- 1
             dist <- crossdist(ploidy, purity, localOpt$bao[best, 2]/ncol(errs), 1-localOpt$bao[best, 1]/nrow(errs))
@@ -529,26 +537,25 @@ server <- function(input, output, session) {
             
           }
           
-          ploidy <- as.numeric(colnames(errs)[as.numeric(ploidy)*ncol(errs)])
-          purity <- as.numeric(rownames(errs)[(1-as.numeric(purity))*nrow(errs)])
-         
+          ploidy <- as.numeric(colnames(errs)[round(as.numeric(ploidy)*ncol(errs), digits=0)])
+          purity <- as.numeric(rownames(errs)[round((1-as.numeric(purity))*nrow(errs), digits=0)])
           
           reslocal$allProfiles.refitted.manual[[index]] <<- getProfile(fitProfile(tracksSingle = reslocal$allTracks.processed[[index]], purity, ploidy, ismale=reslocal$sex[index]=="male"))
-         
-         
+          
+          
           reslocal$allSolutions.refitted.manual[[index]]$ploidy <<- ploidy
-         
+          
           reslocal$allSolutions.refitted.manual[[index]]$purity <<- purity
           
           output$profile2 <- renderPlot({isolate(plotSolution(reslocal$allTracks.processed[[index]],
-                                                              purity=purity,
-                                                              ploidy=ploidy,
-                                                              gamma=.55))})
-        
+                                                                purity=purity,
+                                                                ploidy=ploidy,
+                                                                gamma=.55))})
+          
           output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
           coords$y <<- NULL
           coords$x <<- NULL
-             },
+        },
         error=function(e) {
           message('An Error Occurred')
           print(e)
@@ -870,8 +877,11 @@ server <- function(input, output, session) {
         
         
         list(src = outfile,
-             alt = "Original profile")
+             alt = "Original profile",
+             width = '100%',  
+             height = 400)
       }, deleteFile = TRUE)
+      
        output$profile2 <- renderPlot({isolate(plot2 <- plotSolution(tracksSingle=reslocal$allTracks.processed[[index]],
                                                                     purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
                                                                     ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
