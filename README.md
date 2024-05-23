@@ -16,8 +16,9 @@ devtools::install_github("VanLoo-lab/ASCAT.sc", build_opts = c("--no-build-vigne
 Make sure to install dependencies before installing (this might take a while):
 
 ```{r}
+devtools::install_github("iovlaicu/copynumber")
 BiocManager::install(c("GenomicRanges", "Biostrings", "DNAcopy",
-"minfi", "conumee", "Rsamtools", "xgboost", "copynumber"))
+"minfi", "conumee", "Rsamtools", "xgboost"))
 ```
 
 #### Methylation arrays
