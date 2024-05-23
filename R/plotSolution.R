@@ -2,17 +2,19 @@ plotSolution <- function(tracksSingle,
                            purity,
                            ploidy,
                            sol=NULL,
-                           ylim=c(-1,10),
+                           ylim=c(0,8),
                            gamma=0.55,
                            ismale=F,
                            isPON=F,
                            allchr=NULL,
                            rainbowChr=TRUE,
+                           hideCN=FALSE,
                            ...)
 {
   meansSeg <- fitProfile(tracksSingle,purity,ploidy,gamma=gamma, ismale=ismale, isPON=isPON)
   tracksSingle <- normaliseByPloidy(tracksSingle)
   breaks <- c(0, cumsum(sapply(tracksSingle$lSegs, function(x) max(x$output$loc.end))/1e+06))
+  
   set.seed(10)
   par(plt = c(0, 1, 0, 0.92), new = TRUE, fig = c(0, 1, 0, 1))
   
@@ -25,6 +27,8 @@ plotSolution <- function(tracksSingle,
   if(is.null(allchr))
     labels <- if(is.null(names(tracksSingle$lCTS))) names(breaks)[2:length(breaks)]
   else names(tracksSingle$lCTS)
+  
+  labels <-gsub("chr", "", labels)
   
   for (i in 0:8){
     
@@ -46,6 +50,7 @@ plotSolution <- function(tracksSingle,
     starts <- lCTS$start
     smooth <- lCTS$smoothed
     ends <- lCTS$end
+    
     #### Data points ####
     
     
@@ -69,53 +74,90 @@ plotSolution <- function(tracksSingle,
                                       ploidy,
                                       gamma=gamma, ismale=ismale, isPON=isPON, isX=i==23)
     
-    if (all(nonround >= 0) & all(nonround <= 8)){
-      
-      segments(lSegs$loc.start/1e+06 + breaks[i] ,
-               nonround,
-               lSegs$loc.end/1e+06 + breaks[i],
-               nonround,
+    
+    
+    segments(lSegs$loc.start[which(nonround >=0 & nonround <=8)]/1e+06 + breaks[i],
+             nonround[which(nonround >=0 & nonround <=8)],
+             lSegs$loc.end[which(nonround >=0 & nonround <=8)]/1e+06 + breaks[i],
+             nonround[which(nonround >=0 & nonround <=8)],
+             lwd = 2,
+             col = rgb(0.1, 0.1, 0.1, 0.4))
+    if (any(nonround < 0)){
+      segments(lSegs$loc.start[which(nonround <0)]/1e+06 + breaks[i],
+               0,
+               lSegs$loc.end[which(nonround <0)]/1e+06 + breaks[i],
+               0,
                lwd = 2,
-               col = rgb(0.1, 0.1, 0.1, 0.4)
-               
-      )
+               col = rgb(0.1, 0.1, 0.1, 0.4))
     }
+    if(any(nonround > 8)){
+      segments(lSegs$loc.start[which(nonround >8)]/1e+06 + breaks[i],
+               8,
+               lSegs$loc.end[which(nonround >8)]/1e+06 + breaks[i],
+               8,
+               lwd = 2,
+               col = rgb(0.1, 0.1, 0.1, 0.4))
+    }
+    
     #### Main copy number segments ####
     
     cn <- round(sapply(meansSeg[[i]], function(x) x$roundmu))
     
-    if (all(cn <= 8) & all(cn >= 0)){
+    if(!hideCN){
       
       if (rainbowChr){
         
-        segments(lSegs$loc.start/1e+06 + breaks[i] + 2 ,
-                 cn,
-                 lSegs$loc.end/1e+06 + breaks[i] + 2 ,
-                 cn,
+        ##### cn between 0 and 8 ##### 
+        segments(lSegs$loc.start[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2 ,
+                 cn[which(cn >=0 & cn <=8)],
+                 lSegs$loc.end[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2 ,
+                 cn[which(cn >=0 & cn <=8)],
                  lwd = 17,
                  col =clrs[i], lend=1)
         
-        segments(lSegs$loc.start/1e+06 + breaks[i] + 2,
-                 cn,
-                 lSegs$loc.end/1e+06 + breaks[i] + 2 ,
-                 cn,
+        segments(lSegs$loc.start[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2,
+                 cn[which(cn >=0 & cn <=8)],
+                 lSegs$loc.end[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2 ,
+                 cn[which(cn >=0 & cn <=8)],
                  lwd = 7,
                  col ="steelblue4", lend=1)
         
       }
-      
       else {
         
-        segments(lSegs$loc.start/1e+06 + breaks[i] + 2,
-                 cn,
-                 lSegs$loc.end/1e+06 + breaks[i] + 2 ,
-                 cn,
+        segments(lSegs$loc.start[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2,
+                 cn[which(cn >=0 & cn <=8)],
+                 lSegs$loc.end[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2 ,
+                 cn[which(cn >=0 & cn <=8)],
                  lwd = 17,
                  col ="steelblue4", lend=1)
       }
       
+      ##### cn under 0 or over 8 ##### 
+      
+      if (any(cn < 0)){
+        
+        
+        segments(lSegs$loc.start[which(cn <0)]/1e+06 + breaks[i] + 2 ,
+                 0,
+                 lSegs$loc.end[which(cn <0)]/1e+06 + breaks[i] + 2 ,
+                 0,
+                 lwd = 17,
+                 col =rgb(0.6,0.6,0.6), lend=1)
+        
+      }
+      if(any(cn > 8) ){
+        
+        segments(lSegs$loc.start[which(cn >8)]/1e+06 + breaks[i] + 2 ,
+                 8,
+                 lSegs$loc.end[which(cn >8)]/1e+06 + breaks[i] + 2 ,
+                 8,
+                 lwd = 17,
+                 col =rgb(0.6,0.6,0.6), lend=1)
+        
+      }
+      
     }
-    
     #### vertical breaks ####
     
     if(i==1){
@@ -182,15 +224,16 @@ plotSolution <- function(tracksSingle,
     
   }
   
-  segments(tracksSingle$lSegs[[24]]$output$loc.end[2]/1e+06 + breaks[i] + 4,
+  segments(tracksSingle$lSegs[[length(tracksSingle$lSegs)]]$output$loc.end[length(tracksSingle$lSegs[[length(tracksSingle$lSegs)]]$output$loc.end)]/1e+06 + breaks[i] + 4,
            -1.25,
-           tracksSingle$lSegs[[24]]$output$loc.end[2]/1e+06 + breaks[i] + 4,
+           tracksSingle$lSegs[[length(tracksSingle$lSegs)]]$output$loc.end[length(tracksSingle$lSegs[[length(tracksSingle$lSegs)]]$output$loc.end)]/1e+06 + breaks[i] + 4,
            9.25,
            lwd = 4,
            col ="steelblue4", lend=1)
   
   dpb <- median(unlist(lapply(tracksSingle$lCTS,function(x) x$records)),na.rm=T)
   dpb <- if(all(tracksSingle$lCTS[[1]]$records==tracksSingle$lCTS[[1]]$smoothed)) NA else dpb
+  
   text(x = breaks[9], y=9.8, labels= paste0("purity=",
                                             signif(purity,2),
                                             "; average ploidy=",
@@ -200,6 +243,7 @@ plotSolution <- function(tracksSingle,
                                             if(!is.null(sol)) paste0("; ",ifelse(is.null(sol$ambiguous),"",paste0("ambiguous:",sol$ambiguous)))
                                             
   ), adj=0, pos=1)
+  
   text(x = -40,
        y = c(0:8),
        labels=c(0:8),
