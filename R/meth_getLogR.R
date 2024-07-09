@@ -24,6 +24,24 @@ meth_getLogR <- function(totalintensity,
         logr <- log2(TTI/predicted)
         logr
     }
+    getPredicted <- function(TTI, totalintensityNormal, notalreadyinpanel)
+    {
+        predicted <- lm(y~.-1,
+                        data=data.frame(y=log2(TTI),
+                                        X=log2(totalintensityNormal[,notalreadyinpanel])))$fitted.values
+        predicted[predicted<0] <- 0
+        logr <- log2(TTI)-predicted
+        meds <- stats::runmed(logr,k=5001)
+        keep <- abs(meds-median(meds))<0.3 & abs(logr-meds)<mad(logr-meds)*1.5
+        model <- lm(y~.-1,
+                        data=data.frame(y=log2(TTI[keep]),
+                                        X=log2(totalintensityNormal[keep,notalreadyinpanel])))
+        predicted <- predict(model,newdata=data.frame(y=log2(TTI),
+                                                   X=log2(totalintensityNormal[,notalreadyinpanel])))
+        predicted[predicted<0] <- 0
+        logr <- log2(TTI)-predicted
+        logr
+    }
     logr <- do.call("cbind",mclapply(1:ncol(totalintensity),function(x)
     {
         if(sex[x]=="male") totalintensityNormal <- totalintensityNormalM
