@@ -54,8 +54,8 @@ meth_getLogR <- function(totalintensity,
         logr <- getPredicted(TTI, totalintensityNormal,notalreadyinpanel)
         if(sex[x]=="male")
         {
-            logr[annot[,1]=="X"] <- logr[annot[,1]=="X"]-median(logr[annot[,1]%in%c(1:22)])-GAMMA
-            logr[annot[,1]=="Y"] <- logr[annot[,1]=="Y"]-median(logr[annot[,1]%in%c(1:22)])-GAMMA
+            logr[annot[,1]=="X"] <- logr[annot[,1]=="X"]-GAMMA#median(logr[annot[,1]%in%c(1:22)])-GAMMA
+            logr[annot[,1]=="Y"] <- logr[annot[,1]=="Y"]-GAMMA#median(logr[annot[,1]%in%c(1:22)])-GAMMA
         }
         if(sex[x]=="female")
             logr[annot[,1]=="Y"] <- logr[annot[,1]=="Y"]-3.718385

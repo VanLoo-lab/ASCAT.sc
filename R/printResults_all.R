@@ -6,12 +6,12 @@ printResults_all <- function(res,
   if(any(names(res)=="gamma")) GAMMA <- res$gamma
   createDir <- paste0("mkdir ",outdir,"/profiles_",projectname)
   system(createDir)
- 
+
   for(i in 1:length(res$allTracks.processed))
   {
     png(paste0(outdir,"/profiles_",projectname,"/",names(res$allTracks)[i],".png"), width = 5500, height = 2496, res=300)
-    
-    
+
+
     try({
       suppressWarnings(plotSolution(res$allTracks.processed[[i]],
                    purity=res$allSolutions[[i]]$purity,
@@ -28,20 +28,20 @@ printResults_all <- function(res,
                    outdir=outdir)
     })
   }
-    zip(zipfile = paste0(outdir,"/profiles_",projectname,".zip"), files = paste0(outdir,"/profiles_",projectname))
-    unlink(x=paste0(outdir,"/profiles_",projectname), recursive = TRUE)
-  
- 
+  ##    zip(zipfile = paste0(outdir,"/profiles_",projectname,".zip"), files = paste0(outdir,"/profiles_",projectname))
+  ##    unlink(x=paste0(outdir,"/profiles_",projectname), recursive = TRUE)
+
+
   createDirRefit <- paste0("mkdir ",outdir,"/profiles_",projectname,"_refitted")
   system(createDirRefit)
-  
+
   if(any(grepl("refitted",names(res))))
   {
-    
+
     for(i in 1:length(res$allTracks.processed))
     {
       png(paste0(outdir,"/profiles_",projectname,"_refitted/",names(res$allTracks)[i],".png"), width = 5500, height = 2496, res=300)
-      
+
       try({
         suppressWarnings(plotSolution(res$allTracks.processed[[i]],
                      purity=res$allSolutions.refitted.auto[[i]]$purity,
@@ -58,9 +58,9 @@ printResults_all <- function(res,
                      outdir=outdir)
       })
     }
-    zip(zipfile = paste0(outdir,"/profiles_",projectname,"_refitted.zip"), files = paste0(outdir,"/profiles_",projectname,"_refitted"))
-    unlink(x=paste0(outdir,"/profiles_",projectname,"_refitted"), recursive = TRUE)
-    
+    ##zip(zipfile = paste0(outdir,"/profiles_",projectname,"_refitted.zip"), files = paste0(outdir,"/profiles_",projectname,"_refitted"))
+    ##unlink(x=paste0(outdir,"/profiles_",projectname,"_refitted"), recursive = TRUE)
+
   }
   .mytry <- function(x,retVal=NA,...)
   {
@@ -89,5 +89,5 @@ printResults_all <- function(res,
                   sep="\t",quote=F,col.names=T,row.names=T))
   save(res, file=paste0(outdir,"/result_object_",projectname,".Rda"))
   res
-  
+
 }
