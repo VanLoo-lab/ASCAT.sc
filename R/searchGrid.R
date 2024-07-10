@@ -11,10 +11,11 @@ searchGrid <- function (tracksSingle,
                         distance=c("mse", "statistical"),
                         ismale=F,
                         isPON=F,
-                        gamma=1)
+                        gamma=1,
+                        ismedian=FALSE)
 {
     errs. <- errs
-    tracksSingle <- normaliseByPloidy(tracksSingle)
+    tracksSingle <- normaliseByPloidy(tracksSingle, ismedian=ismedian)
     meansSeg <- unlist(lapply(1:length(tracksSingle$lSegs), function(i) {
         out <- tracksSingle$lSegs[[i]]$output
         means <- unlist(lapply(1:nrow(out), function(x) {
@@ -22,8 +23,7 @@ searchGrid <- function (tracksSingle,
                 tracksSingle$lCTS[[i]]$start <= out$loc.end[x]
             if (sum(isIn) < 2)
                 return(NA)
-            mu <- mean(tracksSingle$lCTS[[i]]$smoothed[isIn],
-                       na.rm = T)
+            mu <- if(ismedian) median(tracksSingle$lCTS[[i]]$smoothed[isIn], na.rm = T) else mean(tracksSingle$lCTS[[i]]$smoothed[isIn], na.rm = T)
             mu
         }))
     }))
@@ -80,6 +80,7 @@ searchGrid <- function (tracksSingle,
                                gamma=gamma,
                                ismale=ismale,
                                isPON=isPON,
+                               ismedian=ismedian,
                                gridsearch=T)
         SOL_SEARCHING <- !isGoodSolution(meansSeg)
         if (SOL_SEARCHING)
@@ -130,7 +131,8 @@ searchGrid <- function (tracksSingle,
                                      gamma=gamma,
                                      ismale=ismale,
                                      isPON=isPON,
-                                     distance=distance),
+                                     distance=distance,
+                                     ismedian=ismedian),
                           list(bestfit=list(errs = errs,
                                             purity = purity,
                                             ploidy = ploidy,

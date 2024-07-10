@@ -5,6 +5,7 @@ refitProfile_shift <- function (track,
                                 isPON = F,
                                 CHRS = NULL,
                                 shift = c(-1,1),
+                                ismedian=FALSE,
                                 gridpur = seq(-0.05,
                                               0.05, 0.01),
                                 gridpl = seq(-0.1, 0.2, 0.01))
@@ -12,6 +13,7 @@ refitProfile_shift <- function (track,
     shift <- shift[1]
     if(is.null(CHRS)) CHRS <- 1:22
     profile <- getProfile(fitProfile(track, solution$purity,
+                                     ismedian=ismedian,
                                      solution$ploidy, gamma = gamma,
                                      ismale = ismale, isPON = isPON),
                           CHRS=CHRS)

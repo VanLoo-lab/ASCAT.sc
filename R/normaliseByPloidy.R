@@ -1,10 +1,18 @@
-normaliseByPloidy <- function(tracksSingle)
+normaliseByPloidy <- function(tracksSingle, ismedian=FALSE)
 {
-    meanS <- mean(unlist(lapply(1:length(tracksSingle$lSegs),
+    if(ismedian)
+        meanS <- median(unlist(lapply(1:length(tracksSingle$lSegs),
                                 function(x) {
                                     oo <- tracksSingle$lSegs[[x]]$output
                                     inverse.rle(list(values = oo$seg.mean, lengths = oo$num.mark))
                                 })), na.rm = T)
+    else
+        meanS <- mean(unlist(lapply(1:length(tracksSingle$lSegs),
+                                    function(x) {
+                                        oo <- tracksSingle$lSegs[[x]]$output
+                                        inverse.rle(list(values = oo$seg.mean, lengths = oo$num.mark))
+                                    })), na.rm = T)
+
     tracksSingle$lCTS <- lapply(tracksSingle$lCTS, function(x) {
         x$smoothed <- x$smoothed - meanS
         return(x)

@@ -205,7 +205,7 @@ run_sc_sequencing <- function(tumour_bams,
                               ismale=if(sex[x]=="male") T else F,
                               isPON=res$isPON),silent=F)
     },mc.cores=MC.CORES))
-    print("## get Fitted Cna Profiles")
+    print("## get Fitted CNA Profiles")
     res$allProfiles <- mclapply(1:length(res$allTracks.processed), function(x)
     {
         try(getProfile(fitProfile(res$allTracks.processed[[x]],

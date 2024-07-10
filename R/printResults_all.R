@@ -1,4 +1,5 @@
 printResults_all <- function(res,
+                             ismedian=FALSE,
                              outdir="./",
                              projectname="project", rainbowChr=TRUE)
 {
@@ -9,7 +10,7 @@ printResults_all <- function(res,
 
   for(i in 1:length(res$allTracks.processed))
   {
-    png(paste0(outdir,"/profiles_",projectname,"/",names(res$allTracks)[i],".png"), width = 5500, height = 2496, res=300)
+    png(paste0(outdir,"/profiles_",projectname,"/",names(res$allTracks)[i],".png"), width = 5500, height = 2496, res=50)
 
 
     try({
@@ -17,6 +18,7 @@ printResults_all <- function(res,
                    purity=res$allSolutions[[i]]$purity,
                    ploidy=res$allSolutions[[i]]$ploidy,
                    gamma=GAMMA,
+                   ismedian=ismedian,
                    ismale=if(!is.null(res$sex)) res$sex[i]=="male" else "female",
                    sol=res$allSolutions[[i]], rainbowChr=rainbowChr))
       title(names(res$allTracks)[i])
@@ -40,7 +42,7 @@ printResults_all <- function(res,
 
     for(i in 1:length(res$allTracks.processed))
     {
-      png(paste0(outdir,"/profiles_",projectname,"_refitted/",names(res$allTracks)[i],".png"), width = 5500, height = 2496, res=300)
+      png(paste0(outdir,"/profiles_",projectname,"_refitted/",names(res$allTracks)[i],".png"), width = 5500, height = 2496, res=50)
 
       try({
         suppressWarnings(plotSolution(res$allTracks.processed[[i]],
@@ -48,6 +50,7 @@ printResults_all <- function(res,
                      ploidy=res$allSolutions.refitted.auto[[i]]$ploidy,
                      ismale=if(!is.null(res$sex)) res$sex[i]=="male" else "female",
                      gamma=GAMMA,
+                     ismedian=ismedian,
                      sol=res$allSolutions[[i]], rainbowChr=rainbowChr))
         title(paste0(names(res$allTracks)[i],"-refitted"))
       })
