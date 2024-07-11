@@ -10,7 +10,7 @@ printResults_all <- function(res,
 
   for(i in 1:length(res$allTracks.processed))
   {
-    png(paste0(outdir,"/profiles_",projectname,"/",names(res$allTracks)[i],".png"), width = 5500, height = 2496, res=50)
+    png(paste0(outdir,"/profiles_",projectname,"/",names(res$allTracks)[i],".png"), width = 5500, height = 2496, res=300)
 
 
     try({
@@ -42,7 +42,7 @@ printResults_all <- function(res,
 
     for(i in 1:length(res$allTracks.processed))
     {
-      png(paste0(outdir,"/profiles_",projectname,"_refitted/",names(res$allTracks)[i],".png"), width = 5500, height = 2496, res=50)
+      png(paste0(outdir,"/profiles_",projectname,"_refitted/",names(res$allTracks)[i],".png"), width = 5500, height = 2496, res=300)
 
       try({
         suppressWarnings(plotSolution(res$allTracks.processed[[i]],
