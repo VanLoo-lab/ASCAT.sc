@@ -39,7 +39,7 @@ filterBins <- function(allTracks=NULL, logr=NULL, lSe, IQRC=1.5)
     }
     if(!is.null(allTracks))
     {
-        rr <- do.call("cbind",lapply(allTracks, function(x) unlist(lapply(x$lCTS,function(y) y$smoothed))))
+        rr <- do.call("cbind",lapply(allTracks, function(x) unlist(lapply(x$lCTS,function(y) y$records))))
     }
     if(!is.null(logr))
     {
@@ -72,7 +72,7 @@ filterBins <- function(allTracks=NULL, logr=NULL, lSe, IQRC=1.5)
     lInds <- lapply(1:length(lSe),function(x)
     {
         cond <- rs[lInds[[x]]]< threshold_low | rs[lInds[[x]]]>threshold_high
-        !cond
+        which(cond)
     })
     lInds
 }
