@@ -73,10 +73,10 @@ printResults_all <- function(res,
   }
   getploidy <- function(tt)
   {
-      tt <- data.frame(chromosome=as.character(tt[,1]),
-                       start=as.numeric(tt[,2]),
-                       end=as.numeric(tt[,3]),
-                       total_copy_number=as.numeric(tt[,4]))
+      tt <- data.frame(chromosome=as.character(tt[,"chromosome"]),
+                       start=as.numeric(tt[,"start"]),
+                       end=as.numeric(tt[,"end"]),
+                       total_copy_number=as.numeric(tt[,"total_copy_number"]))
       sizes <- (tt$end-tt$start)/1000000
       isna <- is.na(sizes) | is.na(tt$total_copy_number)
       sum(tt$total_copy_number[!isna]*sizes[!isna],na.rm=T)/sum(sizes[!isna],na.rm=T)
