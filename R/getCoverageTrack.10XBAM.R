@@ -9,6 +9,7 @@ getCoverageTrack.10XBAM <- function (bamPath,
                                      isUnmappedQuery=NA,
                                      mapqFilter=30,
                                      barcodes=NULL,
+                                     pcchromosome=0.8,
                                      tag=c("CB","CR"))
 {
     suppressPackageStartupMessages(require(Rsamtools))
@@ -22,12 +23,12 @@ getCoverageTrack.10XBAM <- function (bamPath,
                         mapqFilter=mapqFilter,
                         tag=tag[1])
     coverageTrack <- scanBam(bamPath, param = sbp)
-    .guessBarcodes <- function(cT, pcchromosome=.8)
+    .guessBarcodes <- function(cT, pcchromosome=pcchromosome)
     {
         counts <- table(unlist(lapply(cT,function(x) unique(unlist(x)))))
         names(counts)[counts>length(cT)*pcchromosome]
     }
-    if(is.null(barcodes)) barcodes <- .guessBarcodes(coverageTrack)
+    if(is.null(barcodes)) barcodes <- .guessBarcodes(coverageTrack, pcchromosome = pcchromosome)
     .countBarcodes <- function(barcodesBAM, barcodesUNIQUE)
     {
         counts <- as.vector(table(unlist(barcodesBAM))[barcodesUNIQUE])
@@ -35,13 +36,14 @@ getCoverageTrack.10XBAM <- function (bamPath,
         counts[is.na(counts)] <- 0
         counts
     }
-    .formatCounts <- function(counts,chr,start,end)
-    {
+    .formatCounts <- function(counts,chr,start,end, bamPath, bc)
+    {   
+        samplename = paste0(basename(bamPath), "_", bc)
         data.frame(space=NA,
                    start=start,
                    end=end,
                    width=NA,
-                   file=NA,
+                   file=samplename,
                    records=counts,
                    nucleotides=NA)
     }
@@ -54,7 +56,7 @@ getCoverageTrack.10XBAM <- function (bamPath,
                           df <- do.call("rbind",
                                         lapply(1:length(out),
                                                function(i)
-                                                   .formatCounts(out[[i]][bc],chr,starts[i],ends[i])))
+                                                   .formatCounts(out[[i]][bc],chr,starts[i],ends[i], bamPath, bc)))
                           df$width <- df$end-df$start
                           df$space <- chr
                           df
