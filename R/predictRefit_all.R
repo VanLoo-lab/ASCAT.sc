@@ -1,4 +1,4 @@
-predictRefit_all <- function(res, gamma=1)
+predictRefit_all <- function(res, ismedian=FALSE, gamma=1)
 {
     preds <- lapply(res$allProfiles, function(x) try(predictRefit(x)))
     res$allProfiles.refitted.auto <- list()
@@ -13,11 +13,13 @@ predictRefit_all <- function(res, gamma=1)
                                                                                   solution=res$allSolutions[[i]],
                                                                                   CHRS=res$chr,
                                                                                   gamma=gamma,
+                                                                                  ismedian=ismedian,
                                                                                   shift=if(preds[i]==0) 1 else -1,
                                                                                   isPON=res$isPON),silent=F)
                     res$allProfiles.refitted.auto[[i]] <- try(getProfile(fitProfile(res$allTracks.processed[[i]],
                                                                                     purity=res$allSolutions.refitted.auto[[i]]$purity,
                                                                                     ploidy=res$allSolutions.refitted.auto[[i]]$ploidy,
+                                                                                    ismedian=ismedian,
                                                                                     gamma=gamma,
                                                                                     ismale=if(res$sex[i]=="male") T else F),
                                                                          CHRS=res$chr),silent=F)
@@ -29,6 +31,7 @@ predictRefit_all <- function(res, gamma=1)
                                                                                 purity=res$allSolutions.refitted.auto[[i]]$purity,
                                                                                 ploidy=res$allSolutions.refitted.auto[[i]]$ploidy,
                                                                                 gamma=gamma,
+                                                                                ismedian=ismedian,
                                                                                 ismale=if(res$sex[i]=="male") T else F),
                                                                      CHRS=res$chr),silent=F)
             }

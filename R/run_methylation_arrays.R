@@ -156,6 +156,8 @@ run_methylation_array <- function(idat_dir,
                                 starts,
                                 ends,
                                 segmentation_alpha=segmentation_alpha,
+                                transform=FALSE,
+                                ismedian=TRUE,
                                 min.width=min.width,
                                 SBDRY=SBDRY,
                                 allchr=gsub("chr","",allchr))
@@ -224,7 +226,8 @@ run_methylation_array <- function(idat_dir,
                               ploidies = ploidies,
                               maxTumourPhi=maxtumourpsi,
                               gamma=GAMMA,
-                              ismale=sex[x]=="male"),silent=F)
+                              ismale=sex[x]=="male",
+                              ismedian=T),silent=F)
     },mc.cores=MC.CORES))
     ## ##################################################
     print("## get all fitted cna profiles")
@@ -234,6 +237,7 @@ run_methylation_array <- function(idat_dir,
                                   purity=allSols[[x]]$purity,
                                   ploidy=allSols[[x]]$ploidy,
                                   gamma=GAMMA,
+                                  ismedian=T,
                                   ismale=sex[x]=="male"),
                        CHRS=allchr),silent=F)
     },mc.cores=MC.CORES)
@@ -254,9 +258,9 @@ run_methylation_array <- function(idat_dir,
                 gamma=GAMMA,
                 timetofit=timetofit)
     if(predict_refit)
-        res <- predictRefit_all(res, gamma=GAMMA)
+        res <- predictRefit_all(res, ismedian=T, gamma=GAMMA)
     if(print_results)
-        res <- printResults_all(res,  outdir=outdir, projectname=projectname, rainbowChr=rainbowChr)
+        res <- printResults_all(res,  outdir=outdir, ismedian=T, projectname=projectname, rainbowChr=rainbowChr)
     ## ##################################################
     res
 }

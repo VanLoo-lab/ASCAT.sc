@@ -1,5 +1,6 @@
-meth_winsorise_ascat <- function(x)
+meth_winsorise_ascat <- function(x, apply_wins=FALSE)
 {
+    if(!apply_wins) return(x)
     .madWins <- function(x,tau,k)
     {
         .medianFilter <- function(x,k){

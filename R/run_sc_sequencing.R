@@ -174,6 +174,11 @@ run_sc_sequencing <- function(tumour_bams,
             names(res$allTracks) <- basename(tumour_bams)
         }
     }
+    if(sc_exclude_badbins)
+    {
+        print("## exclude Bad bins inferred from normal samples")
+        res <- sc_excludeBadBins(res)
+    }
     if(multipcf)
     {
         print("## calculate Multipcf - multi-sample mode - do not use if samples from different tumours")
@@ -222,7 +227,7 @@ run_sc_sequencing <- function(tumour_bams,
                               ismale=if(sex[x]=="male") T else F,
                               isPON=res$isPON),silent=F)
     },mc.cores=MC.CORES))
-    print("## get Fitted Cna Profiles")
+    print("## get Fitted CNA Profiles")
     res$allProfiles <- mclapply(1:length(res$allTracks.processed), function(x)
     {
         try(getProfile(fitProfile(res$allTracks.processed[[x]],
@@ -253,11 +258,6 @@ run_sc_sequencing <- function(tumour_bams,
                 timetoread_tumours=res$timetoread_tumours,
                 timetoprocessed=res$timetoprocessed,
                 timetofit=res$timetofit)
-    if(sc_exclude_badbins)
-    {
-        print("## exclude Bad bins")
-        res <- sc_excludeBadBins(res)
-    }
     if(predict_refit)
     {
         print("## predict Refit")

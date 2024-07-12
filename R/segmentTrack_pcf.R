@@ -4,6 +4,7 @@ segmentTrack_pcf <- function (covtrack,
                               ends = NA,
                               sd = 0,
                               transform=FALSE,
+                              ismedian=FALSE,
                               min.width = 5,
                               ALPHA=0.01,
                               SBDRY=NULL,
@@ -28,7 +29,7 @@ segmentTrack_pcf <- function (covtrack,
                                   loc.end=as.numeric(as.character(x[,"end.pos"])),
                                   num.mark=as.numeric(as.character(x[,"n.probes"])),
                                   seg.mean=as.numeric(as.character(x[,"mean"]))))
-    if(transform)
+    if(ismedian)
     {
         cna. <- cna$output
         indices <- lapply(1:nrow(cna.),function(x)
@@ -39,13 +40,13 @@ segmentTrack_pcf <- function (covtrack,
             }
             else
             {
-                offset <- cumsum(cna.[1:(x-1),"num.mark"])
+                offset <- sum(cna.[1:(x-1),"num.mark"])
                 return((offset+1):(offset+cna.[x,"num.mark"]))
             }
         })
         for(i in 1:nrow(cna.))
         {
-            cna$output[i,"seg.mean"] <- mean(covtrack[indices[[i]]],na.rm=T)
+            cna$output[i,"seg.mean"] <- median(covtrack[indices[[i]]],na.rm=T)
         }
     }
     cna

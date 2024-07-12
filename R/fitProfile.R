@@ -4,9 +4,10 @@ fitProfile <- function(tracksSingle,
                        ismale=F,
                        isPON=F,
                        gamma=1,
+                       ismedian=FALSE,
                        gridsearch=F)
 {
-    tracksSingle <- normaliseByPloidy(tracksSingle)
+    tracksSingle <- normaliseByPloidy(tracksSingle, ismedian=ismedian)
     NN <- length(tracksSingle$lSegs)
     if(gridsearch) NN <- min(NN,23) ## avoid checking chromosome Y in the grid search (leads to HD flag in males)
     meansSeg <- lapply(1:NN, function(i) {
@@ -19,8 +20,7 @@ fitProfile <- function(tracksSingle,
                             end = out$loc.end[x],
                             num.mark=out$num.mark[x],
                             num.mark.in=sum(isIn)))
-            mu <- mean(tracksSingle$lCTS[[i]]$smoothed[isIn],
-                         na.rm = T)
+            mu <- if(ismedian) median(tracksSingle$lCTS[[i]]$smoothed[isIn], na.rm = T) else mean(tracksSingle$lCTS[[i]]$smoothed[isIn],na.rm = T)
             if (sum(isIn) < 2)
                 sd <- NA
             else
