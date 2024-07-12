@@ -8,6 +8,7 @@ run_sc_sequencing <- function(tumour_bams,
                               maxtumourpsi=5,
                               binsize=500000,
                               segmentation_alpha=0.01,
+                              pcchromosome = 0.8,
                               predict_refit=TRUE,
                               print_results=TRUE,
                               build=c("hg19","hg38"),
@@ -42,8 +43,7 @@ run_sc_sequencing <- function(tumour_bams,
         nperms <- 10000;
         max.ones <- floor(nperms * segmentation_alpha) + 1
         SBDRY <- DNAcopy::getbdry(eta=0.05, nperm=nperms, max.ones=max.ones)
-    }
-    else
+    } else
     {
         SBDRY <- SBDRYs[[as.character(segmentation_alpha)]]
     }
@@ -86,21 +86,38 @@ run_sc_sequencing <- function(tumour_bams,
         if(!any(names(res)=="allTracks"))
         {
             print("## get Tracks from 10X-like bam")
-            res$timetoread_tumours <- system.time(res$allTracks <- getTrackForAll.10XBAM(bamfile=tumour_bams[1],
-                                                                                         barcodes=barcodes_10x,
-                                                                                         allchr=allchr,
-                                                                                         chrstring="",
-                                                                                         lSe=res$lSe,
-                                                                                         doSeg=FALSE))
+            res$timetoread_tumours <- system.time(res$allTracks <- lapply(tumour_bams,function(bamfile)
+            {
+                lCTS.tumour <- getTrackForAll.10XBAM(bamfile=bamfile,
+                                                     barcodes=barcodes_10x,
+                                                     allchr=allchr,
+                                                     chrstring="",
+                                                     lSe=res$lSe,
+                                                     doSeg=FALSE,
+                                                     # Percent of chromosome bins that need to have a barcode to be kept
+                                                     pcchromosome = pcchromosome, 
+                                                     mc.cores=MC.CORES)
+
+                # If multiple bams, rename the tracks to include bamfile (sample)
+                
+                if (length(tumour_bams) > 1) {
+                    names(lCTS.tumour) <- paste0(basename(bamfile), "_", names(lCTS.tumour))
+                }
+
+                # Fix binsizes to match the desired binsize using treatTrack()
+                mclapply(lCTS.tumour, function(x) {
+                    list(lCTS.tumour = x,
+                         nlCTS.tumour = treatTrack(lCTS = x,
+                                                   window = ceiling(binsize / START_WINDOW)))
+                }, mc.cores = MC.CORES)
+            }))
+            # Unlist the top layer to flatten list
+            res$allTracks <- unlist(res$allTracks, recursive = FALSE)
+
+            # sex[1] because the assumption is when running multiple bamfiles, they are from the same tumour?
+            # This ensures that it has the correct length
+            sex <- rep(sex[1], length(res$allTracks))
         }
-        nms <- names(res$allTracks)
-        res$allTracks <- lapply(nms, function(x)
-            list(lCTS.tumour=res$allTracks[[x]],
-                 nlCTS.tumour=treatTrack(lCTS=res$allTracks[[x]],
-                                         window=ceiling(binsize/START_WINDOW)))
-            )
-        names(res$allTracks) <- nms
-        sex <- rep(sex,length(res$allTracks))
     }
     if(is.null(barcodes_10x))
     {

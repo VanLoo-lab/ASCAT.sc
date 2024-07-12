@@ -13,6 +13,8 @@ getTrackForAll.10XBAM <- function (bamfile,
                                    isNotPassingQualityControls = NA,
                                    isUnmappedQuery = NA,
                                    mapqFilter = 30,
+                                   mc.cores = 1,
+                                   pcchromosome = 0.8,
                                    barcodes=NULL)
 {
     if (is.null(lSe)) {
@@ -24,19 +26,24 @@ getTrackForAll.10XBAM <- function (bamfile,
     if(is.null(barcodes) | is.na(barcodes))
     {
         print("get Barcodes")
+        # TODO: In the rare case that chr1 is homozygously deleted, this wont work
         barcodes <- getCoverageTrack.10XBAM(bamPath = bamfile,
                                             chr = allchr[1],
                                             lSe[[allchr[1]]]$starts,
                                             lSe[[allchr[1]]]$ends,
-                                            chrstring=chrstring,
+                                            chrstring = chrstring,
                                             isDuplicate = isDuplicate,
                                             isSecondaryAlignment = isSecondaryAlignment,
                                             isNotPassingQualityControls = isNotPassingQualityControls,
                                             isUnmappedQuery = isUnmappedQuery, mapqFilter = mapqFilter,
-                                            barcodes=NULL)$barcodes
+                                            pcchromosome=pcchromosome,
+                                            barcodes = NULL)$barcodes
+        # Do 10x bamfiles always have the barcode '-' when there is no barcode detected for the read?
+        # If yes, should this be removed from the list of barcodes for example like below.
+        # barcodes = barcodes[barcodes != "-"]
     }
     print("get Coverage Track")
-    lCT <- lapply(allchr, function(chr)
+    lCT <- mclapply(allchr, function(chr)
         getCoverageTrack.10XBAM(bamPath = bamfile,
                                 chr = paste0(chr),
                                 lSe[[chr]]$starts,
@@ -46,7 +53,8 @@ getTrackForAll.10XBAM <- function (bamfile,
                                 barcodes=barcodes,
                                 isSecondaryAlignment = isSecondaryAlignment,
                                 isNotPassingQualityControls = isNotPassingQualityControls,
-                                isUnmappedQuery = isUnmappedQuery, mapqFilter = mapqFilter))
+                                isUnmappedQuery = isUnmappedQuery, mapqFilter = mapqFilter),
+        mc.cores = mc.cores)
     lCTs <- lapply(1:length(lCT[[1]][[1]]), function(cell)
     {
         lCTS <- lapply(1:length(allchr),
