@@ -1,0 +1,3 @@
+load("/Users/maximetarabichi/Downloads/result_SL_manualfitting_7_18_1.Rda")
+ls()
+str(res)
