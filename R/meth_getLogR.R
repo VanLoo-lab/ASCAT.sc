@@ -38,7 +38,6 @@ meth_getLogR <- function(totalintensity,
                                         X=log2(totalintensityNormal[keep,notalreadyinpanel])))
         predicted <- predict(model,newdata=data.frame(y=log2(TTI),
                                                    X=log2(totalintensityNormal[,notalreadyinpanel])))
-        predicted[predicted<0] <- 0
         logr <- log2(TTI)-predicted
         logr
     }
