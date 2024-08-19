@@ -12,6 +12,7 @@ refitProfile_shift <- function (track,
 {
     shift <- shift[1]
     if(is.null(CHRS)) CHRS <- 1:22
+    errs_orig <- solution$errs
     profile <- getProfile(fitProfile(track, solution$purity,
                                      ismedian=ismedian,
                                      solution$ploidy, gamma = gamma,
@@ -58,6 +59,7 @@ refitProfile_shift <- function (track,
         solution$reverted <- TRUE
         return(solution)
     }
+    newsol$errs <- errs_orig
     newsol
 }
 ##########################################################################

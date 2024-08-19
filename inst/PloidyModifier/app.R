@@ -44,7 +44,7 @@ ui <- navbarPage(id="nav_page",
                  tabPanel("Welcome",
                           busy_start_up(
                             loader = tags$img(
-                              src = "Research.gif",
+                              src = "Loader.gif",
                               width = 400
                             ),
                             text = "Loading ...",
@@ -197,10 +197,13 @@ ui <- navbarPage(id="nav_page",
                           ),
                           
                           column(width = 2, offset = 1,
-                                 dropdownButton(tags$h3("Choose ploidy and purity on the sunrise graph"),
-                                                h5("To change the ploidy and purity of the whole sample directly on the Working station profile, please click the point on the sunrise plot corresponding to the desired ploidy/purity values. When 'Automatic optima' is enabled; the closest optimal purity/ploidy pair will be selected. Copy number segments can also be hidden to visualize the data points underneath. Gray segments represent a copy number under 0 or above 8."),
+                                 dropdownButton(tags$h3("Choose the ploidy and purity on the sunrise graph"),
+                                                br(),
+                                                h5("To change the ploidy and purity of the whole sample directly on the Working station profile, please click the point on the sunrise plot corresponding to the desired ploidy/purity values. When 'Automatic optima' is enabled; the closest optimal purity/ploidy pair will be selected. Copy number segments can also be hidden/transparent to visualize the data points underneath. Neon red segments represent a copy number under 0 or above 8."),
+                                                br(),
                                                 checkboxInput("optima", "Automatic optima", TRUE),
                                                 checkboxInput("hideCN", "Hide copy number segments", FALSE),
+                                                checkboxInput("transparentCN", "Transparent copy number segments", FALSE),
                                                 size= "lg", circle= FALSE, status = "info", label = "Modify purity & ploidy", width = "450px"
                                  )
                                  
@@ -305,7 +308,7 @@ server <- function(input, output, session) {
   })
   
   cnHidden <- reactiveVal(FALSE)
-  
+  cnTrans <- reactiveVal(FALSE)
   #########################################################################
   
   ######################## FILE CHOOSER ###################################
@@ -403,7 +406,7 @@ server <- function(input, output, session) {
                                                                      ploidy=reslocal$allSolutions.refitted.manual[[1]]$ploidy,
                                                                      ismale=if(!is.null(reslocal$sex)) reslocal$sex[[1]]=="male" else "female",
                                                                      gamma=.55,
-                                                                     sol=reslocal$allSolutions[[1]], hideCN = cnHidden()))
+                                                                     sol=reslocal$allSolutions[[1]], hideCN = cnHidden(), transparentCN=cnTrans()))
       })
       
       output$sunrise1 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions[[1]]))})
@@ -465,12 +468,39 @@ server <- function(input, output, session) {
       index <- getIndex(sampleName())
       cnHidden(input$hideCN)
       
+      
       output$profile2 <- renderPlot({isolate(plot2 <- plotSolution(tracksSingle=reslocal$allTracks.processed[[index]],
                                                                      purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
                                                                      ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
                                                                      ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
                                                                      gamma=.55,
-                                                                     sol=reslocal$allSolutions[[index]], hideCN=input$hideCN))
+                                                                     sol=reslocal$allSolutions[[index]], hideCN=input$hideCN, transparentCN=cnTrans()))
+      })
+      
+      
+    }
+    else{
+      return (NULL)
+    }
+    
+  })
+  
+  observeEvent(input$transparentCN, {
+    
+    vals(input$samples)
+    
+    if(! is.null(sampleName())){
+      
+      index <- getIndex(sampleName())
+      cnTrans(input$transparentCN)
+      
+      
+      output$profile2 <- renderPlot({isolate(plot2 <- plotSolution(tracksSingle=reslocal$allTracks.processed[[index]],
+                                                                     purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
+                                                                     ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
+                                                                     ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                                     gamma=.55,
+                                                                     sol=reslocal$allSolutions[[index]], hideCN=cnHidden(), transparentCN=input$transparentCN))
       })
       
       
@@ -606,7 +636,7 @@ server <- function(input, output, session) {
           output$profile2 <- renderPlot({isolate(plotSolution(reslocal$allTracks.processed[[index]],
                                                                 purity=purity,
                                                                 ploidy=ploidy,
-                                                                gamma=.55, hideCN=cnHidden()))})
+                                                                gamma=.55, hideCN=cnHidden(), transparentCN=cnTrans()))})
           
           output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
           coords$y <<- NULL
@@ -688,7 +718,7 @@ server <- function(input, output, session) {
                                                                 ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
                                                                 ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
                                                                 gamma=.55,
-                                                                sol=reslocal$allSolutions[[index]], hideCN=cnHidden()))})
+                                                                sol=reslocal$allSolutions[[index]], hideCN=cnHidden(), transparentCN=cnTrans()))})
           
           output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
           coords$y <<- NULL
@@ -749,7 +779,7 @@ server <- function(input, output, session) {
                                                                 ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
                                                                 ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
                                                                 gamma=.55,
-                                                                sol=reslocal$allSolutions[[index]], hideCN=cnHidden()))})
+                                                                sol=reslocal$allSolutions[[index]], hideCN=cnHidden(), transparentCN=cnTrans()))})
           
           output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
           
@@ -813,7 +843,7 @@ server <- function(input, output, session) {
                                                                 ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
                                                                 ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
                                                                 gamma=.55,
-                                                                sol=reslocal$allSolutions[[index]], hideCN=cnHidden()))})
+                                                                sol=reslocal$allSolutions[[index]], hideCN=cnHidden(), transparentCN=cnTrans()))})
           
           output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
           coords$y <<- NULL
@@ -879,7 +909,7 @@ server <- function(input, output, session) {
                                                         ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
                                                         ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
                                                         gamma=.55,
-                                                        sol=reslocal$allSolutions[[index]], hideCN=cnHidden())})
+                                                        sol=reslocal$allSolutions[[index]], hideCN=cnHidden(), transparentCN=cnTrans())})
           
           output$sunrise2 <- renderPlot({plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE)})
           
@@ -953,7 +983,7 @@ server <- function(input, output, session) {
                                                                      ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
                                                                      ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
                                                                      gamma=.55,
-                                                                     sol=reslocal$allSolutions[[index]], hideCN=cnHidden()))
+                                                                     sol=reslocal$allSolutions[[index]], hideCN=cnHidden(), transparentCN=cnTrans()))
       })
       output$sunrise1 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.auto[[index]]))})
       output$sunrise2 <- renderPlot({isolate( localOpt <<- plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})

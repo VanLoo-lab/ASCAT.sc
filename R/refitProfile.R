@@ -14,6 +14,7 @@ refitProfile <- function(track,
                          gridpl=seq(-.1,.2,.01))
 {
     if(is.null(CHRS)) CHRS <- 1:22
+    errs_orig <- solution$errs
     profile <- getProfile(fitProfile(track,solution$purity,solution$ploidy, gamma=gamma, ismale=ismale, isPON=isPON),
                           CHRS=CHRS)
     if(!is.na(chr1))
@@ -47,10 +48,12 @@ refitProfile <- function(track,
     gridpur <- gridpur[gridpur>0 & gridpur<=1]
     gridpl <- gridpl[gridpl>0]
     if(length(gridpur)==0 | length(gridpl)==0) stop("Not possible: ploidy<0 or purity ∉ [0,1]")
-    searchGrid(track,
+    newsol <- searchGrid(track,
                purs=gridpur,
                ploidies=gridpl,
                gamma=gamma,
                ismale=ismale,
                isPON=isPON)
+    newsol$errs <- errs_orig
+    newsol
 }
