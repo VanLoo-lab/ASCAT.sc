@@ -32,7 +32,7 @@ findLocalMinima <- function(mat, N=5)
                              ao <- which(isLocalOptima==1,arr.ind=T)
                              aopp <- cbind(as.numeric(rownames(mat)[ao[,1]])*2,
                                            as.numeric(colnames(mat)[ao[,2]]))
-                             clusts1 <- cutree(hclust(dist(aopp),met="ward.D2"),h=.25)
+                             clusts1 <- cutree(hclust(dist(aopp),met="ward.D2"),h=.35)
                              ord1 <- order(mat[isLocalOptima==1],decreasing=F)
                              ao1  <- ao <- ao[ord1,]
                              errs1=mat[ao]
