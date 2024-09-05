@@ -45,6 +45,7 @@ findLocalMinima <- function(mat, N=5)
                              ao <- ao[ord,]
                              errs=mat[ao]
                              bests=tapply(1:length(clusts),clusts,function(x) x[which.min(errs[x])])
+                             if(length(bests)<N) N <- c(rep(bests[1],N-length(bests)),bests)
                              ao <- ao[bests,]
                              list(bao=ao[1:N,],
                                   ao=ao1,
