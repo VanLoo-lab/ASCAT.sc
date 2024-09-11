@@ -30,21 +30,21 @@ findLocalMinima <- function(mat, N=5)
                              }
                              isLocalOptima <- Reduce("*",nmat)
                              ao <- which(isLocalOptima==1,arr.ind=T)
-                             aopp <- cbind(as.numeric(rownames(mat)[ao[,1]])*2,
-                                           as.numeric(colnames(mat)[ao[,2]]))
-                             clusts1 <- cutree(hclust(dist(aopp),met="ward.D2"),h=.35)
                              ord1 <- order(mat[isLocalOptima==1],decreasing=F)
                              ao1  <- ao <- ao[ord1,]
-                             errs1=mat[ao]
-                             bests1=tapply(1:length(clusts1),clusts1,function(x) x[which.min(errs1[x])])
-                             ao <- ao[bests1,]
-                             aopp <- cbind(as.numeric(rownames(mat)[ao[,1]])*2,
+                             errs1 <- mat[ao]
+                             aopp <- cbind(as.numeric(rownames(mat)[ao[,1]])*5,
                                            as.numeric(colnames(mat)[ao[,2]]))
-                             clusts <- cutree(hclust(dist(aopp),met="ward.D2"),h=.25)
-                             ord <- order(mat[isLocalOptima==1][ord1][!duplicated(clusts1[ord1])],decreasing=F)
+                             clusts1 <- cutree(hclust(dist(aopp),met="ward.D2"),h=.1)
+                             bests1 <- tapply(1:length(clusts1),clusts1,function(x) x[which.min(errs1[x])])
+                             ao <- ao[bests1,]
+                             ord <- order(mat[isLocalOptima==1][ord1][bests1],decreasing=F)
                              ao <- ao[ord,]
-                             errs=mat[ao]
-                             bests=tapply(1:length(clusts),clusts,function(x) x[which.min(errs[x])])
+                             aopp <- cbind(as.numeric(rownames(mat)[ao[,1]])*5,
+                                           as.numeric(colnames(mat)[ao[,2]]))
+                             clusts <- cutree(hclust(dist(aopp),met="ward.D2"),h=.15)
+                             errs <- mat[ao]
+                             bests <- tapply(1:length(clusts),clusts,function(x) x[which.min(errs[x])])
                              if(length(bests)<N) bests <- c(rep(bests[1],N-length(bests)),bests)
                              ao <- ao[bests,]
                              list(bao=ao[1:N,],
