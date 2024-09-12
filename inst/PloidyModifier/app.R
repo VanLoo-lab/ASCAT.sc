@@ -579,10 +579,7 @@ server <- function(input, output, session) {
   
   
   observeEvent(input$sunrise2_click,{
-    vals <- as.numeric(chrs())
     
-    
-    if(! is.null(chrs())){
       index <- getIndex(sampleName())
       
       purity <- NULL
@@ -626,7 +623,7 @@ server <- function(input, output, session) {
           ploidy <- as.numeric(colnames(errs)[round(as.numeric(ploidy)*ncol(errs), digits=0)])
           purity <- as.numeric(rownames(errs)[round((1-as.numeric(purity))*nrow(errs), digits=0)])
           
-          reslocal$allProfiles.refitted.manual[[index]] <<- getProfile(fitProfile(tracksSingle = reslocal$allTracks.processed[[index]], purity, ploidy, ismale=reslocal$sex[index]=="male"))
+          reslocal$allProfiles.refitted.manual[[index]] <<- getProfile(fitProfile(tracksSingle = reslocal$allTracks.processed[[index]], purity, ploidy, ismale=reslocal$sex[index]=="male"), CHRS=reslocal$chr)
           
           
           reslocal$allSolutions.refitted.manual[[index]]$ploidy <<- ploidy
@@ -652,10 +649,6 @@ server <- function(input, output, session) {
           print(w)
           shinyalert("Warning", "New solution is ambiguous: reverted to old one", type = "error")
         })
-    }
-    else{
-      return (NULL)
-    }
     
   })
   #########################################################################
