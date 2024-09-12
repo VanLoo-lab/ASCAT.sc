@@ -1,0 +1,77 @@
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+.RData
+
+# User-specific files
+.Ruserdata
+
+# Example code in package build process
+*-Ex.R
+
+# Output files from R CMD build
+/*.tar.gz
+
+# Output files from R CMD check
+/*.Rcheck/
+
+# RStudio files
+.Rproj.user/
+.Rproj.user/*
+.Rproj.user/**
+
+# RStudio project files
+*.Rproj
+
+# Packages
+.Renviron
+.Rprofile
+
+# GitHub files
+.Rbuildignore
+/.github/
+
+# MacOS specific files
+.DS_Store
+
+# Windows specific files
+Thumbs.db
+
+# Temporary files created by R
+*.Rout
+*.Rout.save
+*.RData
+*.Rhistory
+*.log
+
+# Compiled shared objects (for package development)
+*.so
+*.dll
+*.dylib
+
+# Other temporary files (e.g. swap files)
+*~
+
+# Documentation
+man/*.pdf
+docs/
+vignettes/*.html
+vignettes/*.pdf
+vignettes/*.R
+
+# Testing files
+tests/testthat/test-outputs/
+tests/testthat/*.pdf
+tests/testthat/*.html
+
+# Other ignored directories
+inst/doc/
+inst/figures/
+
+# Coverage files
+.Rcoverage/
+coverage/
+covr/
+tests/testthat/_snaps/
