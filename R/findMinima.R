@@ -45,7 +45,7 @@ findLocalMinima <- function(mat, N=5)
                              clusts <- cutree(hclust(dist(aopp),met="ward.D2"),h=.15)
                              errs <- mat[ao]
                              bests <- tapply(1:length(clusts),clusts,function(x) x[which.min(errs[x])])
-                             bests <- bests[order(mat[ao[bests,]],decreasing=T)]
+                             bests <- bests[order(mat[ao[bests,]],decreasing=F)]
                              if(length(bests)<N) bests <- c(rep(bests[1],N-length(bests)),bests)
                              ao <- ao[bests,]
                              list(bao=ao[1:N,],
