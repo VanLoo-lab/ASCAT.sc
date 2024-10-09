@@ -37,11 +37,11 @@ getSamples <- function() {
 
 plotScGrid <- function(solution) {
   
-  x_values <- seq(1.1, 5, by = 0.1)
+  x_values <- seq(1.1, 7, by = 0.1)
   y_values <- seq(0.95, 1, by = 0.01)
   grid <- expand.grid(x = x_values, y = y_values)
   
-  plot(NA, xlim = c(1.1, 5), ylim = c(0.95, 1), xlab = "Ploidy", 
+  plot(NA, xlim = c(1.1, 7), ylim = c(0.95, 1), xlab = "Ploidy", 
        ylab = "Purity", type = "n")
   
   # Loop through the grid and draw squares with swapped x and y
