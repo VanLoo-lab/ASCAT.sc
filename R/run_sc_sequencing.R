@@ -240,7 +240,8 @@ run_sc_sequencing <- function(tumour_bams,
                 isPON=res$isPON,
                 timetoread_tumours=res$timetoread_tumours,
                 timetoprocessed=res$timetoprocessed,
-                timetofit=res$timetofit)
+                timetofit=res$timetofit
+                mode="sc")
     if(predict_refit)
     {
         print("## predict Refit")
