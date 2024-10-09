@@ -6,6 +6,7 @@ plotSolution <- function(tracksSingle,
                          gamma=0.55,
                          ismale=F,
                          isPON=F,
+                         ismedian=FALSE,
                          allchr=NULL,
                          rainbowChr=TRUE,
                          hideCN=FALSE,
@@ -14,8 +15,8 @@ plotSolution <- function(tracksSingle,
                          ambiguousFlag=TRUE,
                          ...)
 {
-  meansSeg <- fitProfile(tracksSingle,purity,ploidy,gamma=gamma, ismale=ismale, isPON=isPON)
-  tracksSingle <- normaliseByPloidy(tracksSingle)
+  meansSeg <- fitProfile(tracksSingle,purity,ploidy,gamma=gamma, ismale=ismale, isPON=isPON, ismedian=ismedian)
+  tracksSingle <- normaliseByPloidy(tracksSingle, ismedian=ismedian)
   breaks <- c(0, cumsum(sapply(tracksSingle$lSegs, function(x) max(x$output$loc.end))/1e+06))
   
   set.seed(10)
