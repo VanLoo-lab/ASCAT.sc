@@ -1019,7 +1019,7 @@ server <- function(input, output, session) {
                                               chr2=vals[[2]],
                                               ind2=NA,
                                               n2=vals[[4]],
-                                              CHRS=c(1:22,"X","Y"),
+                                              CHRS=reslocal$chr,
                                               outdir="./www",
                                               gridpur=seq(-.05,.05,.01),
                                               gridpl=seq(-.1,.2,.01))
@@ -1057,7 +1057,7 @@ server <- function(input, output, session) {
                                             chr2=vals[[2]],
                                             ind2=NA,
                                             n2=vals[[4]],
-                                            CHRS=c(1:22,"X","Y"),
+                                            CHRS=reslocal$chr,
                                             outdir="./www",
                                             gridpur=seq(-.05,.05,.01),
                                             gridpl=seq(-.1,.2,.01))
@@ -1127,7 +1127,7 @@ server <- function(input, output, session) {
               rescopy <- run_any_refitProfile_shift(rescopy,
                                                     sample_indice=index,
                                                     shift=shiftp,
-                                                    CHRS=c(1:22,"X","Y"),
+                                                    CHRS=reslocal$chr,
                                                     outdir="./www",
                                                     gridpur=seq(-.05,.05,.01),
                                                     gridpl=seq(-.1,.2,.01))
@@ -1167,7 +1167,7 @@ server <- function(input, output, session) {
             rescopy <- run_any_refitProfile_shift(rescopy,
                                                   sample_indice=index,
                                                   shift=shiftp,
-                                                  CHRS=c(1:22,"X","Y"),
+                                                  CHRS=reslocal$chr,
                                                   outdir="./www",
                                                   gridpur=seq(-.05,.05,.01),
                                                   gridpl=seq(-.1,.2,.01))
@@ -1243,7 +1243,7 @@ server <- function(input, output, session) {
               rescopy <- run_any_refitProfile_shift(rescopy,
                                                     sample_indice=index,
                                                     shift=shiftp,
-                                                    CHRS=c(1:22,"X","Y"),
+                                                    CHRS=reslocal$chr,
                                                     outdir="./www",
                                                     gridpur=seq(-.05,.05,.01),
                                                     gridpl=seq(-.1,.2,.01))
@@ -1283,7 +1283,7 @@ server <- function(input, output, session) {
             rescopy <- run_any_refitProfile_shift(rescopy,
                                                   sample_indice=index,
                                                   shift=shiftp,
-                                                  CHRS=c(1:22,"X","Y"),
+                                                  CHRS=reslocal$chr,
                                                   outdir="./www",
                                                   gridpur=seq(-.05,.05,.01),
                                                   gridpl=seq(-.1,.2,.01))
