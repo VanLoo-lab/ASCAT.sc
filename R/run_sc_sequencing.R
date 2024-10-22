@@ -67,11 +67,12 @@ run_sc_sequencing <- function(tumour_bams,
     {
         data("lSe_filtered_30000.hg38",package="ASCAT.sc")
         data("lGCT_filtered_30000.hg38",package="ASCAT.sc")
+        names(lGCT.hg38.filtered) <- names(lSe.hg38.filtered)
         allchr. <- paste0("chr",gsub(chrstring_bam,"",allchr))
         res$lSe <- lapply(allchr., function(chr) lSe.hg38.filtered[[chr]])
         names(res$lSe) <- allchr
         res$lGCT <- lapply(allchr., function(chr) lGCT.hg38.filtered[[chr]])
-        names(res$lGCT) <- names(res$lSe)
+        names(res$lGCT) <- allchr
         if(chrstring_bam=="")
             names(res$lGCT) <- names(res$lSe) <- gsub("chr","",names(res$lSe))
     }
