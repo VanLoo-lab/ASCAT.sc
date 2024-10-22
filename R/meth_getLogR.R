@@ -29,7 +29,6 @@ meth_getLogR <- function(totalintensity,
         predicted <- lm(y~.-1,
                         data=data.frame(y=log2(TTI),
                                         X=log2(totalintensityNormal[,notalreadyinpanel])))$fitted.values
-        predicted[predicted<0] <- 0
         logr <- log2(TTI)-predicted
         meds <- stats::runmed(logr,k=5001)
         keep <- abs(meds-median(meds))<0.3 & abs(logr-meds)<mad(logr-meds)*1.5

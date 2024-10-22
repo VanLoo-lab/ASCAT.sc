@@ -70,7 +70,6 @@ run_sc_sequencing <- function(tumour_bams,
         allchr. <- paste0("chr",gsub(chrstring_bam,"",allchr))
         res$lSe <- lapply(allchr., function(chr) lSe.hg38.filtered[[chr]])
         names(res$lSe) <- allchr
-        names(lGCT.hg38.filtered) <- names(res$lSe)
         res$lGCT <- lapply(allchr., function(chr) lGCT.hg38.filtered[[chr]])
         names(res$lGCT) <- names(res$lSe)
         if(chrstring_bam=="")
@@ -95,11 +94,11 @@ run_sc_sequencing <- function(tumour_bams,
                                                      lSe=res$lSe,
                                                      doSeg=FALSE,
                                                      # Percent of chromosome bins that need to have a barcode to be kept
-                                                     pcchromosome = pcchromosome, 
+                                                     pcchromosome = pcchromosome,
                                                      mc.cores=MC.CORES)
 
                 # If multiple bams, rename the tracks to include bamfile (sample)
-                
+
                 if (length(tumour_bams) > 1) {
                     names(lCTS.tumour) <- paste0(basename(bamfile), "_", names(lCTS.tumour))
                 }
