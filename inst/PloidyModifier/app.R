@@ -37,11 +37,11 @@ getSamples <- function() {
 
 plotScGrid <- function(solution) {
   
-  x_values <- seq(1.1, 7, by = 0.1)
+  x_values <- seq(1.1, 5, by = 0.1)
   y_values <- seq(0.95, 1, by = 0.01)
   grid <- expand.grid(x = x_values, y = y_values)
   
-  plot(NA, xlim = c(1.1, 7), ylim = c(0.95, 1), xlab = "Ploidy", 
+  plot(NA, xlim = c(1.1, 5), ylim = c(0.95, 1), xlab = "Ploidy", 
        ylab = "Purity", type = "n")
   
   # Loop through the grid and draw squares with swapped x and y
@@ -337,6 +337,7 @@ server <- function(input, output, session) {
   cnHidden <- reactiveVal(FALSE)
   cnTrans <- reactiveVal(FALSE)
   pSize <- reactiveVal(FALSE)
+  
   #########################################################################
   
   ######################## FILE CHOOSER ###################################
@@ -373,7 +374,9 @@ server <- function(input, output, session) {
       filepath <<- as.character(pathrdata$datapath)
       
       load(filepath)
+      
       reslocal <<- res
+      
       
       updateSelectInput(session, "samples", label=NULL,
                         choices=getSamples())
@@ -388,9 +391,8 @@ server <- function(input, output, session) {
             reslocal$allProfiles.refitted.manual <<- reslocal$allProfiles
             reslocal$allSolutions.refitted.manual <<- reslocal$allSolutions
             
-            
-            
           }
+          reslocal$gamma <<- 1
           output$profile <- renderImage({
             
             outfile <- tempfile(fileext='.png')
@@ -401,11 +403,11 @@ server <- function(input, output, session) {
             
             
             plotSolution(reslocal$allTracks.processed[[1]],
-                         purity=reslocal$allSolutions[[1]]$purity,
-                         ploidy=reslocal$allSolutions[[1]]$ploidy,
-                         ismale=if(!is.null(reslocal$sex)) reslocal$sex[[1]]=="male" else "female",
-                         gamma=.55,
-                         sol=reslocal$allSolutions[[1]])
+                           purity=reslocal$allSolutions[[1]]$purity,
+                           ploidy=reslocal$allSolutions[[1]]$ploidy,
+                           ismale=if(!is.null(reslocal$sex)) reslocal$sex[[1]]=="male" else "female",
+                           gamma=reslocal$gamma,
+                           sol=reslocal$allSolutions[[1]])
             
             dev.off()
             
@@ -418,32 +420,113 @@ server <- function(input, output, session) {
           
           
           
-          output$profile2 <- renderPlot({isolate(plot2 <- plotSolution(reslocal$allTracks.processed[[2]],
-                                                                       purity=reslocal$allSolutions.refitted.manual[[2]]$purity,
-                                                                       ploidy=reslocal$allSolutions.refitted.manual[[2]]$ploidy,
-                                                                       ismale=if(!is.null(reslocal$sex)) reslocal$sex[[2]]=="male" else "female",
-                                                                       gamma=.55,
-                                                                       sol=reslocal$allSolutions[[1]], ambiguousFlag=FALSE, hideCN = cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))
+          output$profile2 <- renderPlot({isolate(plot2 <- plotSolution(reslocal$allTracks.processed[[1]],
+                                                                         purity=reslocal$allSolutions.refitted.manual[[1]]$purity,
+                                                                         ploidy=reslocal$allSolutions.refitted.manual[[1]]$ploidy,
+                                                                         ismale=if(!is.null(reslocal$sex)) reslocal$sex[[1]]=="male" else "female",
+                                                                         gamma=reslocal$gamma,
+                                                                         sol=reslocal$allSolutions.refitted.manual[[1]], ambiguousFlag=FALSE, hideCN = cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))
           })
           
           
-          output$sunrise1 <- renderPlot({
-            
-            plotScGrid(reslocal$allSolutions[[1]])
-            
-          })
           
-          output$sunrise2 <- renderPlot({ 
-            
-            plotScGrid(reslocal$allSolutions.refitted.manual[[1]])
-            
-          }) 
+          #plotScGrid(reslocal$allSolutions[[1]])
+          output$sunrise1 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions[[1]], is_sc = TRUE))})
+          
+          
+          
+          
+          #plotScGrid(reslocal$allSolutions.refitted.manual[[1]])
+          
+          #output$sunrise2 <- renderPlot({isolate( localOpt <<- plotSunrise(reslocal$allSolutions.refitted.manual[[1]], localMinima=TRUE, is_sc = TRUE))}) 
+          
+          output$sunrise2 <- renderPlot({isolate( localOpt <<- plotSunrise(reslocal$allSolutions.refitted.manual[[1]], localMinima=TRUE, is_sc = TRUE))}) 
+          
           
           
           removeModal()
         }
         
-        
+        else if (reslocal$mode == "methyl") {
+          
+          reslocal$gamma <<- 0.55
+          if(!"allSolutions.refitted.manual"%in%names(reslocal))
+          {
+            if("allSolutions.refitted.auto"%in%names(reslocal)){
+              reslocal$allProfiles.refitted.manual <<- reslocal$allProfiles.refitted.auto
+              reslocal$allSolutions.refitted.manual <<- reslocal$allSolutions.refitted.auto
+              
+            }
+            else
+            {
+              reslocal$allProfiles.refitted.manual <<- reslocal$allProfiles
+              reslocal$allSolutions.refitted.manual <<- reslocal$allSolutions
+              
+              
+            }
+          }
+          
+          
+          output$profile <- renderImage({
+            
+            outfile <- tempfile(fileext='.png')
+            
+            
+            png(outfile, width=950, height=400)
+            
+            
+            if("allSolutions.refitted.auto"%in%names(reslocal)){
+              plotSolution(reslocal$allTracks.processed[[1]],
+                             purity=reslocal$allSolutions.refitted.auto[[1]]$purity,
+                             ploidy=reslocal$allSolutions.refitted.auto[[1]]$ploidy,
+                             ismale=if(!is.null(reslocal$sex)) reslocal$sex[[1]]=="male" else "female",
+                             gamma=reslocal$gamma,
+                             sol=reslocal$allSolutions.refitted.auto[[1]])
+            }
+            else
+            {
+              plotSolution(reslocal$allTracks.processed[[1]],
+                             purity=reslocal$allSolutions[[1]]$purity,
+                             ploidy=reslocal$allSolutions[[1]]$ploidy,
+                             ismale=if(!is.null(reslocal$sex)) reslocal$sex[[1]]=="male" else "female",
+                             gamma=reslocal$gamma,
+                             sol=reslocal$allSolutions[[1]]) 
+              
+            }
+            
+            
+            dev.off()
+            
+            
+            list(src = outfile,
+                 alt = "Original profile",
+                 width = '100%',  
+                 height = 400)
+          }, deleteFile = TRUE)
+          
+          
+          output$profile2 <- renderPlot({isolate(plot2 <- plotSolution(reslocal$allTracks.processed[[1]],
+                                                                         purity=reslocal$allSolutions.refitted.manual[[1]]$purity,
+                                                                         ploidy=reslocal$allSolutions.refitted.manual[[1]]$ploidy,
+                                                                         ismale=if(!is.null(reslocal$sex)) reslocal$sex[[1]]=="male" else "female",
+                                                                         gamma=reslocal$gamma,
+                                                                         sol=reslocal$allSolutions.refitted.manual[[1]], ambiguousFlag=FALSE, hideCN = cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))
+          })
+          if("allSolutions.refitted.auto"%in%names(reslocal)){
+            output$sunrise1 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.auto[[1]]))})
+          }
+          else {
+            
+            output$sunrise1 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions[[1]]))})
+            
+          }
+          output$sunrise2 <- renderPlot({isolate( localOpt <<- plotSunrise(reslocal$allSolutions.refitted.manual[[1]], localMinima=TRUE))}) 
+          
+          
+          removeModal()
+          
+          
+        }
       }
       
       else {
@@ -464,6 +547,8 @@ server <- function(input, output, session) {
           }
         }
         
+        reslocal$gamma <<- 1
+        
         output$profile <- renderImage({
           
           outfile <- tempfile(fileext='.png')
@@ -474,20 +559,20 @@ server <- function(input, output, session) {
           
           if("allSolutions.refitted.auto"%in%names(reslocal)){
             plotSolution(reslocal$allTracks.processed[[1]],
-                         purity=reslocal$allSolutions.refitted.auto[[1]]$purity,
-                         ploidy=reslocal$allSolutions.refitted.auto[[1]]$ploidy,
-                         ismale=if(!is.null(reslocal$sex)) reslocal$sex[[1]]=="male" else "female",
-                         gamma=.55,
-                         sol=reslocal$allSolutions.refitted.auto[[1]])
+                           purity=reslocal$allSolutions.refitted.auto[[1]]$purity,
+                           ploidy=reslocal$allSolutions.refitted.auto[[1]]$ploidy,
+                           ismale=if(!is.null(reslocal$sex)) reslocal$sex[[1]]=="male" else "female",
+                           gamma=reslocal$gamma,
+                           sol=reslocal$allSolutions.refitted.auto[[1]])
           }
           else
           {
             plotSolution(reslocal$allTracks.processed[[1]],
-                         purity=reslocal$allSolutions[[1]]$purity,
-                         ploidy=reslocal$allSolutions[[1]]$ploidy,
-                         ismale=if(!is.null(reslocal$sex)) reslocal$sex[[1]]=="male" else "female",
-                         gamma=.55,
-                         sol=reslocal$allSolutions[[1]]) 
+                           purity=reslocal$allSolutions[[1]]$purity,
+                           ploidy=reslocal$allSolutions[[1]]$ploidy,
+                           ismale=if(!is.null(reslocal$sex)) reslocal$sex[[1]]=="male" else "female",
+                           gamma=reslocal$gamma,
+                           sol=reslocal$allSolutions[[1]]) 
             
           }
           
@@ -503,14 +588,22 @@ server <- function(input, output, session) {
         
         
         output$profile2 <- renderPlot({isolate(plot2 <- plotSolution(reslocal$allTracks.processed[[1]],
-                                                                     purity=reslocal$allSolutions.refitted.manual[[1]]$purity,
-                                                                     ploidy=reslocal$allSolutions.refitted.manual[[1]]$ploidy,
-                                                                     ismale=if(!is.null(reslocal$sex)) reslocal$sex[[1]]=="male" else "female",
-                                                                     gamma=.55,
-                                                                     sol=reslocal$allSolutions[[1]], ambiguousFlag=FALSE, hideCN = cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))
+                                                                       purity=reslocal$allSolutions.refitted.manual[[1]]$purity,
+                                                                       ploidy=reslocal$allSolutions.refitted.manual[[1]]$ploidy,
+                                                                       ismale=if(!is.null(reslocal$sex)) reslocal$sex[[1]]=="male" else "female",
+                                                                       gamma=reslocal$gamma,
+                                                                       sol=reslocal$allSolutions.refitted.manual[[1]], ambiguousFlag=FALSE, hideCN = cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))
         })
         
-        output$sunrise1 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions[[1]]))})
+        if("allSolutions.refitted.auto"%in%names(reslocal)){
+          output$sunrise1 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.auto[[1]]))})
+        }
+        else {
+          
+          output$sunrise1 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions[[1]]))})
+          
+        }
+        
         output$sunrise2 <- renderPlot({isolate( localOpt <<- plotSunrise(reslocal$allSolutions.refitted.manual[[1]], localMinima=TRUE))}) 
         
         
@@ -544,22 +637,52 @@ server <- function(input, output, session) {
         if(reslocal$mode == "sc") {
           
           output$profile2 <- renderPlot({isolate(plotSolution(reslocal$allTracks.processed[[index]],
-                                                              purity=reslocal$allSolutions[[index]]$purity,
-                                                              ploidy=reslocal$allSolutions[[index]]$ploidy,
-                                                              ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                                                              gamma=.55,
-                                                              sol=reslocal$allSolutions[[index]], ambiguousFlag=FALSE, hideCN = cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
+                                                                purity=reslocal$allSolutions[[index]]$purity,
+                                                                ploidy=reslocal$allSolutions[[index]]$ploidy,
+                                                                ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                                gamma=reslocal$gamma,
+                                                                sol=reslocal$allSolutions[[index]], ambiguousFlag=FALSE, hideCN = cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
           
           
-          output$sunrise2 <- renderPlot({ 
-            
-            plotScGrid(reslocal$allSolutions.refitted.manual[[index]])
-            
-          }) 
+          
+          
+          output$sunrise2 <- renderPlot({localOpt <<- isolate( plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE, is_sc = TRUE))}) 
+          
           
           
           reslocal$allProfiles.refitted.manual[[index]] <<-  reslocal$allProfiles[[index]] 
           reslocal$allSolutions.refitted.manual[[index]] <<-  reslocal$allSolutions[[index]] 
+          
+        }
+        
+        else if(reslocal$mode == "methyl") {
+          
+          output$profile2 <- renderPlot({isolate(plotSolution(reslocal$allTracks.processed[[index]],
+                                                                purity=reslocal$allSolutions.refitted.auto[[index]]$purity,
+                                                                ploidy=reslocal$allSolutions.refitted.auto[[index]]$ploidy,
+                                                                ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                                gamma=reslocal$gamma,
+                                                                sol=reslocal$allSolutions.refitted.auto[[index]], ambiguousFlag=FALSE, hideCN = cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
+          
+          
+          
+          
+          output$sunrise2 <- renderPlot({isolate( localOpt <<- plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))}) 
+          
+          if("allProfiles.refitted.auto" %in% names(reslocal)) {
+            
+            reslocal$allProfiles.refitted.manual[[index]] <<-  reslocal$allProfiles.refitted.auto[[index]] 
+            reslocal$allSolutions.refitted.manual[[index]] <<-  reslocal$allSolutions.refitted.auto[[index]] 
+            
+          }
+          else {
+            
+            reslocal$allProfiles.refitted.manual[[index]] <<-  reslocal$allProfiles[[index]] 
+            reslocal$allSolutions.refitted.manual[[index]] <<-  reslocal$allSolutions[[index]] 
+            
+            
+          }
+          
           
         }
         
@@ -568,16 +691,27 @@ server <- function(input, output, session) {
       else {
         
         output$profile2 <- renderPlot({isolate(plotSolution(reslocal$allTracks.processed[[index]],
-                                                            purity=reslocal$allSolutions.refitted.auto[[index]]$purity,
-                                                            ploidy=reslocal$allSolutions.refitted.auto[[index]]$ploidy,
-                                                            ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                                                            gamma=.55,
-                                                            sol=reslocal$allSolutions[[index]], ambiguousFlag=FALSE, hideCN = cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
+                                                              purity=reslocal$allSolutions.refitted.auto[[index]]$purity,
+                                                              ploidy=reslocal$allSolutions.refitted.auto[[index]]$ploidy,
+                                                              ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                              gamma=reslocal$gamma,
+                                                              sol=reslocal$allSolutions.refitted.auto[[index]], ambiguousFlag=FALSE, hideCN = cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
         
-        output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.auto[[index]], localMinima=TRUE))})
-        reslocal$allProfiles.refitted.manual[[index]] <<-  reslocal$allProfiles.refitted.auto[[index]] 
-        reslocal$allSolutions.refitted.manual[[index]] <<-  reslocal$allSolutions.refitted.auto[[index]] 
+        output$sunrise2 <- renderPlot({isolate(localOpt <<- plotSunrise(reslocal$allSolutions.refitted.auto[[index]], localMinima=TRUE))})
         
+        if("allProfiles.refitted.auto" %in% names(reslocal)) {
+          
+          reslocal$allProfiles.refitted.manual[[index]] <<-  reslocal$allProfiles.refitted.auto[[index]] 
+          reslocal$allSolutions.refitted.manual[[index]] <<-  reslocal$allSolutions.refitted.auto[[index]] 
+          
+        }
+        else {
+          
+          reslocal$allProfiles.refitted.manual[[index]] <<-  reslocal$allProfiles[[index]] 
+          reslocal$allSolutions.refitted.manual[[index]] <<-  reslocal$allSolutions[[index]] 
+          
+          
+        }
       }
       
     }
@@ -605,11 +739,11 @@ server <- function(input, output, session) {
       
       
       output$profile2 <- renderPlot({isolate(plot2 <- plotSolution(tracksSingle=reslocal$allTracks.processed[[index]],
-                                                                   purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
-                                                                   ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
-                                                                   ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                                                                   gamma=.55,
-                                                                   sol=reslocal$allSolutions[[index]], ambiguousFlag=FALSE, hideCN=input$hideCN, transparentCN=cnTrans(), zoomPoints=pSize()))
+                                                                     purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
+                                                                     ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
+                                                                     ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                                     gamma=reslocal$gamma,
+                                                                     sol=reslocal$allSolutions.refitted.manual[[index]], ambiguousFlag=FALSE, hideCN=input$hideCN, transparentCN=cnTrans(), zoomPoints=pSize()))
       })
       
       
@@ -631,11 +765,11 @@ server <- function(input, output, session) {
       
       
       output$profile2 <- renderPlot({isolate(plot2 <- plotSolution(tracksSingle=reslocal$allTracks.processed[[index]],
-                                                                   purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
-                                                                   ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
-                                                                   ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                                                                   gamma=.55,
-                                                                   sol=reslocal$allSolutions[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=input$transparentCN, zoomPoints=pSize()))
+                                                                     purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
+                                                                     ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
+                                                                     ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                                     gamma=reslocal$gamma,
+                                                                     sol=reslocal$allSolutions.refitted.manual[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=input$transparentCN, zoomPoints=pSize()))
       })
       
       
@@ -657,11 +791,11 @@ server <- function(input, output, session) {
       
       
       output$profile2 <- renderPlot({isolate(plot2 <- plotSolution(tracksSingle=reslocal$allTracks.processed[[index]],
-                                                                   purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
-                                                                   ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
-                                                                   ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                                                                   gamma=.55,
-                                                                   sol=reslocal$allSolutions[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=input$transparentCN, zoomPoints=pSize()))
+                                                                     purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
+                                                                     ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
+                                                                     ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                                     gamma=reslocal$gamma,
+                                                                     sol=reslocal$allSolutions.refitted.manual[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=input$transparentCN, zoomPoints=pSize()))
       })
       
       
@@ -756,10 +890,47 @@ server <- function(input, output, session) {
           
           if (reslocal$mode == "sc"){
             
-            ploidy <- coords$x
-            purity <- coords$y
             
-            reslocal$allProfiles.refitted.manual[[index]] <<- getProfile(fitProfile(tracksSingle = reslocal$allTracks.processed[[index]], purity, ploidy, ismale=reslocal$sex[index]=="male"), CHRS = reslocal$chr)
+            solution <- reslocal$allSolutions[[index]]
+            errs <- solution$errs
+            
+            errs <- errs-min(errs)
+            errs.max <- max(solution$errs[!is.infinite(solution$errs)])
+            errs[is.infinite(errs)] <- errs.max
+            errs <- errs/errs.max
+            errs <- errs[rev(seq_len(nrow(errs))), ]
+            
+            purity <- coords$y
+            ploidy <- coords$x
+            
+            if (optValue()){
+              best <- 1
+              
+              dist <- crossdist(ploidy, purity, localOpt$bao[best, 2]/ncol(errs), (localOpt$bao[best, 1]-1)/(nrow(errs)-1))
+              
+              
+              for (i in 1:nrow(localOpt$bao)){
+                
+                dist2 <- crossdist(ploidy, purity, localOpt$bao[i, 2]/ncol(errs), (localOpt$bao[i, 1]-1)/(nrow(errs)-1))
+                if (dist >= dist2){
+                  
+                  dist <- dist2
+                  best <- i
+                }
+                
+              }
+              
+              
+              ploidy <- localOpt$bao[best, 2]/ncol(errs)
+              purity <- (localOpt$bao[best, 1]-1)/(nrow(errs)-1)
+              
+            }
+            
+            ploidy <- as.numeric(colnames(errs)[round(as.numeric(ploidy)*ncol(errs), digits=0)])
+            purity <- as.numeric(rownames(errs)[1 + (round((as.numeric(purity))*(nrow(errs)-1), digits=0))])
+            
+            
+            reslocal$allProfiles.refitted.manual[[index]] <<- getProfile(fitProfile(tracksSingle = reslocal$allTracks.processed[[index]], purity, ploidy, ismale=reslocal$sex[index]=="male", gamma = reslocal$gamma), CHRS = reslocal$chr)
             
             
             reslocal$allSolutions.refitted.manual[[index]]$ploidy <<- ploidy
@@ -767,19 +938,67 @@ server <- function(input, output, session) {
             reslocal$allSolutions.refitted.manual[[index]]$purity <<- purity
             
             output$profile2 <- renderPlot({isolate(plotSolution(reslocal$allTracks.processed[[index]],
-                                                                purity=purity,
-                                                                ploidy=ploidy,
-                                                                gamma=.55, ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
+                                                                  purity=purity,
+                                                                  ploidy=ploidy,
+                                                                  gamma=reslocal$gamma,
+                                                                  ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                                  sol=reslocal$allSolutions.refitted.manual[[index]],ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
             
-            x_values <- seq(1.1, 5, by = 0.1)
-            y_values <- seq(0.95, 1, by = 0.01)
-            grid <- expand.grid(x = x_values, y = y_values)
+            output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]], is_sc = TRUE, localMinima=TRUE))})
             
-            output$sunrise2 <- renderPlot({ 
+          }
+          
+          else if (reslocal$mode == "methyl")
+          {
+            
+            solution <- reslocal$allSolutions[[index]]
+            errs <- solution$errs
+            errs <- errs-min(errs)
+            errs.max <- max(solution$errs[!is.infinite(solution$errs)])
+            errs[is.infinite(errs)] <- errs.max
+            errs <- errs/errs.max
+            errs <- errs[rev(seq_len(nrow(errs))), ]
+            
+            purity <- coords$y
+            ploidy <- coords$x
+            
+            if (optValue()){
+              best <- 1
+              dist <- crossdist(ploidy, purity, localOpt$bao[best, 2]/ncol(errs), 1-localOpt$bao[best, 1]/nrow(errs))
               
-              plotScGrid(reslocal$allSolutions.refitted.manual[[index]])
+              for (i in 1:nrow(localOpt$bao)){
+                
+                dist2 <- crossdist(ploidy, purity, localOpt$bao[i, 2]/ncol(errs), 1-localOpt$bao[i, 1]/nrow(errs))
+                if (dist >= dist2){
+                  
+                  dist <- dist2
+                  best <- i
+                }
+                
+              }
               
-            }) 
+              ploidy <- localOpt$bao[best, 2]/ncol(errs)
+              purity <- 1-localOpt$bao[best, 1]/nrow(errs)
+              
+            }
+            
+            ploidy <- as.numeric(colnames(errs)[round(as.numeric(ploidy)*ncol(errs), digits=0)])
+            purity <- as.numeric(rownames(errs)[round((1-as.numeric(purity))*nrow(errs), digits=0)])
+            
+            
+            reslocal$allProfiles.refitted.manual[[index]] <<- getProfile(fitProfile(tracksSingle = reslocal$allTracks.processed[[index]], purity, ploidy, ismale=reslocal$sex[index]=="male", gamma = reslocal$gamma), CHRS = reslocal$chr)
+            
+            
+            reslocal$allSolutions.refitted.manual[[index]]$ploidy <<- ploidy
+            
+            reslocal$allSolutions.refitted.manual[[index]]$purity <<- purity
+            
+            output$profile2 <- renderPlot({isolate(plotSolution(reslocal$allTracks.processed[[index]],
+                                                                  purity=purity,
+                                                                  ploidy=ploidy,
+                                                                  gamma=reslocal$gamma, ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
+            
+            output$sunrise2 <- renderPlot({isolate(localOpt <<- plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
             
             
           }
@@ -787,8 +1006,7 @@ server <- function(input, output, session) {
         
         else{
           
-          
-          solution <- reslocal$allSolutions[[1]]
+          solution <- reslocal$allSolutions[[index]]
           errs <- solution$errs
           errs <- errs-min(errs)
           errs.max <- max(solution$errs[!is.infinite(solution$errs)])
@@ -831,11 +1049,11 @@ server <- function(input, output, session) {
           reslocal$allSolutions.refitted.manual[[index]]$purity <<- purity
           
           output$profile2 <- renderPlot({isolate(plotSolution(reslocal$allTracks.processed[[index]],
-                                                              purity=purity,
-                                                              ploidy=ploidy,
-                                                              gamma=.55, ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
+                                                                purity=purity,
+                                                                ploidy=ploidy,
+                                                                gamma=reslocal$gamma, ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
           
-          output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
+          output$sunrise2 <- renderPlot({isolate(localOpt <<- plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
           
           
           
@@ -924,17 +1142,16 @@ server <- function(input, output, session) {
               
               reslocal <<- rescopy
               output$profile2 <- renderPlot({isolate(plotSolution(reslocal$allTracks.processed[[index]],
-                                                                  purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
-                                                                  ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
-                                                                  ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                                                                  gamma=.55,
-                                                                  sol=reslocal$allSolutions[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
+                                                                    purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
+                                                                    ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
+                                                                    ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                                    gamma=reslocal$gamma,
+                                                                    sol=reslocal$allSolutions.refitted.manual[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
               
-              output$sunrise2 <- renderPlot({ 
-                
-                plotScGrid(reslocal$allSolutions.refitted.manual[[index]])
-                
-              })
+              
+              output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE, is_sc = TRUE))})
+              
+              
             }
           }
           else {
@@ -960,13 +1177,13 @@ server <- function(input, output, session) {
             
             reslocal <<- rescopy
             output$profile2 <- renderPlot({isolate(plotSolution(reslocal$allTracks.processed[[index]],
-                                                                purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
-                                                                ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
-                                                                ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                                                                gamma=.55,
-                                                                sol=reslocal$allSolutions[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
+                                                                  purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
+                                                                  ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
+                                                                  ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                                  gamma=reslocal$gamma,
+                                                                  sol=reslocal$allSolutions.refitted.manual[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
             
-            output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
+            output$sunrise2 <- renderPlot({isolate(localOpt <<- plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
             
           }
           coords$y <<- NULL
@@ -1019,7 +1236,7 @@ server <- function(input, output, session) {
                                               chr2=vals[[2]],
                                               ind2=NA,
                                               n2=vals[[4]],
-                                              CHRS=reslocal$chr,
+                                              CHRS=c(1:22,"X","Y"),
                                               outdir="./www",
                                               gridpur=seq(-.05,.05,.01),
                                               gridpl=seq(-.1,.2,.01))
@@ -1029,17 +1246,18 @@ server <- function(input, output, session) {
               
               reslocal <<- rescopy
               output$profile2 <- renderPlot({isolate(plotSolution(reslocal$allTracks.processed[[index]],
-                                                                  purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
-                                                                  ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
-                                                                  ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                                                                  gamma=.55,
-                                                                  sol=reslocal$allSolutions[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
+                                                                    purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
+                                                                    ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
+                                                                    ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                                    gamma=reslocal$gamma,
+                                                                    sol=reslocal$allSolutions.refitted.manual[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
               
-              output$sunrise2 <- renderPlot({ 
-                
-                plotScGrid(reslocal$allSolutions.refitted.manual[[index]])
-                
-              })
+              
+              
+              output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]], is_sc = TRUE))})
+              
+              
+              
             }
           }
           
@@ -1057,7 +1275,7 @@ server <- function(input, output, session) {
                                             chr2=vals[[2]],
                                             ind2=NA,
                                             n2=vals[[4]],
-                                            CHRS=reslocal$chr,
+                                            CHRS=c(1:22,"X","Y"),
                                             outdir="./www",
                                             gridpur=seq(-.05,.05,.01),
                                             gridpl=seq(-.1,.2,.01))
@@ -1066,13 +1284,13 @@ server <- function(input, output, session) {
             
             reslocal <<- rescopy
             output$profile2 <- renderPlot({isolate(plotSolution(reslocal$allTracks.processed[[index]],
-                                                                purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
-                                                                ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
-                                                                ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                                                                gamma=.55,
-                                                                sol=reslocal$allSolutions[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
+                                                                  purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
+                                                                  ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
+                                                                  ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                                  gamma=reslocal$gamma,
+                                                                  sol=reslocal$allSolutions.refitted.manual[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
             
-            output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
+            output$sunrise2 <- renderPlot({isolate(localOpt <<- plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
             
             
           }
@@ -1127,7 +1345,7 @@ server <- function(input, output, session) {
               rescopy <- run_any_refitProfile_shift(rescopy,
                                                     sample_indice=index,
                                                     shift=shiftp,
-                                                    CHRS=reslocal$chr,
+                                                    CHRS=c(1:22,"X","Y"),
                                                     outdir="./www",
                                                     gridpur=seq(-.05,.05,.01),
                                                     gridpl=seq(-.1,.2,.01))
@@ -1138,18 +1356,18 @@ server <- function(input, output, session) {
               reslocal <<- rescopy
               
               output$profile2 <- renderPlot({isolate(plotSolution(reslocal$allTracks.processed[[index]],
-                                                                  purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
-                                                                  ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
-                                                                  ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                                                                  gamma=.55,
-                                                                  sol=reslocal$allSolutions[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
+                                                                    purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
+                                                                    ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
+                                                                    ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                                    gamma=reslocal$gamma,
+                                                                    sol=reslocal$allSolutions.refitted.manual[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
               
               
-              output$sunrise2 <- renderPlot({ 
-                
-                plotScGrid(reslocal$allSolutions.refitted.manual[[index]])
-                
-              }) 
+              
+              
+              output$sunrise2 <- renderPlot({isolate(localOpt <<- plotSunrise(reslocal$allSolutions.refitted.manual[[index]],  is_sc = TRUE))})
+              
+              
               
             }
             
@@ -1167,7 +1385,7 @@ server <- function(input, output, session) {
             rescopy <- run_any_refitProfile_shift(rescopy,
                                                   sample_indice=index,
                                                   shift=shiftp,
-                                                  CHRS=reslocal$chr,
+                                                  CHRS=c(1:22,"X","Y"),
                                                   outdir="./www",
                                                   gridpur=seq(-.05,.05,.01),
                                                   gridpl=seq(-.1,.2,.01))
@@ -1178,13 +1396,13 @@ server <- function(input, output, session) {
             reslocal <<- rescopy
             
             output$profile2 <- renderPlot({isolate(plotSolution(reslocal$allTracks.processed[[index]],
-                                                                purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
-                                                                ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
-                                                                ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                                                                gamma=.55,
-                                                                sol=reslocal$allSolutions[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
+                                                                  purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
+                                                                  ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
+                                                                  ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                                  gamma=reslocal$gamma,
+                                                                  sol=reslocal$allSolutions.refitted.manual[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))})
             
-            output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
+            output$sunrise2 <- renderPlot({isolate(localOpt <<- plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
           }
           
           
@@ -1243,7 +1461,7 @@ server <- function(input, output, session) {
               rescopy <- run_any_refitProfile_shift(rescopy,
                                                     sample_indice=index,
                                                     shift=shiftp,
-                                                    CHRS=reslocal$chr,
+                                                    CHRS=c(1:22,"X","Y"),
                                                     outdir="./www",
                                                     gridpur=seq(-.05,.05,.01),
                                                     gridpl=seq(-.1,.2,.01))
@@ -1254,18 +1472,14 @@ server <- function(input, output, session) {
               reslocal <<- rescopy
               
               output$profile2 <- renderPlot({plotSolution(reslocal$allTracks.processed[[index]],
-                                                          purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
-                                                          ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
-                                                          ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                                                          gamma=.55,
-                                                          sol=reslocal$allSolutions[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize())})
+                                                            purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
+                                                            ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
+                                                            ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                            gamma=reslocal$gamma,
+                                                            sol=reslocal$allSolutions.refitted.manual[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize())})
               
-              output$sunrise2 <- renderPlot({ 
-                
-                plotScGrid(reslocal$allSolutions.refitted.manual[[index]])
-                
-              }) 
               
+              output$sunrise2 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE, is_sc = TRUE))})
               
               
             }
@@ -1283,7 +1497,7 @@ server <- function(input, output, session) {
             rescopy <- run_any_refitProfile_shift(rescopy,
                                                   sample_indice=index,
                                                   shift=shiftp,
-                                                  CHRS=reslocal$chr,
+                                                  CHRS=c(1:22,"X","Y"),
                                                   outdir="./www",
                                                   gridpur=seq(-.05,.05,.01),
                                                   gridpl=seq(-.1,.2,.01))
@@ -1294,13 +1508,13 @@ server <- function(input, output, session) {
             reslocal <<- rescopy
             
             output$profile2 <- renderPlot({plotSolution(reslocal$allTracks.processed[[index]],
-                                                        purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
-                                                        ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
-                                                        ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                                                        gamma=.55,
-                                                        sol=reslocal$allSolutions[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize())})
+                                                          purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
+                                                          ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
+                                                          ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                          gamma=reslocal$gamma,
+                                                          sol=reslocal$allSolutions.refitted.manual[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize())})
             
-            output$sunrise2 <- renderPlot({plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE)})
+            output$sunrise2 <- renderPlot({localOpt <<- plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE)})
             
             
           }
@@ -1347,31 +1561,54 @@ server <- function(input, output, session) {
             
             
             plotSolution(reslocal$allTracks.processed[[index]],
-                         purity=reslocal$allSolutions[[index]]$purity,
-                         ploidy=reslocal$allSolutions[[index]]$ploidy,
-                         ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                         gamma=.55,
-                         sol=reslocal$allSolutions[[index]]) 
+                           purity=reslocal$allSolutions[[index]]$purity,
+                           ploidy=reslocal$allSolutions[[index]]$ploidy,
+                           ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                           gamma=reslocal$gamma,
+                           sol=reslocal$allSolutions[[index]]) 
+          }
+          
+          else if(reslocal$mode == "methyl"){
+            
+            if("allSolutions.refitted.auto"%in%names(reslocal)){
+              plotSolution(reslocal$allTracks.processed[[index]],
+                             purity=reslocal$allSolutions.refitted.auto[[index]]$purity,
+                             ploidy=reslocal$allSolutions.refitted.auto[[index]]$ploidy,
+                             ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                             gamma=reslocal$gamma,
+                             sol=reslocal$allSolutions.refitted.auto[[index]])
+            }
+            else
+            {
+              plotSolution(reslocal$allTracks.processed[[index]],
+                             purity=reslocal$allSolutions[[index]]$purity,
+                             ploidy=reslocal$allSolutions[[index]]$ploidy,
+                             ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                             gamma=reslocal$gamma,
+                             sol=reslocal$allSolutions[[index]]) 
+              
+            }
+            
           }
         }
         else {
           
           if("allSolutions.refitted.auto"%in%names(reslocal)){
             plotSolution(reslocal$allTracks.processed[[index]],
-                         purity=reslocal$allSolutions.refitted.auto[[index]]$purity,
-                         ploidy=reslocal$allSolutions.refitted.auto[[index]]$ploidy,
-                         ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                         gamma=.55,
-                         sol=reslocal$allSolutions.refitted.auto[[index]])
+                           purity=reslocal$allSolutions.refitted.auto[[index]]$purity,
+                           ploidy=reslocal$allSolutions.refitted.auto[[index]]$ploidy,
+                           ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                           gamma=reslocal$gamma,
+                           sol=reslocal$allSolutions.refitted.auto[[index]])
           }
           else
           {
             plotSolution(reslocal$allTracks.processed[[index]],
-                         purity=reslocal$allSolutions[[index]]$purity,
-                         ploidy=reslocal$allSolutions[[index]]$ploidy,
-                         ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                         gamma=.55,
-                         sol=reslocal$allSolutions[[index]]) 
+                           purity=reslocal$allSolutions[[index]]$purity,
+                           ploidy=reslocal$allSolutions[[index]]$ploidy,
+                           ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                           gamma=reslocal$gamma,
+                           sol=reslocal$allSolutions[[index]]) 
             
           }
           
@@ -1386,11 +1623,11 @@ server <- function(input, output, session) {
              height = 400)
       }, deleteFile = TRUE)
       output$profile2 <- renderPlot({isolate(plot2 <- plotSolution(tracksSingle=reslocal$allTracks.processed[[index]],
-                                                                   purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
-                                                                   ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
-                                                                   ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
-                                                                   gamma=.55,
-                                                                   sol=reslocal$allSolutions[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))
+                                                                     purity=reslocal$allSolutions.refitted.manual[[index]]$purity,
+                                                                     ploidy=reslocal$allSolutions.refitted.manual[[index]]$ploidy,
+                                                                     ismale=if(!is.null(reslocal$sex)) reslocal$sex[[index]]=="male" else "female",
+                                                                     gamma=reslocal$gamma,
+                                                                     sol=reslocal$allSolutions.refitted.manual[[index]], ambiguousFlag=FALSE, hideCN=cnHidden(), transparentCN=cnTrans(), zoomPoints=pSize()))
       })
       
       
@@ -1399,28 +1636,48 @@ server <- function(input, output, session) {
         if(reslocal$mode == "sc"){
           
           
-          output$sunrise1 <- renderPlot({ 
-            
-            plotScGrid(reslocal$allSolutions[[index]])
-            
-          }) 
           
           
-          output$sunrise2 <- renderPlot({ 
+          output$sunrise1 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions[[index]], is_sc=TRUE))})
+          
+          
+          output$sunrise2 <- renderPlot({localOpt <<- isolate(plotSunrise(reslocal$allSolutions.refitted.manual[[index]],  is_sc = TRUE,localMinima=TRUE))})
+          
+          
+        }
+        
+        else if(reslocal$mode == "methyl"){
+          
+          if("allSolutions.refitted.auto"%in%names(reslocal)){
+            output$sunrise1 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.auto[[index]]))})
+          }
+          else {
             
-            plotScGrid(reslocal$allSolutions.refitted.manual[[index]])
+            output$sunrise1 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions[[index]]))})
             
-          }) 
+          }
+          
+          output$sunrise2 <- renderPlot({isolate( localOpt <<- plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
+          
+          #localOpt <<- localOpt$bao
           
           
         }
       }
       else {
         
-        output$sunrise1 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.auto[[index]]))})
+        if("allSolutions.refitted.auto"%in%names(reslocal)){
+          output$sunrise1 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions.refitted.auto[[index]]))})
+        }
+        else {
+          
+          output$sunrise1 <- renderPlot({isolate(plotSunrise(reslocal$allSolutions[[index]]))})
+          
+        }
+        
         output$sunrise2 <- renderPlot({isolate( localOpt <<- plotSunrise(reslocal$allSolutions.refitted.manual[[index]], localMinima=TRUE))})
         
-        localOpt <<- localOpt$bao
+        #localOpt <<- localOpt$bao
         
       }
       
