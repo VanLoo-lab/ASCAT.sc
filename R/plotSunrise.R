@@ -100,7 +100,7 @@ plotSunrise <- function(solution, localMinima = FALSE, plotClust=FALSE, is_sc=FA
     text(0.8, 0.1, cex = 0.9, as.expression(bquote(paste("max ",
                                                          phi[T], " hit"))), col = rgb(1, 1, 1))
     
-    bao1
+    if(localMinima) return(bao1)
     
     
   },
