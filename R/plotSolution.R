@@ -15,8 +15,8 @@ plotSolution <- function(tracksSingle,
                          ambiguousFlag=TRUE,
                          ...)
 {
-  meansSeg <- fitProfile(tracksSingle,purity,ploidy,gamma=gamma, ismale=ismale, isPON=isPON, ismedian=ismedian)
-  tracksSingle <- normaliseByPloidy(tracksSingle, ismedian=ismedian)
+  meansSeg <- fitProfile(tracksSingle,purity,ploidy,gamma=gamma, ismale=ismale, isPON=isPON, ismedian = ismedian)
+  tracksSingle <- normaliseByPloidy(tracksSingle, ismedian = ismedian)
   breaks <- c(0, cumsum(sapply(tracksSingle$lSegs, function(x) max(x$output$loc.end))/1e+06))
   
   set.seed(10)
@@ -25,10 +25,10 @@ plotSolution <- function(tracksSingle,
   plot(0, 0, col = rgb(0, 0, 0, 0), xaxt = "n", yaxt = "n",
        xlim = c(0, max(breaks)-80), xlab = "",ylab="",frame = F, axes=FALSE, ylim=c(-1,10),...)
   
+  
   clrs <- c("indianred1","chocolate1","orange", "lightgoldenrod","khaki1",  "palegreen", "lightgreen","seagreen1", "mediumaquamarine", "aquamarine","cadetblue1","turquoise2",
             "skyblue", "steelblue1","lightslateblue", "mediumpurple1","violet", "plum2", "plum1", "pink1", "lightpink","palevioletred1","lightcoral", "lightcoral")
-  
-  if(is.null(allchr))
+   if(is.null(allchr))
     labels <- if(is.null(names(tracksSingle$lCTS))) names(breaks)[2:length(breaks)]
   else names(tracksSingle$lCTS)
   
@@ -64,7 +64,7 @@ plotSolution <- function(tracksSingle,
     y_points <- ifelse(y_points>8.2,8.2,y_points)
     y_points <- ifelse(y_points<0,0,y_points)
     
-    
+
     segments(starts/1e+06 + breaks[i] + 2,
              y_points,
              ends/1e+06 + breaks[i] + 2,
@@ -72,8 +72,7 @@ plotSolution <- function(tracksSingle,
              
              col = rgb(0.6, 0.8, 1, 0.4),
              pch = 16, lwd=as.numeric(zoomPoints),cex=1)
-    
-    
+  
     nonround <- transform_bulk2tumour(sapply(meansSeg[[i]], function(x) x$mu),
                                       purity,
                                       ploidy,
