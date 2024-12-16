@@ -13,7 +13,7 @@ fitProfile <- function(tracksSingle,
     meansSeg <- lapply(1:NN, function(i) {
         out <- tracksSingle$lSegs[[i]]$output
         means <- lapply(1:nrow(out), function(x) {
-            isIn <- tracksSingle$lCTS[[i]]$start >= out$loc.start[x] &
+            isIn <- tracksSingle$lCTS[[i]]$end >= out$loc.start[x] &
                 tracksSingle$lCTS[[i]]$start <= out$loc.end[x]
             if (sum(isIn) < 1)
                 return(list(roundmu = NA, mu = NA, sd = NA, start = out$loc.start[x],

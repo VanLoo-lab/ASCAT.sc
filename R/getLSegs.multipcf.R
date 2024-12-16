@@ -6,6 +6,7 @@ getLSegs.multipcf <- function(allTracks,
                               allchr,
                               segmentation_alpha=0.01,
                               normalize=F,
+                              svinput=NULL,
                               MC.CORES=1)
 {
     ## #############################################################
@@ -39,7 +40,9 @@ getLSegs.multipcf <- function(allTracks,
                                   })))
             out <- lapply(penalties,function(penalty)
             {
-                invisible(capture.output(suppressMessages({ok <- copynumber::multipcf(data=tmpdata, gamma=penalty, normalize=normalize)})))
+                invisible(capture.output(suppressMessages({ok <- copynumber::multipcf(data=tmpdata,
+                                                                                      gamma=penalty,
+                                                                                      normalize=normalize)})))
                 ok
             })
             out

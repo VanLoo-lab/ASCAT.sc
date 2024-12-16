@@ -76,6 +76,22 @@ run_sc_sequencing <- function(tumour_bams,
         if(chrstring_bam=="")
             names(res$lGCT) <- names(res$lSe) <- gsub("chr","",names(res$lSe))
     }
+    if (build == "mm39")
+    {
+        data("lSe_unfiltered_5000.mm39", package = "ASCAT.sc")
+        data("lGCT_unfiltered_5000.mm39", package = "ASCAT.sc")
+        names(lGCT)[1:length(allchr)] <- names(lSe)[1:length(allchr)] <- allchr
+        res$lSe <- lapply(allchr, function(x) lSe[[x]])
+        res$lGCT <- lapply(allchr, function(x) lGCT[[x]])
+        names(res$lGCT) <- names(res$lSe) <- allchr
+    }
+    if (!build %in% c("hg19", "hg38","mm39"))
+    {
+        START_WINDOW <- median(unlist(lapply(lSe,function(x) x$ends-x$starts+1)))
+        res$lSe <- lSe
+        res$lGCT <- lGCT
+        names(res$lGCT) <- names(res$lSe) <- allchr
+    }
     print("## calculate Target Bin size")
     res$nlGCT <- treatGCT(res$lGCT,window=ceiling(binsize/START_WINDOW))
     res$nlSe <- treatlSe(res$lSe,window=ceiling(binsize/START_WINDOW))
@@ -176,7 +192,7 @@ run_sc_sequencing <- function(tumour_bams,
     }
     if(sc_exclude_badbins)
     {
-        print("## exclude Bad bins inferred from normal samples")
+        print("## exclude Bad bins inferred from normal samples or tumour samples")
         res <- sc_excludeBadBins(res)
     }
     if(multipcf)

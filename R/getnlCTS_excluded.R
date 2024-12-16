@@ -1,11 +1,12 @@
 getnlCTS_excluded <- function(nlCTS.tumour, lInds)
 {
-    lapply(nlCTS.tumour, function(sample)
+    nnlCTS.tumour <- lapply(1:length(nlCTS.tumour),function(chr)
     {
-        lapply(1:length(nlCTS.tumour[[sample]]),function(chr)
-        {
-            nlCTS.tumour[[sample]][[chr]][-lInds[[chr]],]
-        })
+        if(length(lInds[[chr]])>0)
+            return(nlCTS.tumour[[chr]][-lInds[[chr]],])
+        nlCTS.tumour[[chr]]
     })
+    names(nnlCTS.tumour) <- names(nlCTS.tumour)
+    nnlCTS.tumour
 }
 
