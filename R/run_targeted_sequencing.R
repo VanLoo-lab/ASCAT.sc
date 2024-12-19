@@ -31,13 +31,11 @@ run_targeted_sequencing <- function(tumour_bams,
     {
         data("lSe_filtered_30000.hg19",package="ASCAT.sc")
         data("lGCT_filtered_30000.hg19",package="ASCAT.sc")
-        if(!all(allchr%in%names(lSe.hg19.filtered)))
-            stop(paste0("allchr should be in the form: ",names(lSe.hg19.filtered)[1],"; not: ",allchr[1],"..."))
-        lSe <- lapply(allchr, function(chr) lSe.hg19.filtered[[chr]])
-        names(lGCT.hg19.filtered) <- names(lSe.hg19.filtered)
-        names(lSe)[1:length(allchr)] <- allchr
-        lGCT <- lapply(allchr, function(chr) lGCT.hg19.filtered[[chr]])
-        names(lGCT) <- names(lSe)
+        allchr. <- gsub("chr","",allchr)
+        res$lSe <- lapply(allchr., function(chr) lSe.hg19.filtered[[chr]])
+        names(res$lSe) <- allchr
+        names(lGCT.hg19.filtered) <- names(res$lSe)
+        res$lGCT <- lapply(allchr, function(chr) lGCT.hg19.filtered[[chr]])
     }
     if(build=="hg38")
     {

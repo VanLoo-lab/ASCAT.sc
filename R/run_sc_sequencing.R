@@ -27,6 +27,7 @@ run_sc_sequencing <- function(tumour_bams,
                               normalize=FALSE,
                               lExclude=NULL,
                               svinput=NULL,
+                              lSVinput=NULL,
                               sc_exclude_badbins=FALSE)
 {
     checkArguments_scs(c(as.list(environment())))
@@ -229,6 +230,7 @@ run_sc_sequencing <- function(tumour_bams,
                                allchr=allchr,
                                sdNormalise=0,
                                SBDRY=SBDRY,
+                               svinput=if(is.null(lSVinput)) NULL else lSVinput[[x]],
                                segmentation_alpha=segmentation_alpha)
             },mc.cores=MC.CORES))
         }
@@ -279,6 +281,7 @@ run_sc_sequencing <- function(tumour_bams,
                 timetoprocessed=res$timetoprocessed,
                 timetofit=res$timetofit,
                 svinput=svinput,
+                lSVinput=lSVinput,
                 mode="sc")
     if(predict_refit)
     {

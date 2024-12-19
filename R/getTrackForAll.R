@@ -14,6 +14,7 @@ getTrackForAll <- function(bamfile,
 			   mapqFilter=30,
                            doSmooth=TRUE,
                            SBDRY=NULL,
+                           svinput=NULL,
                            doSeg=TRUE)
 {
     if(is.null(lSe))
@@ -51,16 +52,80 @@ getTrackForAll <- function(bamfile,
     ## ##################################################
     print("   ## segment Tracks")
     require(DNAcopy)
-    lSegs <- lapply(1:length(lCTS),function(x)
+    if(is.null(svinput))
     {
-        segments<- segmentTrack(lCTS[[x]]$smoothed,
-                                chr=paste0(x),
-                                sd=sdNormalise,
-                                lSe[[x]]$starts,
-                                lSe[[x]]$ends,
-                                SBDRY=SBDRY,
-                                ALPHA=segmentation_alpha)
-    })
+        lSegs <- lapply(1:length(lCTS),function(x)
+        {
+            segments<- segmentTrack(lCTS[[x]]$smoothed,
+                                    chr=paste0(x),
+                                    sd=sdNormalise,
+                                    lSe[[x]]$starts,
+                                    lSe[[x]]$ends,
+                                    SBDRY=SBDRY,
+                                    ALPHA=segmentation_alpha)
+        })
+    }
+    if(!is.null(svinput))
+    {
+        segmentTrack_by_parts<-function(smoothed,
+                                        chr,
+                                        allchr,
+                                        sd,
+                                        starts,
+                                        ends,
+                                        SBDRY,
+                                        svinput,
+                                        ALPHA)
+        {
+            widths <- ends-starts
+            grcn <- GRanges(allchr[chr],IRanges(starts+round(widths/4),ends-round(widths/4)))
+            bpsv <- sort(svinput[,2], decreasing=F)
+            grregions <- GRanges(rep(allchr[chr],nrow(svinput)+1),IRanges(c(0,bpsv),c(bpsv-1,1000000000)))
+            ovs <- findOverlaps(grcn, grregions, select = "first")
+            indices <- lapply(1:length(grregions),function(x)
+            {
+                which(ovs==x)
+            })
+            indices <- lapply(which(sapply(indices,length)>0),function(x) indices[[x]])
+            ll <- lapply(indices,function(ii)
+            {
+                segmentTrack(smoothed[ii],
+                             chr=chr,
+                             sd=sd,
+                             starts[ii],
+                             ends[ii],
+                             SBDRY=SBDRY,
+                             ALPHA=ALPHA)
+            })
+            out <- list(data = do.call("rbind",lapply(ll,function(x) x$data)),
+                        output = do.call("rbind",lapply(ll,function(x) x$output)))
+        }
+        lSegs <- lapply(1:length(lCTS),function(x)
+        {
+            sv_condchr <- gsub("chr","",svinput[,1])==gsub("chr","",allchr[x])
+            svinput. <- svinput[sv_condchr,]
+            if(sum(sv_condchr)>0)
+            {
+                segments <- segmentTrack_by_parts(smoothed=lCTS[[x]]$smoothed,
+                                                  chr=x,
+                                                  allchr=allchr,
+                                                  sd=sdNormalise,
+                                                  starts=lSe[[x]]$starts,
+                                                  ends=lSe[[x]]$ends,
+                                                  SBDRY=SBDRY,
+                                                  svinput=svinput.,
+                                                  ALPHA=segmentation_alpha)
+            }
+            else
+                segments <- segmentTrack(lCTS[[x]]$smoothed,
+                                         chr=paste0(x),
+                                         sd=sdNormalise,
+                                         lSe[[x]]$starts,
+                                         lSe[[x]]$ends,
+                                         SBDRY=SBDRY,
+                                         ALPHA=segmentation_alpha)
+        })
+    }
     names(lSegs) <- paste0(1:length(lCT))
     tracks <- list(lCTS=lCTS,lSegs=lSegs)
     return(tracks)
