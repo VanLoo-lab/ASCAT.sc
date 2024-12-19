@@ -26,6 +26,7 @@ run_sc_sequencing <- function(tumour_bams,
                               multipcf=FALSE,
                               normalize=FALSE,
                               lExclude=NULL,
+                              svinput=NULL,
                               sc_exclude_badbins=FALSE)
 {
     checkArguments_scs(c(as.list(environment())))
@@ -199,7 +200,9 @@ run_sc_sequencing <- function(tumour_bams,
     {
         print("## calculate Multipcf - multi-sample mode - do not use if samples from different tumours")
         res$timetoprocessed <- system.time(res$allTracks.processed <- getLSegs.multipcf(allTracks=lapply(res$allTracks, function(x)
-        {list(lCTS=x$nlCTS.tumour)}),
+        {
+            list(lCTS=x$nlCTS.tumour)
+        }),
         lCTS=lapply(res$allTracks,function(x) x$nlCTS.tumour),
         lSe=res$nlSe,
         lGCT=res$nlGCT,
@@ -207,6 +210,7 @@ run_sc_sequencing <- function(tumour_bams,
         allchr=allchr,
         segmentation_alpha=segmentation_alpha,
         normalize=normalize,
+        svinput=svinput,
         MC.CORES=MC.CORES))
     }
     else
@@ -274,6 +278,7 @@ run_sc_sequencing <- function(tumour_bams,
                 timetoread_tumours=res$timetoread_tumours,
                 timetoprocessed=res$timetoprocessed,
                 timetofit=res$timetofit,
+                svinput=svinput,
                 mode="sc")
     if(predict_refit)
     {
@@ -283,7 +288,7 @@ run_sc_sequencing <- function(tumour_bams,
     if(print_results)
     {
         print("## print Results")
-        res <- printResults_all(res, outdir=outdir, projectname=projectname)
+        res <- printResults_all(res, svinput=svinput, outdir=outdir, projectname=projectname)
     }
     if(sc_filters)
     {

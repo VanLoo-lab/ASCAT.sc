@@ -13,6 +13,7 @@ plotSolution <- function(tracksSingle,
                          transparentCN=FALSE,
                          zoomPoints=5,
                          ambiguousFlag=TRUE,
+                         svinput=NULL,
                          ...)
 {
   meansSeg <- fitProfile(tracksSingle,purity,ploidy,gamma=gamma, ismale=ismale, isPON=isPON, ismedian = ismedian)
@@ -22,14 +23,25 @@ plotSolution <- function(tracksSingle,
   LWD_SEGS_INTEGER <- 10
   LWD_SEGS_INTEGER2 <- 5
   BASECOLOUR1 <- "grey60" ##"lightblue3"
+  BASECOLOUR1 <- col2rgb(BASECOLOUR1)[,1]
+  BASECOLOUR1 <- rgb(BASECOLOUR1[1]/255,BASECOLOUR1[2]/255,BASECOLOUR1[3]/255,.4)
   BASECOLOUR2 <- "black" ##"steelblue4"
 
   set.seed(10)
   par(plt = c(0, 1, 0, 0.93), new = TRUE, fig = c(0, 1, 0, 1))
   par(mar=c(5,5,4,1))
 
-  plot(0, 0, col = rgb(0, 0, 0, 0), xaxt = "n", yaxt = "n",
-       xlim = c(0, max(breaks)-80), xlab = "",ylab="",frame = F, axes=FALSE, ylim=c(-1,10),...)
+  plot(0, 0,
+       col = rgb(0, 0, 0, 0),
+       xaxt = "n",
+       yaxt = "n",
+       xlim = c(0, max(breaks)-80),
+       xlab = "",
+       ylab="",
+       frame = F,
+       axes=FALSE,
+       ylim=ylim+c(-1,2),
+       ...)
 
   clrs <- c("indianred1","chocolate1","orange",
             "lightgoldenrod","khaki1",  "palegreen",
@@ -40,14 +52,10 @@ plotSolution <- function(tracksSingle,
             "pink1", "lightpink","palevioletred1","lightcoral",
             "lightcoral")
 
-  if(is.null(allchr))
+  labels <- if(is.null(names(tracksSingle$lCTS))) names(breaks)[2:length(breaks)] else names(tracksSingle$lCTS)
+  labels <- gsub("chr", "", labels)
 
-    labels <- if(is.null(names(tracksSingle$lCTS))) names(breaks)[2:length(breaks)]
-  else names(tracksSingle$lCTS)
-
-  labels <-gsub("chr", "", labels)
-
-  for (i in 0:8){
+  for (i in 0:ylim[2]){
 
     #### horizontal breaks ####
 
@@ -76,8 +84,12 @@ plotSolution <- function(tracksSingle,
                                       purity,
                                       ploidy,
                                       gamma=gamma, ismale=ismale, isPON=isPON, isX=i==23)
-    y_points <- ifelse(y_points>8.2,8.2,y_points)
-    y_points <- ifelse(y_points<0,0,y_points)
+    y_points <- ifelse(y_points>ylim[2]+.2,
+                       ylim[2]+.2,
+                       y_points)
+    y_points <- ifelse(y_points<0,
+                       0,
+                       y_points)
     segments(starts/1e+06 + breaks[i] + 2,
              y_points,
              ends/1e+06 + breaks[i] + 2,
@@ -95,10 +107,10 @@ plotSolution <- function(tracksSingle,
                                       isPON=isPON,
                                       isX=i==23)
 
-    segments(lSegs$loc.start[which(nonround >=0 & nonround <=8)]/1e+06 + breaks[i],
-             nonround[which(nonround >=0 & nonround <=8)],
-             lSegs$loc.end[which(nonround >=0 & nonround <=8)]/1e+06 + breaks[i],
-             nonround[which(nonround >=0 & nonround <=8)],
+    segments(lSegs$loc.start[which(nonround >=0 & nonround <=ylim[2])]/1e+06 + breaks[i],
+             nonround[which(nonround >=0 & nonround <=ylim[2])],
+             lSegs$loc.end[which(nonround >=0 & nonround <=ylim[2])]/1e+06 + breaks[i],
+             nonround[which(nonround >=0 & nonround <=ylim[2])],
              lwd = 2,
              col = rgb(0.1, 0.1, 0.1, 0.4))
 
@@ -113,10 +125,10 @@ plotSolution <- function(tracksSingle,
     }
     if(any(nonround > 8))
     {
-      segments(lSegs$loc.start[which(nonround >8)]/1e+06 + breaks[i],
-               8,
-               lSegs$loc.end[which(nonround >8)]/1e+06 + breaks[i],
-               8,
+      segments(lSegs$loc.start[which(nonround >ylim[2])]/1e+06 + breaks[i],
+               ylim[2],
+               lSegs$loc.end[which(nonround >ylim[2])]/1e+06 + breaks[i],
+               ylim[2],
                lwd = 2,
                col = rgb(0.1, 0.1, 0.1, 0.4))
     }
@@ -130,27 +142,27 @@ plotSolution <- function(tracksSingle,
       if (rainbowChr){
 
         ##### cn between 0 and 8 #####
-        segments(lSegs$loc.start[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2 ,
-                 cn[which(cn >=0 & cn <=8)],
-                 lSegs$loc.end[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2 ,
-                 cn[which(cn >=0 & cn <=8)],
+        segments(lSegs$loc.start[which(cn >=0 & cn <=ylim[2])]/1e+06 + breaks[i] + 2 ,
+                 cn[which(cn >=0 & cn <=ylim[2])],
+                 lSegs$loc.end[which(cn >=0 & cn <=ylim[2])]/1e+06 + breaks[i] + 2 ,
+                 cn[which(cn >=0 & cn <=ylim[2])],
                  lwd = LWD_SEGS_INTEGER,
                  col =clrs[i], lend=1)
 
-        segments(lSegs$loc.start[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2,
-                 cn[which(cn >=0 & cn <=8)],
-                 lSegs$loc.end[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2 ,
-                 cn[which(cn >=0 & cn <=8)],
+        segments(lSegs$loc.start[which(cn >=0 & cn <=ylim[2])]/1e+06 + breaks[i] + 2,
+                 cn[which(cn >=0 & cn <=ylim[2])],
+                 lSegs$loc.end[which(cn >=0 & cn <=ylim[2])]/1e+06 + breaks[i] + 2 ,
+                 cn[which(cn >=0 & cn <=ylim[2])],
                  lwd = LWD_SEGS_INTEGER2,
                  col = BASECOLOUR2, lend=1)
 
       }
       else {
 
-        segments(lSegs$loc.start[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2,
-                 cn[which(cn >=0 & cn <=8)],
-                 lSegs$loc.end[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2 ,
-                 cn[which(cn >=0 & cn <=8)],
+        segments(lSegs$loc.start[which(cn >=0 & cn <=ylim[2])]/1e+06 + breaks[i] + 2,
+                 cn[which(cn >=0 & cn <=ylim[2])],
+                 lSegs$loc.end[which(cn >=0 & cn <=ylim[2])]/1e+06 + breaks[i] + 2 ,
+                 cn[which(cn >=0 & cn <=ylim[2])],
                  lwd = LWD_SEGS_INTEGER,
                  col = BASECOLOUR2, lend=1)
       }
@@ -170,10 +182,10 @@ plotSolution <- function(tracksSingle,
       }
       if(any(cn > 8) ){
 
-        segments(lSegs$loc.start[which(cn >8)]/1e+06 + breaks[i] + 2 ,
-                 8,
-                 lSegs$loc.end[which(cn >8)]/1e+06 + breaks[i] + 2 ,
-                 8,
+        segments(lSegs$loc.start[which(cn >ylim[2])]/1e+06 + breaks[i] + 2 ,
+                 ylim[2],
+                 lSegs$loc.end[which(cn >ylim[2])]/1e+06 + breaks[i] + 2 ,
+                 ylim[2],
                  lwd = LWD_SEGS_INTEGER,
                  col =rgb(1,0,0), lend=1)
 
@@ -188,27 +200,27 @@ plotSolution <- function(tracksSingle,
       if (rainbowChr){
 
         ##### cn between 0 and 8 #####
-        segments(lSegs$loc.start[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2 ,
-                 cn[which(cn >=0 & cn <=8)],
-                 lSegs$loc.end[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2 ,
-                 cn[which(cn >=0 & cn <=8)],
+        segments(lSegs$loc.start[which(cn >=0 & cn <=ylim[2])]/1e+06 + breaks[i] + 2 ,
+                 cn[which(cn >=0 & cn <=ylim[2])],
+                 lSegs$loc.end[which(cn >=0 & cn <=ylim[2])]/1e+06 + breaks[i] + 2 ,
+                 cn[which(cn >=0 & cn <=ylim[2])],
                  lwd = LWD_SEGS_INTEGER,
                  col = adjustcolor(clrs[i], alpha.f = 0.2), lend=1)
 
-        segments(lSegs$loc.start[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2,
-                 cn[which(cn >=0 & cn <=8)],
-                 lSegs$loc.end[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2 ,
-                 cn[which(cn >=0 & cn <=8)],
+        segments(lSegs$loc.start[which(cn >=0 & cn <=ylim[2])]/1e+06 + breaks[i] + 2,
+                 cn[which(cn >=0 & cn <=ylim[2])],
+                 lSegs$loc.end[which(cn >=0 & cn <=ylim[2])]/1e+06 + breaks[i] + 2 ,
+                 cn[which(cn >=0 & cn <=ylim[2])],
                  lwd = LWD_SEGS_INTEGER2,
                  col =adjustcolor(BASECOLOUR2, alpha.f = 0.2), lend=1)
 
       }
       else {
 
-        segments(lSegs$loc.start[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2,
-                 cn[which(cn >=0 & cn <=8)],
-                 lSegs$loc.end[which(cn >=0 & cn <=8)]/1e+06 + breaks[i] + 2 ,
-                 cn[which(cn >=0 & cn <=8)],
+        segments(lSegs$loc.start[which(cn >=0 & cn <=ylim[2])]/1e+06 + breaks[i] + 2,
+                 cn[which(cn >=0 & cn <=ylim[2])],
+                 lSegs$loc.end[which(cn >=0 & cn <=ylim[2])]/1e+06 + breaks[i] + 2 ,
+                 cn[which(cn >=0 & cn <=ylim[2])],
                  lwd = LWD_SEGS_INTEGER,
                  col =adjustcolor(BASECOLOUR2, alpha.f = 0.2), lend=1)
       }
@@ -228,10 +240,10 @@ plotSolution <- function(tracksSingle,
       }
       if(any(cn > 8) ){
 
-        segments(lSegs$loc.start[which(cn >8)]/1e+06 + breaks[i] + 2 ,
-                 8,
-                 lSegs$loc.end[which(cn >8)]/1e+06 + breaks[i] + 2 ,
-                 8,
+        segments(lSegs$loc.start[which(cn >ylim[2])]/1e+06 + breaks[i] + 2 ,
+                 ylim[2],
+                 lSegs$loc.end[which(cn >ylim[2])]/1e+06 + breaks[i] + 2 ,
+                 ylim[2],
                  lwd = LWD_SEGS_INTEGER,
                  col =rgb(1,0,0, 0.3), lend=1)
 
@@ -273,41 +285,37 @@ plotSolution <- function(tracksSingle,
              col = BASECOLOUR2, lend=1)
 
     #### chr text ####
+    text(x = breaks[i] + (breaks[i+1] - breaks[i])/2,
+         y = ylim[2]+1,
+         labels=labels[i],
+         col="white",
+         cex = 1.2
+         )
+    text(x = breaks[i] + (breaks[i+1] - breaks[i])/2,
+         y = -1,
+         labels=labels[i],
+         col="white",
+         cex = 1.2)
 
-    if(i>1){
-
-      text(x = breaks[i] + (breaks[i+1] - breaks[i])/2,
-           y = 9,
-           labels=labels[i],
-           col="white",
-           cex = 1.2
-      )
-      text(x = breaks[i] + (breaks[i+1] - breaks[i])/2,
-           y = -1,
-           labels=labels[i],
-           col="white",
-           cex = 1.2)
+    if(!is.null(svinput))
+    {
+        svcond <- gsub("chr","",svinput[,1])==gsub("chr","",allchr[i])
+        svtmp <- svinput[svcond,]
+        if(sum(svcond)>0)
+            segments(breaks[i] + svtmp[,2]/1e+06,
+                     0,
+                     breaks[i] + svtmp[,2]/1e+06,
+                     ylim[2]+.3,
+                     lwd=LWD_SEGS_INTEGER/3,
+                     lty=1,
+                     col=rgb(1,0,0,.5))
     }
-    else{
-      text(x = breaks[i+1]/2,
-           y = 9,
-           labels=labels[i],
-           col="white",
-           cex = 1.2
-      )
-      text(x = breaks[i+1]/2,
-           y = -1,
-           labels=labels[i],
-           col="white",
-           cex = 1.2)
-    }
-
   }
 
   segments(tracksSingle$lSegs[[length(tracksSingle$lSegs)]]$output$loc.end[length(tracksSingle$lSegs[[length(tracksSingle$lSegs)]]$output$loc.end)]/1e+06 + breaks[i] + 4,
            -1.25,
            tracksSingle$lSegs[[length(tracksSingle$lSegs)]]$output$loc.end[length(tracksSingle$lSegs[[length(tracksSingle$lSegs)]]$output$loc.end)]/1e+06 + breaks[i] + 4,
-           9.25,
+           ylim[2]+1.25,
            lwd = 4,
            col = BASECOLOUR2, lend=1)
 
@@ -322,40 +330,47 @@ plotSolution <- function(tracksSingle,
 
   if(ambiguousFlag) {
 
-    text(x = breaks[9], y=9.8, labels= paste0("purity=",
-                                              signif(purity,2),
-                                              "; average ploidy=",
-                                              signif(ploidy,2),
-                                              "; tumor ploidy=",
-                                              signif(getTumourPhi(ploidy,purity),2), "; ambiguous=", ambiguous, "; dpb=", dpb
+      text(x = breaks[9],
+           y=ylim[2]+1.8,
+           labels= paste0("purity=",
+                          signif(purity,2),
+                          "; average ploidy=",
+                          signif(ploidy,2),
+                          "; tumor ploidy=",
+                          signif(getTumourPhi(ploidy,purity),2),
+                          "; ambiguous=", ambiguous,
+                          "; dpb=", dpb
 
     ), adj=0, pos=1)
 
   }
   else {
 
-    text(x = breaks[9], y=9.8, labels= paste0("purity=",
-                                              signif(purity,2),
-                                              "; average ploidy=",
-                                              signif(ploidy,2),
-                                              "; tumor ploidy=",
-                                              signif(getTumourPhi(ploidy,purity),2), "; large deep deletion fraction=", ambiguous
+      text(x = breaks[9],
+           y=ylim[2]+1.8,
+           labels= paste0("purity=",
+                          signif(purity,2),
+                          "; average ploidy=",
+                          signif(ploidy,2),
+                          "; tumor ploidy=",
+                          signif(getTumourPhi(ploidy,purity),2),
+                          "; large deep deletion fraction=", ambiguous,
+                          "; dpb=", dpb
 
     ), adj=0, pos=1)
 
   }
 
   text(x = -40,
-       y = c(0:8),
-       labels=c(0:8),
+       y = c(0:ylim[2]),
+       labels=c(0:ylim[2]),
        col=BASECOLOUR2,
-       cex = 1.5
-  )
-  text(x = -60,
+       cex = 1.5)
+
+  text(x = -70,
        y = 2.7,
        labels="Total copy number",
        col= BASECOLOUR2,
-       cex = 1.5, adj=0, srt=90
-  )
+       cex = 1.5, adj=0, srt=90)
 
 }

@@ -28,23 +28,37 @@ getLSegs.multipcf <- function(allTracks,
     print("Smoothing all tracks")
     lCTSs <- smoothAll(lCTS,lSe, lGCT, lNormals, allchr, MC.CORES=MC.CORES)
     ## #############################################################
-    runMultiPCF <- function(allT, penalties, nchr, mc.cores=1)
+    runMultiPCF <- function(allT, penalties, nchr, svinput, mc.cores=1)
     {
         chr_pcfed <- mclapply(1:nchr,function(i)
         {
             tmpdata <- data.frame("chr"=rep(i,nrow(allT$lCTS[[1]][[i]])),
                                   pos=round(allT$lCTS[[1]][[i]][,"start"]+allT$lCTS[[1]][[i]][,"width"]/2),
+                                  start=allT$lCTS[[1]][[i]][,"start"]+allT$lCTS[[1]][[i]][,"width"]/4,
+                                  end=allT$lCTS[[1]][[i]][,"end"]-allT$lCTS[[1]][[i]][,"width"]/4,
                                   do.call("cbind",lapply(allT$lCTS,function(x)
                                   {
                                       x[[i]]$smoothed
                                   })))
-            out <- lapply(penalties,function(penalty)
+            rmcc <- which(colnames(tmpdata)%in%c("start","end"))
+            out <- NULL
+            if(!is.null(svinput))
             {
-                invisible(capture.output(suppressMessages({ok <- copynumber::multipcf(data=tmpdata,
-                                                                                      gamma=penalty,
-                                                                                      normalize=normalize)})))
-                ok
-            })
+                sv_condchr <- gsub("chr","",svinput[,1])==gsub("chr","",allchr[i])
+                svinput <- svinput[sv_condchr,]
+                if(sum(sv_condchr)>0)
+                    out <- sc_getBreakpoints_multipcf(tmpdata, svinput, penalties, normalize)
+            }
+            if(is.null(svinput) | is.null(out))
+            {
+                out <- lapply(penalties,function(penalty)
+                {
+                    invisible(capture.output(suppressMessages({ok <- copynumber::multipcf(data=tmpdata[,-rmcc],
+                                                                                          gamma=penalty,
+                                                                                          normalize=normalize)})))
+                    ok
+                })
+            }
             out
         },mc.cores=mc.cores)
         names(chr_pcfed) <- paste0("chr",1:nchr)
@@ -59,6 +73,7 @@ getLSegs.multipcf <- function(allTracks,
     allsegs <- runMultiPCF(allT,
                            penalties=penalties,
                            nchr=nchr,
+                           svinput,
                            mc.cores=MC.CORES)
     ## #############################################################
     allTracks.processed <- mclapply(1:length(allTracks), function(i)
