@@ -32,10 +32,10 @@ run_targeted_sequencing <- function(tumour_bams,
         data("lSe_filtered_30000.hg19",package="ASCAT.sc")
         data("lGCT_filtered_30000.hg19",package="ASCAT.sc")
         allchr. <- gsub("chr","",allchr)
-        res$lSe <- lapply(allchr., function(chr) lSe.hg19.filtered[[chr]])
-        names(res$lSe) <- allchr
-        names(lGCT.hg19.filtered) <- names(res$lSe)
-        res$lGCT <- lapply(allchr, function(chr) lGCT.hg19.filtered[[chr]])
+        lSe <- lapply(allchr., function(chr) lSe.hg19.filtered[[chr]])
+        names(lSe) <- allchr
+        names(lGCT.hg19.filtered) <- names(lSe)
+        lGCT <- lapply(allchr, function(chr) lGCT.hg19.filtered[[chr]])
     }
     if(build=="hg38")
     {
@@ -47,7 +47,7 @@ run_targeted_sequencing <- function(tumour_bams,
         lGCT <- lapply(allchr, function(chr) lGCT.hg38.filtered[[chr]])
         names(lGCT) <- names(lSe)
         if(chrstring_bam=="")
-            names(res$lGCT) <- names(res$lSe) <- gsub("chr","",names(res$lSe))
+            names(lGCT) <- names(lSe) <- gsub("chr","",names(lSe))
     }
     if(build=="mm39")
     {
