@@ -291,7 +291,7 @@ run_sc_sequencing <- function(tumour_bams,
     if(print_results)
     {
         print("## print Results")
-        res <- printResults_all(res, svinput=svinput, outdir=outdir, projectname=projectname)
+        res <- printResults_all(res, svinput=svinput, lSVinput=lSVinput, outdir=outdir, projectname=projectname)
     }
     if(sc_filters)
     {

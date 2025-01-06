@@ -11,6 +11,13 @@ getAS_CNA <- function(res,
 {
     suppressPackageStartupMessages(require(GenomicRanges))
     suppressPackageStartupMessages(require(data.table))
+    getNANBfromTot <- function(baf,tot,purity, retNa=TRUE)
+    {
+        Na <- round(baf*(purity*tot+(1-purity)*2)-1+purity)
+        Nb <- round(tot-Na)
+        if(retNa) return(Na)
+        return(Nb)
+    }
     .searchGrid  <-  function (baf,
                               logr,
                               sizes,
@@ -124,6 +131,10 @@ getAS_CNA <- function(res,
     {
         if(is.null(steps))
             steps <- if(length(counts)%/%3>10) 5 else 3
+        if(length(counts)<10)
+        {
+
+        }
         nonas <- !is.na(counts) & !is.na(depths)
         counts <- counts[nonas]
         depths <- depths[nonas]
@@ -168,7 +179,25 @@ getAS_CNA <- function(res,
         q95 <- values[c(which(cs>.05)[1],which(cs>.95)[1])]
         c(q95[1],baf,q95[2])
     }
-
+    is_distant_enough <- function(positions, distance=1000)
+    {
+        ##ord <- order(positions,decreasing=F)
+        ##psort <- positions[ord]
+        ##keep <- c(T,diff(psort)>distance)
+        ##return(keep[order(ord,decreasing=F)])
+        spositions <- sort(positions)
+        keep <- numeric(0)
+        prev_kept <- -Inf
+        for (pos in spositions)
+        {
+            if (pos - prev_kept >= distance)
+            {
+                keep <- c(keep, pos)
+                prev_kept <- pos
+            }
+        }
+        positions%in%keep
+    }
     getProfile <- function(df,
                            prof,
                            purity,
@@ -211,11 +240,15 @@ getAS_CNA <- function(res,
         for(i in unique(qH))
         {
             inds <- 1:nrow(df)%in%sH[qH==i]
-            nprof[i,c("q05","BAF","q95")] <- fitBinom.1dist(df[inds, 3],
-                                                               rowSums(df[inds, c(3,4)]),
-                                                            steps=steps)
-            nprof[i,c("q05_noswitch","BAF_noswitch","q95_noswitch")] <- fitBinom.1dist.noswitch(df[inds, 3],
-                                                                                                rowSums(df[inds, c(3,4)]))
+            inds[inds] <- inds[inds] & is_distant_enough(df[inds,2])
+            if(sum(inds)>1)
+            {
+                nprof[i,c("q05","BAF","q95")] <- fitBinom.1dist(df[inds, 3],
+                                                                rowSums(df[inds, c(3,4)]),
+                                                                steps=steps)
+                nprof[i,c("q05_noswitch","BAF_noswitch","q95_noswitch")] <- fitBinom.1dist.noswitch(df[inds, 3],
+                                                                                                    rowSums(df[inds, c(3,4)]))
+            }
         }
         nona <- !is.na(nprof[,"BAF"])
         sG <- .searchGrid(as.numeric(nprof[nona,"BAF"]),
@@ -237,8 +270,8 @@ getAS_CNA <- function(res,
         nprof[,"ntot_free"] <- transform_bulk2tumour(nprof[,"logr"],sG$purity,sG$ploidy)
         nprof[,"ntot_fixed"] <- transform_bulk2tumour(nprof[,"logr"],sG.fixed$purity,sG.fixed$ploidy)
         list(nprof.free=cbind(nprof,
-                              nA=round(nprof[,"fitted"]*nprof[,"BAF"]),
-                              nB=nprof[,"fitted"]-round(nprof[,"fitted"]*nprof[,"BAF"]),
+                              nA=getNANBfromTot(baf=nprof[,"BAF"], tot=nprof[,"fitted"], purity=purity),
+                              nB=getNANBfromTot(baf=nprof[,"BAF"], tot=nprof[,"fitted"], purity=purity, retNa=FALSE),
                               nA_sc_raw=exceptNA(sG$profile$Nb,nona),
                               nB_sc_raw=exceptNA(sG$profile$Na,nona),
                               nA_sc=exceptNA(round(sG$profile$Nb),nona),
@@ -246,8 +279,8 @@ getAS_CNA <- function(res,
              purity.free=sG$purity,
              ploidy.free=sG$ploidy,
              nprof.fixed=cbind(nprof,
-                               nA=round(nprof[,"fitted"]*nprof[,"BAF"]),
-                               nB=nprof[,"fitted"]-round(nprof[,"fitted"]*nprof[,"BAF"]),
+                               nA=getNANBfromTot(baf=nprof[,"BAF"], tot=nprof[,"fitted"], purity=purity),
+                               nB=getNANBfromTot(baf=nprof[,"BAF"], tot=nprof[,"fitted"], purity=purity, retNa=FALSE),
                                nA_sc_raw=exceptNA(sG.fixed$profile$Nb,nona),
                                nB_sc_raw=exceptNA(sG.fixed$profile$Na,nona),
                                nA_sc=exceptNA(round(sG.fixed$profile$Nb),nona),

@@ -3,6 +3,7 @@ printResults_all <- function(res,
                              outdir="./",
                              projectname="project",
                              svinput=NULL,
+                             lSVinput=NULL,
                              rainbowChr=TRUE)
 {
     GAMMA <- 1
@@ -21,7 +22,7 @@ printResults_all <- function(res,
                                           allchr=res$chr,
                                           ismale=if(!is.null(res$sex)) res$sex[i]=="male" else "female",
                                           sol=res$allSolutions[[i]],
-                                          svinput=svinput,
+                                          svinput=if(!is.null(lSVinput)) lSVinput[[i]] else svinput,
                                           rainbowChr=rainbowChr))
             title(names(res$allTracks)[i])
         })
@@ -49,7 +50,7 @@ printResults_all <- function(res,
                                               allchr=res$chr,
                                               gamma=GAMMA,
                                               ismedian=ismedian,
-                                              svinput=svinput,
+                                              svinput=if(!is.null(lSVinput)) lSVinput[[i]] else svinput,
                                               sol=res$allSolutions[[i]],
                                               rainbowChr=rainbowChr))
                 title(paste0(names(res$allTracks)[i],"-refitted"))
