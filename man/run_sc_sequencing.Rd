@@ -99,8 +99,7 @@ run_sc_sequencing(tumour_bams,
   \item{MC.CORES}{
     numeric value. number of cores to use, relies on parallel's mclapply
   }
-  \item{barcodes_10x}
-  {
+  \item{barcodes_10x}{
     vector of character strings. legacy for 10X scDNA-seq bam files:
     barcodes for GEL beads associated with cells/nuclei. typically
     located in the "outs/barcodes.csv" of the 10x cell-ranger pipeline.
@@ -119,14 +118,12 @@ run_sc_sequencing(tumour_bams,
   \item{projectname}{
     character string to use as flag in output file names.
   }
-  \item{steps}
-  {
+  \item{steps}{
     numeric value. for AS-CNA calling only. number of consecutive
     phased covered heterozygous SNPs to consider for merging in BAF MLE
     fitting. default is 5 or 3 depending on segment size.
   }
-  \item{smooth_sc}
-  {
+  \item{smooth_sc}{
     boolean. for single-cell data and allele-specific CNA calling
     only. Smooths the inferred integer values associated to the BAF/logR
     of each segment by MLE-like fitting per segment across cells.

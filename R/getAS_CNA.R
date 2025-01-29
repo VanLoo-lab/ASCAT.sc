@@ -131,10 +131,6 @@ getAS_CNA <- function(res,
     {
         if(is.null(steps))
             steps <- if(length(counts)%/%3>10) 5 else 3
-        if(length(counts)<10)
-        {
-
-        }
         nonas <- !is.na(counts) & !is.na(depths)
         counts <- counts[nonas]
         depths <- depths[nonas]
