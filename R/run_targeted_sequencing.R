@@ -72,6 +72,7 @@ run_targeted_sequencing <- function(tumour_bams,
     lSe <- getlSe_excluded(lSe, lInds)
     lCTS.normal <- NULL
     lCTS.normal.combined <- NULL
+    lNormals <- NULL
     timetoread_normals <- NULL
     isPON <- FALSE
     if(!is.null(normal_bams[1]) & is.null(nlCTS.normal))
