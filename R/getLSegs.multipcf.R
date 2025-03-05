@@ -24,6 +24,21 @@ getLSegs.multipcf <- function(allTracks,
         cat("\n")
         lCTSs
     }
+    applyOriginalPositions <- function(out, tmpdata)
+    {
+        nprobes <- out$n.probes
+        start.ind <- c(1,cumsum(nprobes)+1)
+        start.ind <- start.ind[-length(start.ind)]
+        end.ind <- cumsum(nprobes)
+        starts <- tmpdata$start
+        ends <- tmpdata$end
+        widths <-(ends-starts+1)*2
+        starts <- starts-widths/4
+        ends <- ends+widths/4
+        out$start.pos <- starts[start.ind]
+        out$end.pos <- ends[end.ind]
+        out
+    }
     ## #############################################################
     print("Smoothing all tracks")
     lCTSs <- smoothAll(lCTS,lSe, lGCT, lNormals, allchr, MC.CORES=MC.CORES)
@@ -59,6 +74,7 @@ getLSegs.multipcf <- function(allTracks,
                     ok
                 })
             }
+            out[[1]] <- applyOriginalPositions(out[[1]], tmpdata)
             out
         },mc.cores=mc.cores)
         names(chr_pcfed) <- paste0("chr",1:nchr)

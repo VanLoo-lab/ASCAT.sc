@@ -2,15 +2,21 @@ getBins_lSe_GC_from_fasta <- function(fasta="/PATH/TO/YOUR/REFERENCE/GENOME/fast
                                     CHRS = paste0("", c(1:19, "X")), ##contig names
                                     WINDOW=5000,##starting WINDOW = bin size
                                     outdir="./",
-                                    filename_save="Build_xx"
-                                    )
+                                    CHRS.names.fasta = paste0("chr",c(1:19,"X")),
+                                    filename_save="Build_xx")
 {
     ## ##########################################
     require(Biostrings)
     ## ##########################################
     REFGENOME <- Biostrings::readDNAStringSet(fasta, format = "fasta")
     print(substr(names(REFGENOME),1,20))
-    REFGENOME <- lapply(1:length(CHRS),function(x) REFGENOME[[x]]) #make sure contigs in same order in your fasta as CHRS
+    if(is.null(CHRS.names.fasta))
+    {
+        print("Warning: make sure contigs in same order in your fasta as CHRS or use CHRS.names.fasta to specify the names of each chromosome in the fasta")
+        REFGENOME <- lapply(1:length(CHRS),function(x) REFGENOME[[x]])
+    }
+    if(!is.null(CHRS.names.fasta))
+       REFGENOME <- lapply(CHRS.names.fasta,function(x) REFGENOME[[x]])
     names(REFGENOME) <- CHRS
     allchr <- ALLCHR <- CHRS
     ## ##########################################
