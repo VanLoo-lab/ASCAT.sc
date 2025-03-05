@@ -31,6 +31,11 @@ run_sc_sequencing <- function(tumour_bams,
                               sc_exclude_badbins=FALSE)
 {
     checkArguments_scs(c(as.list(environment())))
+    if(!is.list(purs))
+    {
+        purs <- lapply(1:length(bams), function(x) purs)
+        ploidies <- lapply(1:length(bams), function(x) ploidies)
+    }
     suppressPackageStartupMessages(require(parallel))
     suppressPackageStartupMessages(require(Rsamtools))
     suppressPackageStartupMessages(require(Biostrings))
@@ -243,8 +248,8 @@ run_sc_sequencing <- function(tumour_bams,
     res$timetofit <- system.time(res$allSols <- mclapply(1:length(res$allTracks.processed), function(x)
     {
         sol <- try(searchGrid(res$allTracks.processed[[x]],
-                              purs = purs,
-                              ploidies = ploidies,
+                              purs = purs[[x]],
+                              ploidies = ploidies[[x]],
                               maxTumourPhi=maxtumourpsi,
                               ismale=if(sex[x]=="male") T else F,
                               isPON=res$isPON),silent=F)
