@@ -329,8 +329,8 @@ getAS_CNA <- function(res,
                                 else res$allSolutions[[x]]$purity,
                          ploidy=if(any(grepl("refitted",names(res)))) res$allSolutions.refitted.auto[[x]]$ploidy
                                 else res$allSolutions[[x]]$ploidy,
-                         purs=purs,
-                         ploidies=ploidies,
+                         purs=purs[[x]],
+                         ploidies=ploidies[[x]],
                          path_to_phases=if(length(path_to_phases)>1) path_to_phases[[x]] else NULL,
                          steps=steps)
     },mc.cores=mc.cores)
