@@ -32,9 +32,9 @@ getLSegs.multipcf <- function(allTracks,
         end.ind <- cumsum(nprobes)
         starts <- tmpdata$start
         ends <- tmpdata$end
-        widths <-(ends-starts+1)*2
-        starts <- starts-widths/4
-        ends <- ends+widths/4
+        widths <-ends-starts
+        starts <- starts-widths/2
+        ends <- ends+widths/2
         out$start.pos <- starts[start.ind]
         out$end.pos <- ends[end.ind]
         out
@@ -47,10 +47,11 @@ getLSegs.multipcf <- function(allTracks,
     {
         chr_pcfed <- mclapply(1:nchr,function(i)
         {
+            widths <- (allT$lCTS[[1]][[i]][,"end"]-allT$lCTS[[1]][[i]][,"start"])
             tmpdata <- data.frame("chr"=rep(i,nrow(allT$lCTS[[1]][[i]])),
-                                  pos=round(allT$lCTS[[1]][[i]][,"start"]+allT$lCTS[[1]][[i]][,"width"]/2),
-                                  start=allT$lCTS[[1]][[i]][,"start"]+allT$lCTS[[1]][[i]][,"width"]/4,
-                                  end=allT$lCTS[[1]][[i]][,"end"]-allT$lCTS[[1]][[i]][,"width"]/4,
+                                  pos=round(allT$lCTS[[1]][[i]][,"start"]+widths/2),
+                                  start=allT$lCTS[[1]][[i]][,"start"]+widths/4,
+                                  end=allT$lCTS[[1]][[i]][,"end"]-widths/4,
                                   do.call("cbind",lapply(allT$lCTS,function(x)
                                   {
                                       x[[i]]$smoothed
