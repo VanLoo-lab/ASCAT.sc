@@ -31,11 +31,20 @@ run_sc_sequencing <- function(tumour_bams,
                               sc_exclude_badbins=FALSE)
 {
     checkArguments_scs(c(as.list(environment())))
-    if(!is.list(purs))
+    if(is.list(purs) & is.list(ploidies))
     {
-        purs <- lapply(1:length(tumour_bams), function(x) purs)
-        ploidies <- lapply(1:length(tumour_bams), function(x) ploidies)
-    }
+        if(length(purs)!=length(ploidies))
+            stop("purs and ploidies might not match!")
+        if(length(purs)!=length(tumour_bams))
+            stop("purs and bam might not match")
+        if(length(ploidies)!=length(tumour_bams))
+            stop("ploidies and bam might not match")
+    } else if(!all(is.list(purs),is.list())){
+        stop("purs and ploidies must be both lists in the current version.")
+    } else {
+            purs <- lapply(1:length(bams), function(x) purs)
+            ploidies <- lapply(1:length(bams), function(x) ploidies)
+        }
     suppressPackageStartupMessages(require(parallel))
     suppressPackageStartupMessages(require(Rsamtools))
     suppressPackageStartupMessages(require(Biostrings))

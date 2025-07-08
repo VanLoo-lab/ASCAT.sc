@@ -19,6 +19,20 @@ run_targeted_sequencing <- function(tumour_bams,
                                     projectname="project",
                                     multipcf=FALSE)
 {
+    if(is.list(purs) & is.list(ploidies))
+    {
+        if(length(purs)!=length(ploidies))
+            stop("purs and ploidies might not match!")
+        if(length(purs)!=length(tumour_bams))
+            stop("purs and bam might not match")
+        if(length(ploidies)!=length(tumour_bams))
+            stop("ploidies and bam might not match")
+    } else if(!all(is.list(purs),is.list())){
+        stop("purs and ploidies must be both lists in the current version.")
+    } else {
+            purs <- lapply(1:length(bams), function(x) purs)
+            ploidies <- lapply(1:length(bams), function(x) ploidies)
+        }
     suppressPackageStartupMessages(require(parallel))
     suppressPackageStartupMessages(require(Rsamtools))
     suppressPackageStartupMessages(require(Biostrings))
@@ -144,8 +158,8 @@ run_targeted_sequencing <- function(tumour_bams,
     timetofit <- system.time(allSols <- mclapply(1:length(allTracks.processed), function(x)
     {
         sol <- try(searchGrid(allTracks.processed[[x]],
-                              purs = purs,
-                              ploidies = ploidies,
+                              purs = purs[[x]],
+                              ploidies = ploidies[[x]],
                               maxTumourPhi=maxtumourpsi,
                               ismale=if(sex[x]=="male") T else F,
                               isPON=isPON),silent=F)
