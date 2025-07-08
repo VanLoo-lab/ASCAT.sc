@@ -27,7 +27,7 @@ run_targeted_sequencing <- function(tumour_bams,
             stop("purs and bam might not match")
         if(length(ploidies)!=length(tumour_bams))
             stop("ploidies and bam might not match")
-    } else if(!all(is.list(purs),is.list())){
+    } else if(!all(is.list(purs),is.list(ploidies))){
         stop("purs and ploidies must be both lists in the current version.")
     } else {
             purs <- lapply(1:length(bams), function(x) purs)
