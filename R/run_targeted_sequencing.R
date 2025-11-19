@@ -28,8 +28,8 @@ run_targeted_sequencing <- function(tumour_bams,
     print("## load bins for genome build")
     if(!is.list(purs) & is.vector(purs))
     {
-        purs <- lapply(1:length(bams), function(x) purs)
-        ploidies <- lapply(1:length(bams), function(x) ploidies)
+        purs <- lapply(1:length(tumour_bams), function(x) purs)
+        ploidies <- lapply(1:length(tumour_bams), function(x) ploidies)
     }
     else
     {
