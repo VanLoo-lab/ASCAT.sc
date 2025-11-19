@@ -26,6 +26,15 @@ run_targeted_sequencing <- function(tumour_bams,
     suppressPackageStartupMessages(require(copynumber))
     binsize <- as.numeric(binsize)
     print("## load bins for genome build")
+    if(!is.list(purs) & is.vector(purs))
+    {
+        purs <- lapply(1:length(bams), function(x) purs)
+        ploidies <- lapply(1:length(bams), function(x) ploidies)
+    }
+    else
+    {
+        stop("purs & ploidies should be a list of the same length as bams or a single vector")
+    }
     if(!build=="mm39") START_WINDOW <- 30000 else START_WINDOW <- 5000
     if(build=="hg19")
     {
@@ -56,7 +65,7 @@ run_targeted_sequencing <- function(tumour_bams,
         names(lGCT)[1:length(allchr)] <- names(lSe)[1:length(allchr)] <- allchr
         lSe <- lapply(allchr,function(x) lSe[[x]])
         lGCT <- lapply(allchr,function(x) lGCT[[x]])
-        names(lGCT) <- names(lSe)
+        names(lGCT) <- names(lSe) <- allchr
     }
     print("## read in bed file")
     bed <- ts_treatBed(read.table(bed_file,
@@ -144,8 +153,8 @@ run_targeted_sequencing <- function(tumour_bams,
     timetofit <- system.time(allSols <- mclapply(1:length(allTracks.processed), function(x)
     {
         sol <- try(searchGrid(allTracks.processed[[x]],
-                              purs = purs,
-                              ploidies = ploidies,
+                              purs = purs[[x]],
+                              ploidies = ploidies[[x]],
                               maxTumourPhi=maxtumourpsi,
                               ismale=if(sex[x]=="male") T else F,
                               isPON=isPON),silent=F)

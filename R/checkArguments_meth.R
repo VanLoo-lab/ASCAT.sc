@@ -15,4 +15,15 @@ checkArguments_meth <- function(args)
     }
     if(!dir.exists(args$outdir))
         stop("Output directory outdir does not exist")
+    getPlatform <- function(file)
+    {
+        require(minfi)
+        tryCatch({
+            readIDAT(file, quiet = TRUE)$RunInfo$Array
+        }, error = function(e) NA)
+    }
+    idat_files <- list.files(args$idat_dir, pattern = "idat$", full.names = TRUE)
+    platforms <- sapply(idat_files, getPlatform)
+    print(table(platforms))
+
 }

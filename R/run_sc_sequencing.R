@@ -31,10 +31,14 @@ run_sc_sequencing <- function(tumour_bams,
                               sc_exclude_badbins=FALSE)
 {
     checkArguments_scs(c(as.list(environment())))
-    if(!is.list(purs))
+    if(!is.list(purs) & is.vector(purs))
     {
         purs <- lapply(1:length(bams), function(x) purs)
         ploidies <- lapply(1:length(bams), function(x) ploidies)
+    }
+    else
+    {
+        stop("purs & ploidies should be a list of the same length as bams or a single vector")
     }
     suppressPackageStartupMessages(require(parallel))
     suppressPackageStartupMessages(require(Rsamtools))
