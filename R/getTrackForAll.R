@@ -81,7 +81,7 @@ getTrackForAll <- function(bamfile,
             grcn <- GRanges(allchr[chr],IRanges(starts+round(widths/4),ends-round(widths/4)))
             bpsv <- sort(svinput[,2], decreasing=F)
             grregions <- GRanges(rep(allchr[chr],nrow(svinput)+1),IRanges(c(0,bpsv),c(bpsv-1,1000000000)))
-            ovs <- findOverlaps(grcn, grregions, select = "first")
+            ovs <- nearest(grcn, grregions, ignore.strand = TRUE, select = "arbitrary")
             indices <- lapply(1:length(grregions),function(x)
             {
                 which(ovs==x)

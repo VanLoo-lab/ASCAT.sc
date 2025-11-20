@@ -6,7 +6,7 @@ sc_getBreakpoints_multipcf <- function(tmpdata, svinput, penalties, normalize)
         grcn <- GRanges(tmpdata[,"chr"],IRanges(tmpdata[,"start"],tmpdata[,"end"]))
         bpsv <- sort(sv[,2], decreasing=F)
         grregions <- GRanges(rep(tmpdata[1,"chr"],nrow(sv)+1),IRanges(c(0,bpsv),c(bpsv-1,1000000000)))
-        ovs <- findOverlaps(grcn, grregions, select = "first")
+        ovs <- nearest(grcn, grregions, ignore.strand = TRUE, select = "arbitrary")
         indices <- lapply(1:length(grregions),function(x)
         {
             which(ovs==x)
