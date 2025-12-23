@@ -1,6 +1,7 @@
 printResults_all <- function(res,
                              ismedian=FALSE,
                              outdir="./",
+                             is_pdf,
                              projectname="project",
                              svinput=NULL,
                              lSVinput=NULL,
@@ -12,7 +13,10 @@ printResults_all <- function(res,
     system(createDir)
     for(i in 1:length(res$allTracks.processed))
     {
-        png(paste0(outdir,"/profiles_",projectname,"/",names(res$allTracks)[i],".png"), width = 5500, height = 2496, res=300)
+        if(!is_pdf)
+            png(paste0(outdir,"/profiles_",projectname,"/",names(res$allTracks)[i],".png"), width = 5500, height = 2496, res=300)
+        if(is_pdf)
+            pdf(paste0(outdir,"/profiles_",projectname,"/",names(res$allTracks)[i],".pdf"), width=15, height=5.5)
         try({
             suppressWarnings(plotSolution(res$allTracks.processed[[i]],
                                           purity=res$allSolutions[[i]]$purity,
@@ -23,7 +27,8 @@ printResults_all <- function(res,
                                           ismale=if(!is.null(res$sex)) res$sex[i]=="male" else "female",
                                           sol=res$allSolutions[[i]],
                                           svinput=if(!is.null(lSVinput)) lSVinput[[i]] else svinput,
-                                          rainbowChr=rainbowChr))
+                                          rainbowChr=rainbowChr,
+                                          is_pdf=is_pdf))
             title(names(res$allTracks)[i])
         })
         dev.off()
@@ -41,7 +46,10 @@ printResults_all <- function(res,
     {
         for(i in 1:length(res$allTracks.processed))
         {
-            png(paste0(outdir,"/profiles_",projectname,"_refitted/",names(res$allTracks)[i],".png"), width = 5500, height = 2496, res=300)
+            if(!is_pdf)
+                png(paste0(outdir,"/profiles_",projectname,"_refitted/",names(res$allTracks)[i],".png"), width = 5500, height = 2496, res=300)
+            if(is_pdf)
+                pdf(paste0(outdir,"/profiles_",projectname,"_refitted/",names(res$allTracks)[i],".pdf"), width = 15, height = 5.5)
             try({
                 suppressWarnings(plotSolution(res$allTracks.processed[[i]],
                                               purity=res$allSolutions.refitted.auto[[i]]$purity,
@@ -52,7 +60,8 @@ printResults_all <- function(res,
                                               ismedian=ismedian,
                                               svinput=if(!is.null(lSVinput)) lSVinput[[i]] else svinput,
                                               sol=res$allSolutions[[i]],
-                                              rainbowChr=rainbowChr))
+                                              rainbowChr=rainbowChr,
+                                              is_pdf=is_pdf))
                 title(paste0(names(res$allTracks)[i],"-refitted"))
             })
             dev.off()

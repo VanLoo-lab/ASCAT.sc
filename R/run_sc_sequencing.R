@@ -16,6 +16,7 @@ run_sc_sequencing <- function(tumour_bams,
                               barcodes_10x=NULL,
                               normal_bams=NULL,
                               outdir="./",
+                              is_pdf=F,
                               probs_filters=.1,
                               path_to_phases=NULL,
                               list_ac_counts_paths=NULL,
@@ -300,7 +301,7 @@ run_sc_sequencing <- function(tumour_bams,
     if(print_results)
     {
         print("## print Results")
-        res <- printResults_all(res, svinput=svinput, lSVinput=lSVinput, outdir=outdir, projectname=projectname)
+        res <- printResults_all(res, svinput=svinput, lSVinput=lSVinput, outdir=outdir, projectname=projectname, is_pdf=is_pdf)
     }
     if(sc_filters)
     {
