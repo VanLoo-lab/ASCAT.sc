@@ -317,6 +317,15 @@ getAS_CNA <- function(res,
         print("## read-in Phases")
         phases <- readPhases(path_to_phases[[1]])
     }
+
+    # Convert purs/ploidies to list 
+    if(!is.list(purs))
+    {
+        purs <- lapply(1:length(res$allTracks.processed), function(x) purs)
+        ploidies <- lapply(1:length(res$allTracks.processed), function(x) ploidies)
+    }
+    # ADD THIS LINE AT THE VERY START
+    print(">>> USING FIXED VERSION OF run_sc_sequencing (2026-01-11) <<<")
     print("## derive Allele-specific Profiles")
     res$allProfiles_AS <- parallel::mclapply(1:length(res$allTracks.processed), function(x)
     {

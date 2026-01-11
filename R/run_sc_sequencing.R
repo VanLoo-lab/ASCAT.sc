@@ -32,15 +32,6 @@ run_sc_sequencing <- function(tumour_bams,
                               sc_exclude_badbins=FALSE)
 {
     checkArguments_scs(c(as.list(environment())))
-    if(!is.list(purs) & is.vector(purs))
-    {
-        purs <- lapply(1:length(tumour_bams), function(x) purs)
-        ploidies <- lapply(1:length(tumour_bams), function(x) ploidies)
-    }
-    else
-    {
-        stop("purs & ploidies should be a list of the same length as bams or a single vector")
-    }
     suppressPackageStartupMessages(require(parallel))
     suppressPackageStartupMessages(require(Rsamtools))
     suppressPackageStartupMessages(require(Biostrings))
@@ -249,6 +240,14 @@ run_sc_sequencing <- function(tumour_bams,
         names(res$allTracks.processed) <- names(res$allTracks) <- basename(tumour_bams)
     else
         names(res$allTracks.processed) <- names(res$allTracks)
+
+    if(!is.list(purs)) 
+    {
+        purs <- lapply(1:length(res$allTracks.processed), function(x) purs)
+        ploidies <- lapply(1:length(res$allTracks.processed), function(x) ploidies)
+    }
+    # ADD THIS LINE AT THE VERY START
+    print(">>> USING FIXED VERSION OF run_sc_sequencing (2026-01-11) <<<")
     print("## fit Purity/Ploidy")
     res$timetofit <- system.time(res$allSols <- mclapply(1:length(res$allTracks.processed), function(x)
     {
