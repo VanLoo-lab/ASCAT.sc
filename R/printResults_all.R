@@ -1,7 +1,7 @@
 printResults_all <- function(res,
                              ismedian=FALSE,
                              outdir="./",
-                             is_pdf,
+                             is_pdf=F,
                              projectname="project",
                              svinput=NULL,
                              lSVinput=NULL,

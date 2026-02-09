@@ -16,6 +16,7 @@ run_targeted_sequencing <- function(tumour_bams,
                                     print_results=TRUE,
                                     MC.CORES=1,
                                     outdir="./",
+                                    is_pdf=F,
                                     projectname="project",
                                     multipcf=FALSE)
 {
@@ -192,6 +193,6 @@ run_targeted_sequencing <- function(tumour_bams,
     if(predict_refit)
         res <- predictRefit_all(res)
     if(print_results)
-        res <- printResults_all(res, outdir=outdir, projectname=projectname)
+        res <- printResults_all(res, outdir=outdir, projectname=projectname, is_pdf=is_pdf)
     res
 }
