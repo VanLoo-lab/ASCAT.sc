@@ -15,8 +15,6 @@ Imports:
     DNAcopy,
     copynumber,
     xgboost,
-    minfi,
-    conumee,
     shiny,
     shinybusy,
     shinythemes,

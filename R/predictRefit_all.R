@@ -1,14 +1,23 @@
 predictRefit_all <- function(res, ismedian=FALSE, gamma=1)
 {
+    require(xgboost)
     if(is.null(res$is_methyl))
     {
-        data("model_xgboost",package="ASCAT.sc")
-        xgb_model <- final_model
+        ##data("model_xgboost",package="ASCAT.sc")
+        ##xgb_model <- final_model
+        xgb_model <- xgb.load(list.files(system.file('extdata',
+                                                     package = 'ASCAT.sc'),
+                                         full.names = TRUE,
+                                         pattern="09022026.ubj"))
     }
     else
     {
-        data("model_xgb_trained_on_tcga_toby",package="ASCAT.ma")
-        xgb_model <- model_xgb
+        ##data("model_xgb_trained_on_tcga_toby",package="ASCAT.ma")
+        ##xgb_model <- model_xgb
+        xgb_model <- xgb.load(list.files(system.file('extdata',
+                                                     package = 'ASCAT.ma'),
+                                         full.names = TRUE,
+                                         pattern="09022026.ubj"))
     }
     predict_path <-function(df)
     {
