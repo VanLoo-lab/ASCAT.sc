@@ -329,10 +329,15 @@ plotSolution <- function(tracksSingle,
   dpb <- median(unlist(lapply(tracksSingle$lCTS,function(x) x$records)),na.rm=T)
   dpb <- if(all(tracksSingle$lCTS[[1]]$records==tracksSingle$lCTS[[1]]$smoothed)) NA else dpb
 
+  # FIX: previously y=ylim[2]+3 with pos=1 (below) placed the text above the data
+  # range (plot goes to ylim[2]+2). R clips at the data range, so only a thin sliver
+  # showed right on top of the black rectangles (at ylim[2]+1). Fix: use pos=3
+  # (above the reference point) at y=ylim[2]+1.8, combined with xpd=NA so the text
+  # can draw into the top figure margin and is fully readable above the rectangles.
   if(ambiguousFlag) {
 
       text(x = breaks[9],
-           y=ylim[2]+ifelse(is_pdf,2.4,1.8),
+           y = ylim[2]+1.8,
            labels= paste0("purity=",
                           signif(purity,2),
                           "; average ploidy=",
@@ -342,13 +347,13 @@ plotSolution <- function(tracksSingle,
                           "; ambiguous=", ambiguous,
                           "; dpb=", dpb
 
-    ), adj=0, pos=1)
+    ), adj=0, pos=3, xpd=NA)
 
   }
   else {
 
       text(x = breaks[9],
-           y=ylim[2]+ifelse(is_pdf,2.4,1.8),
+           y = ylim[2]+1.8,
            labels= paste0("purity=",
                           signif(purity,2),
                           "; average ploidy=",
@@ -358,7 +363,7 @@ plotSolution <- function(tracksSingle,
                           "; large deep deletion fraction=", ambiguous,
                           "; dpb=", dpb
 
-    ), adj=0, pos=1)
+    ), adj=0, pos=3, xpd=NA)
 
   }
 
@@ -368,10 +373,10 @@ plotSolution <- function(tracksSingle,
        col=BASECOLOUR2,
        cex = 1.5)
 
-  text(x = ifelse(is_pdf,-90,-70),
-       y = ifelse(is_pdf,0.9,2.7),
+  text(x = -90,
+       y = 0.9,
        labels="Total copy number",
        col= BASECOLOUR2,
        cex = 1.5, adj=0, srt=90)
-
 }
+

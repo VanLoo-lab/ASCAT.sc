@@ -11,7 +11,17 @@ plotSunrise <- function(solution, localMinima = FALSE, plotClust=FALSE, is_sc=FA
     errs.max <- max(solution$errs[!is.infinite(solution$errs)])
     errs[is.infinite(errs)] <- errs.max
     errs <- errs/errs.max
-    errs <- errs[rev(seq_len(nrow(errs))), ]
+    
+    # FIX 1: only reverse rows if purity is currently ascending (row 1 = min purity).
+    # Some solution objects store the matrix already descending (row 1 = max purity).
+    # A blind rev() there double-flips the matrix, rendering rasterImage upside down.
+    # After this block, row 1 is always the highest purity value, which rasterImage
+    # renders at y=1 (top) — consistent with the axis and marker formulas below.
+    
+    purity_vals <- as.numeric(rownames(errs))
+    if (purity_vals[1] < purity_vals[nrow(errs)]) {
+      errs <- errs[rev(seq_len(nrow(errs))), ]
+    }
     
     
     .getCol <- function(x) {
@@ -53,8 +63,18 @@ plotSunrise <- function(solution, localMinima = FALSE, plotClust=FALSE, is_sc=FA
     
     else {
       
+      # FIX 2: The is_sc axis places ticks at seq(0.1, 1, 0.9/(nrow-1)), so the
+      # y-coordinate for row index i (post-rev, row 1 = max purity) is:
+      #   y = 1 - (i - 1) * 0.9 / (nrow - 1)
+      # The previous formula (i - 1)/(nrow - 1) was inverted (mapped row 1 -> y=0
+      # instead of y=1) and on the wrong 0..1 scale instead of the 0.1..1.0 axis scale.
+      # The same correct formula applies at all three marker call sites below.
+      
+      i_sol <- which(rownames(errs) == solution$purity)
+      y_sol <- 1 - (i_sol - 1) * 0.9 / (nrow(errs) - 1)
+      
       points(which(colnames(errs) == solution$ploidy)/ncol(errs),
-             (which(rownames(errs) == solution$purity) - 1)/(nrow(errs)-1),
+             y_sol,
              col = "chartreuse", pch = "X",cex = 1.5)
       
       
@@ -64,12 +84,14 @@ plotSunrise <- function(solution, localMinima = FALSE, plotClust=FALSE, is_sc=FA
         ao <- bao1$bao
         
         text(ao[,2]/ncol(errs),
-             (ao[,1] - 1)/(nrow(errs)-1), label=1:nrow(ao),
+             1 - (ao[,1] - 1) * 0.9 / (nrow(errs) - 1),
+             label=1:nrow(ao),
              col = "white", pch = 19)
         ao <- bao1$ao
         if(plotClust){
           text(ao[,2]/ncol(errs),
-               1-ao[,1]/nrow(errs), label=1:nrow(ao),
+               1 - (ao[,1] - 1) * 0.9 / (nrow(errs) - 1),
+               label=1:nrow(ao),
                col = RColorBrewer::brewer.pal(12,"Paired")[bao1$clusts], cex=.6)
           
         }
