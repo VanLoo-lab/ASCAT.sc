@@ -1,33 +1,33 @@
 Package: ASCAT.sc
 Type: Package
-Title: LogR-based copy number calling for shallow coverage (SC) and/or single-cell sequencing (SC) experiments
-Version: 0.1
-Date: 2021-06-11
-Author: Maxime Tarabichi
-Maintainer: <maxime.tarabichi@gmail.com>
-Description: LogR-based copy number calling for shallow coverage (SC) and/or single-cell sequencing (SC) experiments
-License: GNU-GPL V3
+Title: LogR-based copy number calling for shallow coverage (SC) and/or single-cell sequencing experiments
+Version: 0.1.0
+Authors@R: 
+    person("Maxime", "Tarabichi", email = "maxime.tarabichi@gmail.com", role = c("aut", "cre"))
+Description: LogR-based copy number calling for shallow coverage (SC) and/or single-cell sequencing experiments.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
 Imports:
     Biostrings,
+    copynumber,
+    DNAcopy,
+    dipsaus,
     GenomicRanges,
     parallel,
     Rsamtools,
-    DNAcopy,
-    copynumber,
-    xgboost,
     shiny,
-    shinybusy,
-    shinythemes,
-    shinyWidgets,
-    shinycssloaders,
-    shinyjs,
     shinyalert,
+    shinybusy,
+    shinycssloaders,
     shinydashboard,
     shinyFiles,
+    shinyjs,
+    shinythemes,
+    shinyWidgets,
     spatstat.geom,
-    dipsaus
+    xgboost
 Suggests: 
     knitr,
     rmarkdown
 VignetteBuilder: knitr
-ShinyAppDir: PloidyModifier

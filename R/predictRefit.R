@@ -2,10 +2,18 @@ predictRefit <- function(prof)
 {
     suppressPackageStartupMessages(require(xgboost))
     ##data("predict_refit_xgb_object_pcawg",package="ASCAT.sc")
-    predict_refit_xgb_pcawg <- xgb.load(list.files(system.file('extdata',
-                                                               package = 'ASCAT.sc'),
-                                                   full.names = TRUE,
-                                                   pattern="1.6.0.1"))
+    ##predict_refit_xgb_pcawg <- xgb.load(list.files(system.file('extdata',
+    ##                                                           package = 'ASCAT.sc'),
+    ##                                               full.names = TRUE,
+    ##                                               pattern="1.6.0.1"))
+    model_path <- system.file("extdata",
+                              "model_xgboost_tcga_snp6_200426.json",
+                              package = "ASCAT.sc")
+    if(model_path=="")
+    {
+        stop("Model file not found in package. Check installation.")
+    }
+    predict_refit_xgb_tcga <- xgboost::xgb.load(model_path)
     .getTotal <- function(cn)
     {
         .getTotalDistrib <- function(cn)
@@ -28,5 +36,5 @@ predictRefit <- function(prof)
           .getTotalDistrib(cn),
           .getTotalDistrib(cnp1))
     }
-    predsProfs <- predict(predict_refit_xgb_pcawg,t(as.matrix(.getTotal(prof))))
+    predsProfs <- predict(predict_refit_xgb_tcga,t(as.matrix(.getTotal(prof))))
 }

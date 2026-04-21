@@ -29,7 +29,8 @@ run_sc_sequencing <- function(tumour_bams,
                               lExclude=NULL,
                               svinput=NULL,
                               lSVinput=NULL,
-                              sc_exclude_badbins=FALSE)
+                              sc_exclude_badbins=FALSE,
+                              betabinom=FALSE)
 {
     checkArguments_scs(c(as.list(environment())))
     suppressPackageStartupMessages(require(parallel))
@@ -132,7 +133,6 @@ run_sc_sequencing <- function(tumour_bams,
             }))
             # Unlist the top layer to flatten list
             res$allTracks <- unlist(res$allTracks, recursive = FALSE)
-
             # sex[1] because the assumption is when running multiple bamfiles, they are from the same tumour?
             # This ensures that it has the correct length
             sex <- rep(sex[1], length(res$allTracks))
@@ -241,13 +241,11 @@ run_sc_sequencing <- function(tumour_bams,
     else
         names(res$allTracks.processed) <- names(res$allTracks)
 
-    if(!is.list(purs)) 
+    if(!is.list(purs))
     {
         purs <- lapply(1:length(res$allTracks.processed), function(x) purs)
         ploidies <- lapply(1:length(res$allTracks.processed), function(x) ploidies)
     }
-    # ADD THIS LINE AT THE VERY START
-    print(">>> USING FIXED VERSION OF run_sc_sequencing (2026-01-11) <<<")
     print("## fit Purity/Ploidy")
     res$timetofit <- system.time(res$allSols <- mclapply(1:length(res$allTracks.processed), function(x)
     {
@@ -321,6 +319,7 @@ run_sc_sequencing <- function(tumour_bams,
                          outdir=outdir,
                          projectname=projectname,
                          steps=steps,
+                         betabinom=betabinom,
                          mc.cores=MC.CORES)
         names(res$allProfiles_AS) <- names(res$allProfiles)
     }

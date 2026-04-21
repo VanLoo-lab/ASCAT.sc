@@ -1,24 +1,14 @@
 predictRefit_all <- function(res, ismedian=FALSE, gamma=1)
 {
     require(xgboost)
-    if(is.null(res$is_methyl))
+    model_path <- system.file("extdata",
+                              "model_xgboost_tcga_snp6_200426.json",
+                              package = "ASCAT.sc")
+    if(model_path=="")
     {
-        ##data("model_xgboost",package="ASCAT.sc")
-        ##xgb_model <- final_model
-        xgb_model <- xgb.load(list.files(system.file('extdata',
-                                                     package = 'ASCAT.sc'),
-                                         full.names = TRUE,
-                                         pattern="09022026.ubj"))
+        stop("Model file not found in package. Check installation.")
     }
-    else
-    {
-        ##data("model_xgb_trained_on_tcga_toby",package="ASCAT.ma")
-        ##xgb_model <- model_xgb
-        xgb_model <- xgb.load(list.files(system.file('extdata',
-                                                     package = 'ASCAT.ma'),
-                                         full.names = TRUE,
-                                         pattern="09022026.ubj"))
-    }
+    xgb_model <- xgboost::xgb.load(model_path)
     predict_path <-function(df)
     {
         fit_df <- get_fit_features(df)
@@ -67,48 +57,4 @@ predictRefit_all <- function(res, ismedian=FALSE, gamma=1)
                                                              CHRS=res$chr),silent=F)
     }
     return(res)
-}
-
-if(FALSE){
-predictRefit_all <- function(res, ismedian=FALSE, gamma=1)
-{
-    preds <- lapply(res$allProfiles, function(x) try(predictRefit(x)))
-    res$allProfiles.refitted.auto <- list()
-    res$allSolutions.refitted.auto <- list()
-    for(i in 1:length(preds))
-    {
-        if(is.numeric(preds[[i]]) & length(preds[[i]])==1)
-        {
-            if(preds[i]!=1)
-                {
-                    res$allSolutions.refitted.auto[[i]] <- try(refitProfile_shift(track=res$allTracks.processed[[i]],
-                                                                                  solution=res$allSolutions[[i]],
-                                                                                  CHRS=res$chr,
-                                                                                  gamma=gamma,
-                                                                                  ismedian=ismedian,
-                                                                                  shift=if(preds[i]==0) 1 else -1,
-                                                                                  isPON=res$isPON),silent=F)
-                    res$allProfiles.refitted.auto[[i]] <- try(getProfile(fitProfile(res$allTracks.processed[[i]],
-                                                                                    purity=res$allSolutions.refitted.auto[[i]]$purity,
-                                                                                    ploidy=res$allSolutions.refitted.auto[[i]]$ploidy,
-                                                                                    ismedian=ismedian,
-                                                                                    gamma=gamma,
-                                                                                    ismale=if(res$sex[i]=="male") T else F),
-                                                                         CHRS=res$chr),silent=F)
-                }
-            if(preds[i]==1)
-            {
-                res$allSolutions.refitted.auto[[i]] <- res$allSolutions[[i]]
-                res$allProfiles.refitted.auto[[i]] <- try(getProfile(fitProfile(res$allTracks.processed[[i]],
-                                                                                purity=res$allSolutions.refitted.auto[[i]]$purity,
-                                                                                ploidy=res$allSolutions.refitted.auto[[i]]$ploidy,
-                                                                                gamma=gamma,
-                                                                                ismedian=ismedian,
-                                                                                ismale=if(res$sex[i]=="male") T else F),
-                                                                     CHRS=res$chr),silent=F)
-            }
-        }
-    }
-    return(res)
-}
 }

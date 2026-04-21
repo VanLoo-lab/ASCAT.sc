@@ -21,8 +21,10 @@ get_fit_features <- function(fit_cn)
     deviation <- abs(fit_cn$total_copy_number_logr - fit_cn$total_copy_number)
     ## Deviation features
     fit_features[["Deviation_Med"]] <- median(deviation,na.rm=T)
-    fit_features[["Deviation_Q_Low"]] <- as.numeric(quantile(deviation, 0.10,na.rm=T))
-    fit_features[["Deviation_Q_High"]] <- as.numeric(quantile(deviation, 0.90,na.rm=T))
+    fit_features[["Deviation_Q_VLow"]] <- as.numeric(quantile(deviation, 0.10,na.rm=T))
+    fit_features[["Deviation_Q_Low"]] <- as.numeric(quantile(deviation, 0.25,na.rm=T))
+    fit_features[["Deviation_Q_High"]] <- as.numeric(quantile(deviation, 0.75,na.rm=T))
+    fit_features[["Deviation_Q_VHigh"]] <- as.numeric(quantile(deviation, 0.90,na.rm=T))
     df <- data.frame(fit_features, stringsAsFactors = FALSE)
     return(df)
 }
