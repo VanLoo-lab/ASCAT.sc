@@ -898,10 +898,7 @@ server <- function(input, output, session) {
             errs.max <- max(solution$errs[!is.infinite(solution$errs)])
             errs[is.infinite(errs)] <- errs.max
             errs <- errs/errs.max
-            # FIX: conditional rev — only reverse if purity is currently ascending,
-            # matching the same logic in plotSunrise so click coordinates align with
-            # the rendered image (row 1 = max purity after this block).
-            purity_vals_click <- as.numeric(rownames(errs))
+                     purity_vals_click <- as.numeric(rownames(errs))
             if (purity_vals_click[1] < purity_vals_click[nrow(errs)]) {
               errs <- errs[rev(seq_len(nrow(errs))), ]
             }
@@ -912,10 +909,7 @@ server <- function(input, output, session) {
             if (optValue()){
               best <- 1
               
-              # FIX: sc y-coordinate for row index i is 1 - (i-1)*0.9/(nrow-1),
-              # matching the axis formula seq(0.1, 1, 0.9/(nrow-1)) used in plotSunrise.
-              # The previous formula (i-1)/(nrow-1) was inverted and on the wrong scale.
-              dist <- crossdist(ploidy, purity, localOpt$bao[best, 2]/ncol(errs), 1 - (localOpt$bao[best, 1]-1) * 0.9 / (nrow(errs)-1))
+                dist <- crossdist(ploidy, purity, localOpt$bao[best, 2]/ncol(errs), 1 - (localOpt$bao[best, 1]-1) * 0.9 / (nrow(errs)-1))
               
               
               for (i in 1:nrow(localOpt$bao)){
@@ -936,10 +930,7 @@ server <- function(input, output, session) {
             }
             
             ploidy <- as.numeric(colnames(errs)[round(as.numeric(ploidy)*ncol(errs), digits=0)])
-            # FIX: invert the correct sc formula y = 1 - (i-1)*0.9/(nrow-1)
-            # to get row index from click y: i = 1 + (1-y)*(nrow-1)/0.9.
-            # Clamped to valid row range to guard against edge clicks.
-            purity <- as.numeric(rownames(errs)[
+               purity <- as.numeric(rownames(errs)[
               max(1, min(nrow(errs), 1 + round((1 - as.numeric(purity)) * (nrow(errs)-1) / 0.9, digits=0)))
             ])
             

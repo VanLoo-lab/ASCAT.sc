@@ -329,11 +329,6 @@ plotSolution <- function(tracksSingle,
   dpb <- median(unlist(lapply(tracksSingle$lCTS,function(x) x$records)),na.rm=T)
   dpb <- if(all(tracksSingle$lCTS[[1]]$records==tracksSingle$lCTS[[1]]$smoothed)) NA else dpb
 
-  # FIX: previously y=ylim[2]+3 with pos=1 (below) placed the text above the data
-  # range (plot goes to ylim[2]+2). R clips at the data range, so only a thin sliver
-  # showed right on top of the black rectangles (at ylim[2]+1). Fix: use pos=3
-  # (above the reference point) at y=ylim[2]+1.8, combined with xpd=NA so the text
-  # can draw into the top figure margin and is fully readable above the rectangles.
   if(ambiguousFlag) {
 
       text(x = breaks[9],
