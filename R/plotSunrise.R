@@ -2,6 +2,13 @@ plotSunrise <- function(solution, localMinima = FALSE, plotClust=FALSE, is_sc=FA
 {
   tryCatch({
     
+    rdbu10 <- c("#67001F","#B2182B","#D6604D","#F4A582","#FDDBC7",
+                "#D1E5F0","#92C5DE","#4393C3","#2166AC","#053061")
+    
+    hmcol <- colorRampPalette(rdbu10)(256)
+    hmcol[1:70] <- colorRampPalette(hmcol[28:70])(70)
+    hmcol[197:256] <- colorRampPalette(hmcol[197:232])(60)
+    
     plot(0, 0, col = rgb(0, 0, 0, 0), xlab = "ploidy", ylab = "purity",
          xaxt = "n", yaxt = "n", frame = F, xlim = c(0, 1), ylim = c(0,
                                                                      1))
@@ -18,14 +25,19 @@ plotSunrise <- function(solution, localMinima = FALSE, plotClust=FALSE, is_sc=FA
       errs <- errs[rev(seq_len(nrow(errs))), ]
     }
     
-    
+    # ASCAT colors
     .getCol <- function(x) {
-      vec <- c(sapply(seq(0, 1, length.out = 100), function(x) rgb(0.85,
-                                                                   0.33, 0.33, 1 - x)), sapply(seq(0, 1, length.out = 100),
-                                                                                               function(x) rgb(0.18, 0.34, 0.6, x)))
-      vec[pmax(1, pmin(200, round(x * 200)))]
-      
+      x <- pmax(0, pmin(1, x))
+      hmcol[round(x * 255) + 1]
     }
+    
+    # .getCol <- function(x) {
+    #   vec <- c(sapply(seq(0, 1, length.out = 100), function(x) rgb(0.85,
+    #                                                                0.33, 0.33, 1 - x)), sapply(seq(0, 1, length.out = 100),
+    #                                                                                            function(x) rgb(0.18, 0.34, 0.6, x)))
+    #   vec[pmax(1, pmin(200, round(x * 200)))]
+    #   
+    # }
     
     im <- matrix(.getCol(as.vector(1 - errs)), dim(errs)[1],
                  dim(errs)[2])
