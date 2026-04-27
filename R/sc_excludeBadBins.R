@@ -3,7 +3,7 @@ sc_excludeBadBins <- function(res)
     if(!is.null(res$lCTS.normal$nlCTS.normal))
     {
         print("Using normal samples for removal of bad bins")
-        lInds <- filterBins(allTracks=res$lCTS.normal$nlCTS.normal, logr=NULL, lSe=res$nlSe, IQRC=1.5)
+        lInds <- filterBins(allTracks=res$lCTS.normal$nlCTS.normal, logr=NULL, lSe=res$nlSe)
         res$nlGCT <- getlGCT_excluded(res$nlGCT, lInds)
         res$nlSe <- getlSe_excluded(res$nlSe, lInds)
         if(!is.null(res$lNormals))

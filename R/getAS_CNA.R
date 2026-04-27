@@ -287,7 +287,8 @@ getAS_CNA <- function(res,
                             stringsAsFactors=F)
         if(betabinom)
         {
-            for(rho in seq(0.01,0.2,0.01))
+            rhos_grid <- c(seq(0,0.02,0.01), seq(0.2,0.5,0.02))
+            for(rho in rhos)
             {
                 df_rho=data.frame(col1=rep(as.numeric(NA),nrow(nprof)),
                                   col2=rep(as.numeric(NA),nrow(nprof)),
@@ -325,7 +326,7 @@ getAS_CNA <- function(res,
                                                                                                     rowSums(df[inds, c(3,4)]))
                 if(betabinom)
                 {
-                    for(rho in seq(0.01,0.2,0.01))
+                    for(rho in rhos)
                     {
                         nprof[i,paste0(c("q05_rho","BAF_rho","q95_rho"),rho)] <- fitBetaBinom.1dist(df[inds, 3],
                                                                                                     rowSums(df[inds, c(3,4)]),

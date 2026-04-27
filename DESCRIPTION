@@ -7,7 +7,7 @@ Authors@R:
 Description: LogR-based copy number calling for shallow coverage (SC) and/or single-cell sequencing experiments.
 License: GPL-3
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 Imports:
     Biostrings,
     copynumber,
