@@ -229,13 +229,17 @@ cluster_by_cell_type <- function(mat, cell_types,
 #' @return data.table with chr, start, end, bin, start_cum, end_cum
 extract_bins <- function(res) {
   message("Extracting genomic bins...")
-  
-  # res$lSe is a list where each element is a chromosome
-  bins_list <- lapply(names(res$lSe), function(chr) {
+
+  # Prefer nlSe (filtered by sc_excludeBadBins) over lSe (original full set).
+  # nlSe uses $starts/$ends; lSe uses $start/$end.
+  lSe_use    <- if (!is.null(res$nlSe)) res$nlSe else res$lSe
+  use_plural <- !is.null(res$nlSe)
+
+  bins_list <- lapply(names(lSe_use), function(chr) {
     data.table(
-      chr = chr,
-      start = res$lSe[[chr]]$start,
-      end = res$lSe[[chr]]$end
+      chr   = chr,
+      start = if (use_plural) lSe_use[[chr]]$starts else lSe_use[[chr]]$start,
+      end   = if (use_plural) lSe_use[[chr]]$ends   else lSe_use[[chr]]$end
     )
   })
   
@@ -328,45 +332,61 @@ extract_total_profiles <- function(res) {
 #' @return list with $nMajor, $nMinor, $total (all data.tables)
 extract_allele_profiles <- function(res, bins) {
   message("Extracting allele-specific profiles...")
-  
-  if (is.null(res$allProfiles_AS)) {
-    stop("No allProfiles_AS found in result object.")
+
+  as_profiles <- if (!is.null(res$allProfiles_AS_smoothed)) res$allProfiles_AS_smoothed else res$allProfiles_AS
+  if (is.null(as_profiles)) {
+    stop("No allProfiles_AS or allProfiles_AS_smoothed found in result object.")
   }
-  
-  cell_names <- names(res$allProfiles_AS)
+
+  cell_names <- names(as_profiles)
   message(sprintf("  Processing %d cells...", length(cell_names)))
   
   n_bins <- nrow(bins)
   
+  # allProfiles_AS_smoothed entries are data frames directly (nprof.fixed columns
+  # + allele1Inferred/allele2Inferred/AS_mode_ON); allProfiles_AS entries are
+  # lists with a $nprof.fixed element. Detect which structure we have.
+  is_smoothed <- !is.null(res$allProfiles_AS_smoothed)
+
   profiles_list <- lapply(cell_names, function(cell) {
-    cell_data <- res$allProfiles_AS[[cell]]
-    
-    # Handle NA or invalid cell data
-    if (!is.list(cell_data) || is.null(cell_data$nprof.fixed)) {
-      return(list(nMajor = rep(NA_real_, n_bins),
-                  nMinor = rep(NA_real_, n_bins),
-                  total = rep(NA_real_, n_bins)))
+    cell_data <- as_profiles[[cell]]
+
+    # Extract the profile data frame depending on structure
+    if (is_smoothed) {
+      # smoothed: cell_data IS the data frame
+      if (!is.data.frame(cell_data) && !is.matrix(cell_data)) {
+        return(list(nMajor = rep(NA_real_, n_bins),
+                    nMinor = rep(NA_real_, n_bins),
+                    total  = rep(NA_real_, n_bins)))
+      }
+      prof <- as.data.table(cell_data)
+    } else {
+      # unsmoothed: cell_data is a list with $nprof.fixed
+      if (!is.list(cell_data) || is.null(cell_data$nprof.fixed)) {
+        return(list(nMajor = rep(NA_real_, n_bins),
+                    nMinor = rep(NA_real_, n_bins),
+                    total  = rep(NA_real_, n_bins)))
+      }
+      prof <- as.data.table(cell_data$nprof.fixed)
     }
-    
-    prof <- as.data.table(cell_data$nprof.fixed)
-    
-    # Get num.mark from the total profiles (same segments, same row order)
+
+    # num.mark comes from the total (segmented) profiles — same row order
     total_prof <- as.data.table(res$allProfiles[[cell]])
     num_mark <- as.numeric(total_prof$num.mark)
-    
+
     # If nA is NA, set to 0; if nB is NA, assign total_copy_number
     prof[is.na(nA), nA := 0]
     prof[is.na(nB), nB := total_copy_number]
-    
+
     # Expand segments to bins using num.mark
     nA_expanded <- rep(as.numeric(prof$nA), num_mark)
     nB_expanded <- rep(as.numeric(prof$nB), num_mark)
-    
+
     # nMajor = max(nA, nB), nMinor = min(nA, nB)
     nMajor <- pmax(nA_expanded, nB_expanded, na.rm = FALSE)
     nMinor <- pmin(nA_expanded, nB_expanded, na.rm = FALSE)
     total <- nMajor + nMinor
-    
+
     list(nMajor = nMajor, nMinor = nMinor, total = total)
   })
   
@@ -415,9 +435,11 @@ extract_allele_profiles <- function(res, bins) {
 }
 
 extract_baf_ci <- function(res, cell_name, bins) {
-  cell_as <- res$allProfiles_AS[[cell_name]]
-  
-  seg_prof <- as.data.table(cell_as$nprof.fixed)
+  as_profiles <- if (!is.null(res$allProfiles_AS_smoothed)) res$allProfiles_AS_smoothed else res$allProfiles_AS
+  cell_as <- as_profiles[[cell_name]]
+
+  # smoothed: cell_as IS the data frame; unsmoothed: access $nprof.fixed
+  seg_prof <- as.data.table(if (is.data.frame(cell_as) || is.matrix(cell_as)) cell_as else cell_as$nprof.fixed)
   cell_total <- as.data.table(res$allProfiles[[cell_name]])
   num_mark <- as.numeric(cell_total$num.mark)
   
@@ -1257,6 +1279,9 @@ plot_allele_profile <- function(nMajor, nMinor, bins, cell_name = NULL, ploidy =
 #' @param res ASCAT.sc result object
 #' @return Logical: TRUE if allele-specific, FALSE otherwise
 detect_allele_specific <- function(res) {
+  if (!is.null(res$allProfiles_AS_smoothed) && length(res$allProfiles_AS_smoothed) > 0) {
+    return(TRUE)
+  }
   if (!is.null(res$allProfiles_AS) && length(res$allProfiles_AS) > 0) {
     return(TRUE)
   }
