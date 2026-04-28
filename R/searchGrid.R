@@ -69,6 +69,7 @@ searchGrid <- function (tracksSingle,
     counts <- 0
     totalcounts <- 0
     ambiguous <- F
+    oerrs <- errs
     while (SOL_SEARCHING)
     {
         mins <- arrayInd(which.min(errs), dim(errs))
@@ -99,8 +100,21 @@ searchGrid <- function (tracksSingle,
             }
             if(totalcounts>maxattempts)
             {
+                ## CN=0 regions are large regardless of the optima
                 SOL_SEARCHING <- FALSE
                 ambiguous <- T
+                mins <- arrayInd(which.min(oerrs), dim(oerrs))
+                ## reverting to best fit
+                purity <- purs[mins[1]]
+                ploidy <- ploidies[mins[2]]
+                meansSeg <- fitProfile(tracksSingle,
+                                       purity,
+                                       ploidy,
+                                       gamma=gamma,
+                                       ismale=ismale,
+                                       isPON=isPON,
+                                       ismedian=ismedian,
+                                       gridsearch=T)
             }
         }
     }
