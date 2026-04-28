@@ -287,7 +287,7 @@ getAS_CNA <- function(res,
                             stringsAsFactors=F)
         if(betabinom)
         {
-            rhos_grid <- c(seq(0,0.02,0.01), seq(0.2,0.5,0.02))
+            rhos <- c(seq(0,0.02,0.01), seq(0.2,0.5,0.02))
             for(rho in rhos)
             {
                 df_rho=data.frame(col1=rep(as.numeric(NA),nrow(nprof)),

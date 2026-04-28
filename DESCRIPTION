@@ -1,7 +1,7 @@
 Package: ASCAT.sc
 Type: Package
 Title: LogR-based copy number calling for shallow coverage (SC) and/or single-cell sequencing experiments
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: 
     person("Maxime", "Tarabichi", email = "maxime.tarabichi@gmail.com", role = c("aut", "cre"))
 Description: LogR-based copy number calling for shallow coverage (SC) and/or single-cell sequencing experiments.
