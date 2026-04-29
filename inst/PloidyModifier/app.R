@@ -898,7 +898,10 @@ server <- function(input, output, session) {
             errs.max <- max(solution$errs[!is.infinite(solution$errs)])
             errs[is.infinite(errs)] <- errs.max
             errs <- errs/errs.max
-            errs <- errs[rev(seq_len(nrow(errs))), ]
+                     purity_vals_click <- as.numeric(rownames(errs))
+            if (purity_vals_click[1] < purity_vals_click[nrow(errs)]) {
+              errs <- errs[rev(seq_len(nrow(errs))), ]
+            }
             
             purity <- coords$y
             ploidy <- coords$x
@@ -906,12 +909,12 @@ server <- function(input, output, session) {
             if (optValue()){
               best <- 1
               
-              dist <- crossdist(ploidy, purity, localOpt$bao[best, 2]/ncol(errs), (localOpt$bao[best, 1]-1)/(nrow(errs)-1))
+                dist <- crossdist(ploidy, purity, localOpt$bao[best, 2]/ncol(errs), 1 - (localOpt$bao[best, 1]-1) * 0.9 / (nrow(errs)-1))
               
               
               for (i in 1:nrow(localOpt$bao)){
                 
-                dist2 <- crossdist(ploidy, purity, localOpt$bao[i, 2]/ncol(errs), (localOpt$bao[i, 1]-1)/(nrow(errs)-1))
+                dist2 <- crossdist(ploidy, purity, localOpt$bao[i, 2]/ncol(errs), 1 - (localOpt$bao[i, 1]-1) * 0.9 / (nrow(errs)-1))
                 if (dist >= dist2){
                   
                   dist <- dist2
@@ -922,12 +925,14 @@ server <- function(input, output, session) {
               
               
               ploidy <- localOpt$bao[best, 2]/ncol(errs)
-              purity <- (localOpt$bao[best, 1]-1)/(nrow(errs)-1)
+              purity <- 1 - (localOpt$bao[best, 1]-1) * 0.9 / (nrow(errs)-1)
               
             }
             
             ploidy <- as.numeric(colnames(errs)[round(as.numeric(ploidy)*ncol(errs), digits=0)])
-            purity <- as.numeric(rownames(errs)[1 + (round((as.numeric(purity))*(nrow(errs)-1), digits=0))])
+               purity <- as.numeric(rownames(errs)[
+              max(1, min(nrow(errs), 1 + round((1 - as.numeric(purity)) * (nrow(errs)-1) / 0.9, digits=0)))
+            ])
             
             
             reslocal$allProfiles.refitted.manual[[index]] <<- getProfile(fitProfile(tracksSingle = reslocal$allTracks.processed[[index]], purity, ploidy, ismale=reslocal$sex[index]=="male", gamma = reslocal$gamma), CHRS = reslocal$chr)

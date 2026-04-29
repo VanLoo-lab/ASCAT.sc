@@ -332,7 +332,7 @@ plotSolution <- function(tracksSingle,
   if(ambiguousFlag) {
 
       text(x = breaks[9],
-           y=ylim[2]+ifelse(is_pdf,2.4,1.8),
+           y = ylim[2]+1.8,
            labels= paste0("purity=",
                           signif(purity,2),
                           "; average ploidy=",
@@ -342,13 +342,13 @@ plotSolution <- function(tracksSingle,
                           "; ambiguous=", ambiguous,
                           "; dpb=", dpb
 
-    ), adj=0, pos=1)
+    ), adj=0, pos=3, xpd=NA)
 
   }
   else {
 
       text(x = breaks[9],
-           y=ylim[2]+ifelse(is_pdf,2.4,1.8),
+           y = ylim[2]+1.8,
            labels= paste0("purity=",
                           signif(purity,2),
                           "; average ploidy=",
@@ -358,7 +358,7 @@ plotSolution <- function(tracksSingle,
                           "; large deep deletion fraction=", ambiguous,
                           "; dpb=", dpb
 
-    ), adj=0, pos=1)
+    ), adj=0, pos=3, xpd=NA)
 
   }
 
@@ -368,10 +368,10 @@ plotSolution <- function(tracksSingle,
        col=BASECOLOUR2,
        cex = 1.5)
 
-  text(x = ifelse(is_pdf,-90,-70),
-       y = ifelse(is_pdf,0.9,2.7),
+  text(x = -90,
+       y = 0.9,
        labels="Total copy number",
        col= BASECOLOUR2,
        cex = 1.5, adj=0, srt=90)
-
 }
+

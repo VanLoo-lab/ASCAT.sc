@@ -2,6 +2,13 @@ plotSunrise <- function(solution, localMinima = FALSE, plotClust=FALSE, is_sc=FA
 {
   tryCatch({
     
+    rdbu10 <- c("#67001F","#B2182B","#D6604D","#F4A582","#FDDBC7",
+                "#D1E5F0","#92C5DE","#4393C3","#2166AC","#053061")
+    
+    hmcol <- colorRampPalette(rdbu10)(256)
+    hmcol[1:70] <- colorRampPalette(hmcol[28:70])(70)
+    hmcol[197:256] <- colorRampPalette(hmcol[197:232])(60)
+    
     plot(0, 0, col = rgb(0, 0, 0, 0), xlab = "ploidy", ylab = "purity",
          xaxt = "n", yaxt = "n", frame = F, xlim = c(0, 1), ylim = c(0,
                                                                      1))
@@ -11,16 +18,26 @@ plotSunrise <- function(solution, localMinima = FALSE, plotClust=FALSE, is_sc=FA
     errs.max <- max(solution$errs[!is.infinite(solution$errs)])
     errs[is.infinite(errs)] <- errs.max
     errs <- errs/errs.max
-    errs <- errs[rev(seq_len(nrow(errs))), ]
     
     
-    .getCol <- function(x) {
-      vec <- c(sapply(seq(0, 1, length.out = 100), function(x) rgb(0.85,
-                                                                   0.33, 0.33, 1 - x)), sapply(seq(0, 1, length.out = 100),
-                                                                                               function(x) rgb(0.18, 0.34, 0.6, x)))
-      vec[pmax(1, pmin(200, round(x * 200)))]
-      
+    purity_vals <- as.numeric(rownames(errs))
+    if (purity_vals[1] < purity_vals[nrow(errs)]) {
+      errs <- errs[rev(seq_len(nrow(errs))), ]
     }
+    
+    # ASCAT colors
+    .getCol <- function(x) {
+      x <- pmax(0, pmin(1, x))
+      hmcol[round(x * 255) + 1]
+    }
+    
+    # .getCol <- function(x) {
+    #   vec <- c(sapply(seq(0, 1, length.out = 100), function(x) rgb(0.85,
+    #                                                                0.33, 0.33, 1 - x)), sapply(seq(0, 1, length.out = 100),
+    #                                                                                            function(x) rgb(0.18, 0.34, 0.6, x)))
+    #   vec[pmax(1, pmin(200, round(x * 200)))]
+    #   
+    # }
     
     im <- matrix(.getCol(as.vector(1 - errs)), dim(errs)[1],
                  dim(errs)[2])
@@ -53,8 +70,12 @@ plotSunrise <- function(solution, localMinima = FALSE, plotClust=FALSE, is_sc=FA
     
     else {
       
+     
+      i_sol <- which(rownames(errs) == solution$purity)
+      y_sol <- 1 - (i_sol - 1) * 0.9 / (nrow(errs) - 1)
+      
       points(which(colnames(errs) == solution$ploidy)/ncol(errs),
-             (which(rownames(errs) == solution$purity) - 1)/(nrow(errs)-1),
+             y_sol,
              col = "chartreuse", pch = "X",cex = 1.5)
       
       
@@ -64,12 +85,14 @@ plotSunrise <- function(solution, localMinima = FALSE, plotClust=FALSE, is_sc=FA
         ao <- bao1$bao
         
         text(ao[,2]/ncol(errs),
-             (ao[,1] - 1)/(nrow(errs)-1), label=1:nrow(ao),
+             1 - (ao[,1] - 1) * 0.9 / (nrow(errs) - 1),
+             label=1:nrow(ao),
              col = "white", pch = 19)
         ao <- bao1$ao
         if(plotClust){
           text(ao[,2]/ncol(errs),
-               1-ao[,1]/nrow(errs), label=1:nrow(ao),
+               1 - (ao[,1] - 1) * 0.9 / (nrow(errs) - 1),
+               label=1:nrow(ao),
                col = RColorBrewer::brewer.pal(12,"Paired")[bao1$clusts], cex=.6)
           
         }
