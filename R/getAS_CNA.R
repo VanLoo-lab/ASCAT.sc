@@ -8,6 +8,7 @@ getAS_CNA <- function(res,
                       outdir="./",
                       betabinom=FALSE,
                       mc.cores=1,
+                      maxTumourPhi=5,
                       steps=NULL)
 {
     suppressPackageStartupMessages(require(GenomicRanges))
@@ -35,6 +36,8 @@ getAS_CNA <- function(res,
 
         errors <- function(baf, logr, sizes, purity, ploidy)
         {
+            if (getTumourPhi(ploidy, purity) > maxTumourPhi)
+                return(Inf)
             nanb <- getNANB(baf,logr,purity,ploidy)
             ssize <- sum(sizes)
             sum(((nanb$Na-round(nanb$Na))^2+(nanb$Nb-round(nanb$Nb))^2)*(sizes/ssize))
@@ -68,7 +71,6 @@ getAS_CNA <- function(res,
         phasing <- lapply(phasing_paths,function(x) as.data.frame(data.table::fread(x)))
         phases <- lapply(phasing,function(x)
         {
-            ##x <- x[x[,10]%in%c("0|1","1|0"),]
             x <- x[grep("0\\|1|1\\|0",x[, 10]), ]
             phase <- gsub("(.*)\\|(.*)","\\1",x[,10])
             phases1 <- x[,"REF"]
@@ -287,7 +289,7 @@ getAS_CNA <- function(res,
                             stringsAsFactors=F)
         if(betabinom)
         {
-            rhos <- c(seq(0,0.02,0.01), seq(0.2,0.5,0.02))
+            rhos <- c(seq(0.01,0.02,0.01), seq(0.2,0.5,0.02))
             for(rho in rhos)
             {
                 df_rho=data.frame(col1=rep(as.numeric(NA),nrow(nprof)),
