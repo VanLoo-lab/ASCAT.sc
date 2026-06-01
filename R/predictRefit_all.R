@@ -2,7 +2,7 @@ predictRefit_all <- function(res, ismedian=FALSE, gamma=1)
 {
     require(xgboost)
     model_path <- system.file("extdata",
-                              "model_xgboost_tcga_snp6_200426.json",
+                              "model_xgboost_tcga_snp6_200526.json",
                               package = "ASCAT.sc")
     if(model_path=="")
     {

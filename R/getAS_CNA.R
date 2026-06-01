@@ -15,8 +15,9 @@ getAS_CNA <- function(res,
     suppressPackageStartupMessages(require(data.table))
     getNANBfromTot <- function(baf,tot,purity, retNa=TRUE)
     {
-        Na <- round(baf*(purity*tot+(1-purity)*2)-1+purity)
-        Nb <- round(tot-Na)
+        Cobs <- purity*tot+(1-purity)*2
+        Nb <- (baf*Cobs-(1-purity))/purity
+        Na <- tot-Nb
         if(retNa) return(Na)
         return(Nb)
     }
@@ -227,7 +228,7 @@ getAS_CNA <- function(res,
             NBs <- round(prof[,"total_copy_number"]-NAs)
             expected <- NAs/(NAs+NBs)
             rem <- !is.na(widths) & !is.na(BAFs) & !is.na(expected)
-            dists <- sum(sqrt(widths*(expected-BAFs)^2)[rem])
+            dists <- sum((widths*(expected-BAFs)^2)[rem])/sum(widths[rem])
             return(dists)
 	}
 	rhos <- gsub("BAF_rho","",colnames(prof)[grepl("BAF_rho",colnames(prof))])

@@ -53,6 +53,7 @@ Thumbs.db
 
 # Other temporary files (e.g. swap files)
 *~
+*#*
 
 # Documentation
 man/*.pdf
