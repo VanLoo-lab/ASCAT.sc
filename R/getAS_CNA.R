@@ -16,10 +16,12 @@ getAS_CNA <- function(res,
     getNANBfromTot <- function(baf,tot,purity, retNa=TRUE)
     {
         Cobs <- purity*tot+(1-purity)*2
-        Nb <- (baf*Cobs-(1-purity))/purity
-        Na <- tot-Nb
-        if(retNa) return(Na)
-        return(Nb)
+        Nb <- round((baf*Cobs-(1-purity))/purity)
+        Na <- round(tot-Nb)
+        Na. <- max(Na, Nb)
+        Nb. <- min(Na, Nb)
+        if(retNa) return(Na.)
+        return(Nb.)
     }
     .searchGrid  <-  function (baf,
                               logr,
