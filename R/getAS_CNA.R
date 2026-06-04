@@ -18,8 +18,8 @@ getAS_CNA <- function(res,
         Cobs <- purity*tot+(1-purity)*2
         Nb <- round((baf*Cobs-(1-purity))/purity)
         Na <- round(tot-Nb)
-        Na. <- max(Na, Nb)
-        Nb. <- min(Na, Nb)
+        Na. <- pmax(Na, Nb)
+        Nb. <- pmin(Na, Nb)
         if(retNa) return(Na.)
         return(Nb.)
     }
