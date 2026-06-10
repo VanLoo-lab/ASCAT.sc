@@ -427,7 +427,7 @@ getAS_CNA <- function(res,
     {
         cat(".")
         getAS_CNA_sample(track=res$allTracks.processed[[x]],
-                         profile=res$allProfiles[[x]],
+                         profile=if(any(grepl("refitted",names(res)))) res$allProfiles.refitted.auto[[x]] else res$allProfiles[[x]],
                          ac_counts_paths=list_ac_counts_paths[[x]],
                          phases=phases,
                          purity=if(any(grepl("refitted",names(res)))) res$allSolutions.refitted.auto[[x]]$purity
