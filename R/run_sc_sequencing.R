@@ -16,7 +16,7 @@ run_sc_sequencing <- function(tumour_bams,
                               barcodes_10x=NULL,
                               normal_bams=NULL,
                               outdir="./",
-                              is_pdf=F,
+                              is_pdf=FALSE,
                               probs_filters=.1,
                               path_to_phases=NULL,
                               list_ac_counts_paths=NULL,
@@ -33,6 +33,14 @@ run_sc_sequencing <- function(tumour_bams,
                               betabinom=FALSE)
 {
     checkArguments_scs(c(as.list(environment())))
+    
+    # --- Strict input validation guards ---
+    if(is.null(tumour_bams)) stop("tumour_bams cannot be NULL.")
+    if(!all(file.exists(tumour_bams))) stop("One or more files in tumour_bams do not exist.")
+    if(!is.null(normal_bams) && !all(file.exists(normal_bams))) stop("One or more files in normal_bams do not exist.")
+    build <- match.arg(build, choices = c("hg19", "hg38", "mm39"))
+    # --------------------------------------
+
     suppressPackageStartupMessages(require(parallel))
     suppressPackageStartupMessages(require(Rsamtools))
     suppressPackageStartupMessages(require(Biostrings))
@@ -54,6 +62,7 @@ run_sc_sequencing <- function(tumour_bams,
     if(binsize<30000)
     {
         print("Current minimum bin size is 30000 - resetting to 30000")
+        binsize <- 30000
     }
     if(is.null(res))
         res <- list()
@@ -140,15 +149,15 @@ run_sc_sequencing <- function(tumour_bams,
     }
     if(is.null(barcodes_10x))
     {
-        if(!is.null(normal_bams[1]) & is.null(res$nlCTS.normal))
+        if(!is.null(normal_bams[1]) && is.null(res$nlCTS.normal))
         {
             print("## get all tracks from normal bams")
             timetoread_normals <- system.time(res$lCTS.normal <- mclapply(normal_bams,function(bamfile)
             {
                 lCTS.normal <- lapply(paste0(chrstring_bam,allchr), function(chr) getCoverageTrack(bamPath=bamfile,
                                                                                                    chr=chr,
-                                                                                                   lSe[[chr]]$starts,
-                                                                                                   lSe[[chr]]$ends,
+                                                                                                   res$lSe[[chr]]$starts,
+                                                                                                   res$lSe[[chr]]$ends,
                                                                                                    mapqFilter=30))
                 list(lCTS.normal=lCTS.normal,
                      nlCTS.normal=treatTrack(lCTS=lCTS.normal,
@@ -165,7 +174,7 @@ run_sc_sequencing <- function(tumour_bams,
             res$lNormals <- NULL
             res$timetoread_normals <- NULL
         }
-        if(any(names(res)=="allTracks") & res$binsize!=binsize)
+        if(any(names(res)=="allTracks") && res$binsize!=binsize)
         {
             print("## adjust Tracks for bin size ")
             res$timetoread_tumours <- system.time(res$allTracks <- mclapply(names(res$allTracks),function(bamfile)
@@ -217,7 +226,7 @@ run_sc_sequencing <- function(tumour_bams,
     }
     else
     {
-        if(!any("allTracks.processed"%in%names(res)) | res$binsize!=binsize)
+        if(!any("allTracks.processed"%in%names(res)) || res$binsize!=binsize)
         {
             print("## smooth Tracks")
             res$timetoprocessed <- system.time(res$allTracks.processed <- mclapply(1:length(res$allTracks), function(x)
@@ -253,17 +262,18 @@ run_sc_sequencing <- function(tumour_bams,
                               purs = purs[[x]],
                               ploidies = ploidies[[x]],
                               maxTumourPhi=maxtumourpsi,
-                              ismale=if(sex[x]=="male") T else F,
-                              isPON=res$isPON),silent=F)
+                              ismale=if(sex[x]=="male") TRUE else FALSE,
+                              isPON=res$isPON),silent=FALSE)
     },mc.cores=MC.CORES))
     print("## get Fitted CNA Profiles")
     res$allProfiles <- mclapply(1:length(res$allTracks.processed), function(x)
     {
+        if(inherits(res$allSols[[x]], "try-error")) return(NULL)
         try(getProfile(fitProfile(res$allTracks.processed[[x]],
                                   purity=res$allSols[[x]]$purity,
                                   ploidy=res$allSols[[x]]$ploidy,
-                                  ismale=if(sex[x]=="male") T else F),
-                       CHRS=allchr),silent=F)
+                                  ismale=if(sex[x]=="male") TRUE else FALSE),
+                       CHRS=allchr),silent=FALSE)
     },mc.cores=MC.CORES)
     names(res$allProfiles) <- names(res$allSols) <- names(res$allTracks)
     print("## compile Results")
@@ -308,7 +318,7 @@ run_sc_sequencing <- function(tumour_bams,
                          outdir=outdir,
                          projectname=projectname)
     }
-    if(!is.null(list_ac_counts_paths) & !is.null(path_to_phases))
+    if(!is.null(list_ac_counts_paths) && !is.null(path_to_phases))
     {
         print("## get Allele-specific CNA")
         res <- getAS_CNA(res,
@@ -323,13 +333,13 @@ run_sc_sequencing <- function(tumour_bams,
                          mc.cores=MC.CORES)
         names(res$allProfiles_AS) <- names(res$allProfiles)
     }
-    if(smooth_sc & any(grepl("_AS",names(res))))
+    if(smooth_sc && any(grepl("_AS",names(res))))
     {
         print("## smooth Across Single-Cells/Nulcei")
         res <- getAS_CNA_smoothed(res,
                                   mc.cores=MC.CORES)
     }
-    if(smooth_sc & !any(grepl("_AS",names(res))))
+    if(smooth_sc && !any(grepl("_AS",names(res))))
         print("Warning: Smoothing is only possible for allele-specific copy numbers")
     res
 }

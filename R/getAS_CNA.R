@@ -71,10 +71,29 @@ getAS_CNA <- function(res,
 
     readPhases <- function(phasing_paths)
     {
-        phasing <- lapply(phasing_paths,function(x) as.data.frame(data.table::fread(x)))
+        phasing <- lapply(phasing_paths, function(x) {
+            tryCatch({
+                cmd_str <- if(grepl("\\.gz$", x, ignore.case=TRUE)) paste0("zgrep -v '^##' ", x) else paste0("grep -v '^##' ", x)
+                df <- as.data.frame(data.table::fread(cmd=cmd_str))
+                if(ncol(df) > 0 && grepl("CHROM", colnames(df)[1], ignore.case=TRUE)) colnames(df)[1] <- "#CHROM"
+                df
+            }, error = function(e) {
+                tryCatch({
+                    as.data.frame(data.table::fread(x, skip="#CHROM"))
+                }, error = function(e2) {
+                    as.data.frame(data.table::fread(x))
+                })
+            })
+        })
         phases <- lapply(phasing,function(x)
         {
-            x <- x[grep("0\\|1|1\\|0",x[, 10]), ]
+            if(ncol(x) >= 10 && !("REF" %in% colnames(x))) {
+                colnames(x)[4] <- "REF"
+                colnames(x)[5] <- "ALT"
+            }
+            if(ncol(x) < 10) return(list(chr=integer(0), pos=integer(0), phases1=integer(0), phases2=integer(0)))
+            x <- x[grep("0\\|1|1\\|0",x[, 10]), , drop=FALSE]
+            if(nrow(x) == 0) return(list(chr=integer(0), pos=integer(0), phases1=integer(0), phases2=integer(0)))
             phase <- gsub("(.*)\\|(.*)","\\1",x[,10])
             phases1 <- x[,"REF"]
             phases1[phase=="1"] <- x[phase=="1","ALT"]
@@ -426,17 +445,26 @@ getAS_CNA <- function(res,
     res$allProfiles_AS <- parallel::mclapply(1:length(res$allTracks.processed), function(x)
     {
         cat(".")
+        profile_to_use <- if(any(grepl("refitted",names(res)))) res$allProfiles.refitted.auto[[x]] else res$allProfiles[[x]]
+        if(is.null(profile_to_use) || inherits(profile_to_use, "try-error")) return(NULL)
+
+        ac_p <- if(length(list_ac_counts_paths)==1) list_ac_counts_paths[[1]] else list_ac_counts_paths[[x]]
+        ph_p <- if(length(path_to_phases)==1) path_to_phases[[1]] else path_to_phases[[x]]
+
+        if(!all(file.exists(ac_p)) || (!is.null(ph_p) && !all(file.exists(ph_p)))) {
+            warning(paste("Missing allele count or phasing files for cell", x, "- skipping AS CNA for this cell."))
+            return(NULL)
+        }
+
         getAS_CNA_sample(track=res$allTracks.processed[[x]],
-                         profile=if(any(grepl("refitted",names(res)))) res$allProfiles.refitted.auto[[x]] else res$allProfiles[[x]],
-                         ac_counts_paths=list_ac_counts_paths[[x]],
-                         phases=phases,
-                         purity=if(any(grepl("refitted",names(res)))) res$allSolutions.refitted.auto[[x]]$purity
-                                else res$allSolutions[[x]]$purity,
-                         ploidy=if(any(grepl("refitted",names(res)))) res$allSolutions.refitted.auto[[x]]$ploidy
-                                else res$allSolutions[[x]]$ploidy,
+                         profile=profile_to_use,
+                         ac_counts_paths=ac_p,
                          purs=purs[[x]],
                          ploidies=ploidies[[x]],
-                         path_to_phases=if(length(path_to_phases)>1) path_to_phases[[x]] else NULL,
+                         purity=if(any(grepl("refitted",names(res)))) res$allProfiles.refitted.auto[[x]]$purity else res$allSolutions[[x]]$purity,
+                         ploidy=if(any(grepl("refitted",names(res)))) res$allProfiles.refitted.auto[[x]]$ploidy else res$allSolutions[[x]]$ploidy,
+                         phases=if(!is.null(phases)) phases,
+                         path_to_phases=ph_p,
                          steps=steps,
                          betabinom=betabinom)
     },mc.cores=mc.cores)
@@ -445,25 +473,30 @@ getAS_CNA <- function(res,
         print("Estimate best overdispersion parameters per cell")
         res$allProfiles_AS <- lapply(res$allProfiles_AS, function(x)
         {
+            if(is.null(x) || inherits(x, "try-error")) return(NULL)
             tmp <- get_best_overdispersion_profile(x$nprof.fixed)
             x$nprof.fixed <- tmp$prof
             x$overdispersion_best_fit <- tmp$best_rho
             x
         })
-        odps <- sapply(res$allProfiles_AS,function(x) x$overdispersion_best_fit)
-        print(paste("Overdispersion quantiles:",quantile(odps,probs=seq(0,1,.1)),collapse=" "))
+        odps <- sapply(res$allProfiles_AS,function(x) if(!is.null(x)) x$overdispersion_best_fit else NA)
+        odps <- odps[!is.na(odps)]
+        if(length(odps)>0) print(paste("Overdispersion quantiles:",paste(quantile(odps,probs=seq(0,1,.1),na.rm=TRUE),collapse=" ")))
     }
     print("## write to disk and plot Allele-specific Profiles")
     pdf(paste0(outdir,"/all_as_cna_profiles_",projectname,".pdf"),width=15,height=5)
     tnull <- lapply(1:length(res$allProfiles_AS), function(x)
     {
+        if(is.null(res$allProfiles_AS[[x]]) || inherits(res$allProfiles_AS[[x]], "try-error")) return(NULL)
         try({
             plot_AS_profile(res$allProfiles_AS[[x]]$nprof.fixed)
             title(paste0(names(res$allTracks)[x]," - bam",x) ,cex=.5)
         })
-        write.table(res$allProfiles_AS[[x]]$nprof.fixed,
-                    sep="\t",col.names=T,row.names=F,quote=F,
-                    file=paste0(outdir,"/as_cna_profile_",names(res$allTracks)[x],"_bam",x,".txt"))
+        try({
+            write.table(res$allProfiles_AS[[x]]$nprof.fixed,
+                        sep="\t",col.names=T,row.names=F,quote=F,
+                        file=paste0(outdir,"/as_cna_profile_",names(res$allTracks)[x],"_bam",x,".txt"))
+        })
         if(betabinom)
         {
             try({
