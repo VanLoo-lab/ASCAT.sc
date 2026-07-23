@@ -44,7 +44,7 @@ getQCs <- function(res)
         dists <- sqrt(sum((widths*(expected-BAFs)^2)[rem])/sum(widths[rem]))
         return(dists)
     }
-    dists_AS <- sapply(res$allProfiles_AS,distance_to_integer_AS)
+    dists_AS <- sapply(res$allProfiles_AS, function(x) distance_to_integer_AS(x$nprof.fixed))
     res$QC_metrics <- data.frame(distance_integer_logR = sapply(res$allProfiles, distance_to_integer_total),
                                  distance_integer_BAF = if(length(dists_AS)==0) rep(NA,length(res$allProfiles)) else dists_AS)
     if("filters_data_frame"%in%names(res))
