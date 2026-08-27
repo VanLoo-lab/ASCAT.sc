@@ -430,9 +430,9 @@ getAS_CNA <- function(res,
                          profile=if(any(grepl("refitted",names(res)))) res$allProfiles.refitted.auto[[x]] else res$allProfiles[[x]],
                          ac_counts_paths=list_ac_counts_paths[[x]],
                          phases=phases,
-                         purity=if(any(grepl("refitted",names(res)))) res$allSolutions.refitted.auto[[x]]$purity
+                         purity=if(any(grepl("refitted",names(res)))) res$allProfiles.refitted.auto[[x]]$purity
                                 else res$allSolutions[[x]]$purity,
-                         ploidy=if(any(grepl("refitted",names(res)))) res$allSolutions.refitted.auto[[x]]$ploidy
+                         ploidy=if(any(grepl("refitted",names(res)))) res$allProfiles.refitted.auto[[x]]$ploidy
                                 else res$allSolutions[[x]]$ploidy,
                          purs=purs[[x]],
                          ploidies=ploidies[[x]],
