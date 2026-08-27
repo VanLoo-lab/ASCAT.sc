@@ -33,6 +33,14 @@ run_sc_sequencing <- function(tumour_bams,
                               betabinom=FALSE)
 {
     checkArguments_scs(c(as.list(environment())))
+    
+    # --- Strict input validation guards ---
+    if(is.null(tumour_bams)) stop("tumour_bams cannot be NULL.")
+    if(!all(file.exists(tumour_bams))) stop("One or more files in tumour_bams do not exist.")
+    if(!is.null(normal_bams) && !all(file.exists(normal_bams))) stop("One or more files in normal_bams do not exist.")
+    build <- match.arg(build, choices = c("hg19", "hg38", "mm39"))
+    # --------------------------------------
+
     suppressPackageStartupMessages(require(parallel))
     suppressPackageStartupMessages(require(Rsamtools))
     suppressPackageStartupMessages(require(Biostrings))
