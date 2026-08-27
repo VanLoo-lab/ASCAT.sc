@@ -71,10 +71,29 @@ getAS_CNA <- function(res,
 
     readPhases <- function(phasing_paths)
     {
-        phasing <- lapply(phasing_paths,function(x) as.data.frame(data.table::fread(x)))
+        phasing <- lapply(phasing_paths, function(x) {
+            tryCatch({
+                cmd_str <- if(grepl("\\.gz$", x, ignore.case=TRUE)) paste0("zgrep -v '^##' ", x) else paste0("grep -v '^##' ", x)
+                df <- as.data.frame(data.table::fread(cmd=cmd_str))
+                if(ncol(df) > 0 && grepl("CHROM", colnames(df)[1], ignore.case=TRUE)) colnames(df)[1] <- "#CHROM"
+                df
+            }, error = function(e) {
+                tryCatch({
+                    as.data.frame(data.table::fread(x, skip="#CHROM"))
+                }, error = function(e2) {
+                    as.data.frame(data.table::fread(x))
+                })
+            })
+        })
         phases <- lapply(phasing,function(x)
         {
-            x <- x[grep("0\\|1|1\\|0",x[, 10]), ]
+            if(ncol(x) >= 10 && !("REF" %in% colnames(x))) {
+                colnames(x)[4] <- "REF"
+                colnames(x)[5] <- "ALT"
+            }
+            if(ncol(x) < 10) return(list(chr=integer(0), pos=integer(0), phases1=integer(0), phases2=integer(0)))
+            x <- x[grep("0\\|1|1\\|0",x[, 10]), , drop=FALSE]
+            if(nrow(x) == 0) return(list(chr=integer(0), pos=integer(0), phases1=integer(0), phases2=integer(0)))
             phase <- gsub("(.*)\\|(.*)","\\1",x[,10])
             phases1 <- x[,"REF"]
             phases1[phase=="1"] <- x[phase=="1","ALT"]
