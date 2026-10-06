@@ -13,10 +13,11 @@ run_any_refitProfile_shift <- function(res,
     }
     if(is.null(res$isPON)) res$isPON <- F
     gamma <- if("gamma"%in%names(res)) res$gamma else if("GAMMA"%in%names(res)) res$GAMMA else 1
+    ismale <- resolve_ismale(res$sex, sample_indice, names(res$allTracks.processed)[sample_indice])
     solution <- res$allSolutions.refitted.manual[[sample_indice]] <- refitProfile_shift(track=res$allTracks.processed[[sample_indice]],
                                                                                         solution=res$allSolutions.refitted.auto[[sample_indice]],
                                                                                         gamma=gamma,
-                                                                                        ismale=res$sex[sample_indice]=="male",
+                                                                                        ismale=ismale,
                                                                                         isPON=res$isPON,
                                                                                         CHRS=res$chr,
                                                                                         shift=shift,
@@ -26,7 +27,7 @@ run_any_refitProfile_shift <- function(res,
                                                                               solution$purity,
                                                                               solution$ploidy,
                                                                               gamma=gamma,
-                                                                              ismale=res$sex[sample_indice]=="male",
+                                                                              ismale=ismale,
                                                                               isPON=res$isPON),
                                                                    CHRS=res$chr)
     writeProfile(res$allProfiles.refitted.manual[[sample_indice]],
