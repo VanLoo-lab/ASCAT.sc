@@ -18,6 +18,7 @@ run_any_refitProfile <- function(res,
     }
     if(is.null(res$isPON)) res$isPON <- F
     gamma <- if("gamma"%in%names(res)) res$gamma else if("GAMMA"%in%names(res)) res$GAMMA else 1
+    ismale <- resolve_ismale(res$sex, sample_indice, names(res$allTracks.processed)[sample_indice])
     solution <- res$allSolutions.refitted.manual[[sample_indice]] <- refitProfile(track=res$allTracks.processed[[sample_indice]],
                                                                  solution=res$allSolutions.refitted.auto[[sample_indice]],
                                                                  chr1=chr1,
@@ -27,7 +28,7 @@ run_any_refitProfile <- function(res,
                                                                  ind2=ind2,
                                                                  total2=n2,
                                                                  gamma=gamma,
-                                                                 ismale=res$sex[sample_indice]=="male",
+                                                                 ismale=ismale,
                                                                  isPON=res$isPON,
                                                                  CHRS=res$chr,
                                                                  gridpur=gridpur,
@@ -36,7 +37,7 @@ run_any_refitProfile <- function(res,
                                                                                solution$purity,
                                                                                solution$ploidy,
                                                                                gamma=gamma,
-                                                                               ismale=res$sex[sample_indice]=="male",
+                                                                               ismale=ismale,
                                                                                isPON=res$isPON),
                           CHRS=res$chr)
     writeProfile(res$allProfiles.refitted.manual[[sample_indice]],

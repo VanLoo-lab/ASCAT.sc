@@ -25,15 +25,29 @@ refitProfile_shift <- function (track,
     })
     lengthlogr <- tapply(1:nrow(profile),profile[,"total_copy_number"],function(x) sum(sizes[x]))
     lengthlogr <- lengthlogr[names(meanlogr)]
-    keep <- rep(T,length(lengthlogr))
-    if(shift==-1) {keep <- !names(lengthlogr)%in%c("0","1")}
+    # Keep only copy-number states that stay above 0 once shifted.
+    keep <- (as.numeric(names(lengthlogr)) + shift) > 0
     lengthlogr <- lengthlogr[keep]
     meanlogr <- meanlogr[keep]
+    # Two copy-number states are needed as reference segments; otherwise
+    # keep the current solution.
+    if (length(lengthlogr) < 2) {
+        print("Not possible: fewer than 2 usable copy-number states after applying this shift -- reverting to old solution")
+        solution$reverted <- TRUE
+        return(solution)
+    }
     longest2 <- order(lengthlogr,decreasing=T)[1:2]
     logr1 <- 2^(meanlogr[longest2[1]]/gamma)
     logr2 <- 2^(meanlogr[longest2[2]]/gamma)
     total1 <- as.numeric(names(lengthlogr)[longest2[1]])+shift
     total2 <- as.numeric(names(lengthlogr)[longest2[2]])+shift
+    # A reference state can have NA logr (no covered bins); keep the
+    # current solution in that case.
+    if (is.na(logr1) || is.na(logr2)) {
+        print("Not possible: selected reference segment has no underlying data (NA logR) -- reverting to old solution")
+        solution$reverted <- TRUE
+        return(solution)
+    }
     purity <- (2 * logr1/total1/logr2 - 2/total1)/(1 - logr1 *
                                                    total2/logr2/total1 + logr1/logr2/total1 * 2 - 2/total1)
     if(purity>1) purity <- 1
@@ -41,15 +55,15 @@ refitProfile_shift <- function (track,
     ploidy <- (total2 * purity + (1 - purity) * 2)/logr2
     gridpur <- purity + gridpur
     gridpl <- ploidy + gridpl
-    gridpur <- gridpur[gridpur > 0 & gridpur <= 1]
-    gridpl <- gridpl[gridpl > 0]
+    # is.finite() also drops NA/NaN/Inf, which a range check alone
+    # would keep.
+    gridpur <- gridpur[is.finite(gridpur) & gridpur > 0 & gridpur <= 1]
+    gridpl <- gridpl[is.finite(gridpl) & gridpl > 0]
     if (length(gridpur) == 0 | length(gridpl) == 0)
     {
-        print("Not possible: ploidy<0 or purity ∉ [0,1]")
-        return(list(errs=NULL,
-                    purity=NA,
-                    ploidy=NA,
-                    ambiguous=TRUE))
+        print("Not possible: ploidy<0 or purity \u2209 [0,1] -- reverting to old solution")
+        solution$reverted <- TRUE
+        return(solution)
     }
     newsol <- searchGrid(track, purs = gridpur, ploidies = gridpl, gamma = gamma,
                          ismale = ismale, isPON = isPON)
@@ -62,4 +76,3 @@ refitProfile_shift <- function (track,
     newsol$errs <- errs_orig
     newsol
 }
-##########################################################################
