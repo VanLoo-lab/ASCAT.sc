@@ -23,7 +23,7 @@ getTrackForAll.10XBAM <- function (bamfile,
         lSe <- lapply(allchr, function(chr) getStartsEnds(window,
                                                           paste0(chr)))
     }
-    if(is.null(barcodes) | is.na(barcodes))
+    if (is.null(barcodes) || any(is.na(barcodes)))
     {
         print("get Barcodes")
         # TODO: In the rare case that chr1 is homozygously deleted, this wont work
