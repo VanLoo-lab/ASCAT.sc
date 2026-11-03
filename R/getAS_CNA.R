@@ -9,8 +9,12 @@ getAS_CNA <- function(res,
                       betabinom=FALSE,
                       mc.cores=1,
                       maxTumourPhi=5,
-                      steps=NULL)
+                      steps=NULL,
+                      snp_bb_min_spacing=1000L,
+                      snp_bb_include_chrX=FALSE)
 {
+    if (betabinom && is.null(steps)) steps <- 5L
+    if (snp_bb_min_spacing < 1) stop("snp_bb_min_spacing must be positive")
     suppressPackageStartupMessages(require(GenomicRanges))
     suppressPackageStartupMessages(require(data.table))
     getNANBfromTot <- function(baf,tot,purity, retNa=TRUE)
@@ -184,43 +188,6 @@ getAS_CNA <- function(res,
         q95 <- values[c(which(cs>.05)[1],which(cs>.95)[1])]
         c(q95[1],baf,q95[2])
     }
-    dbetabinom <- function(k, n, p, rho)
-    {
-        alpha <- p * (1 - rho) / rho
-        beta  <- (1 - p) * (1 - rho) / rho
-        lchoose(n, k) + lbeta(k + alpha, n - k + beta) - lbeta(alpha, beta)
-    }
-    fitBetaBinom.1dist <- function(counts, depths, steps=NULL, rho=0.01)
-    {
-        if(is.null(steps))
-            steps <- if(length(counts)%/%3>10) 5 else 3
-        nonas <- !is.na(counts) & !is.na(depths)
-        counts <- counts[nonas]
-        depths <- depths[nonas]
-        haploblocks <- cut(1:length(counts), pmax(length(counts)%/%steps, 2))
-        if(length(counts) < 10) haploblocks <- rep(1, length(counts))
-        lcounts <- split(counts, haploblocks)
-        ldepths <- split(depths, haploblocks)
-        lcounts <- lapply(1:length(lcounts), function(x)
-            if(rnorm(1) < 0) ldepths[[x]] - lcounts[[x]] else lcounts[[x]])
-        counts <- sapply(lcounts, sum)
-        depths <- sapply(ldepths, sum)
-        values <- seq(0.5, .999, 0.001)
-        llh <- sapply(values, function(x)
-        {
-            ll1 <- dbetabinom(counts, depths, x, rho)
-            ll2 <- dbetabinom(counts, depths, 1 - x, rho)
-            sum(log(exp(ll1) + exp(ll2)))
-        })
-        llh <- llh - max(llh)
-        normalised <- exp(llh) / sum(exp(llh))
-        baf <- values[which.max(llh)]
-        if(length(baf)==0) baf <- NA
-        cs <- cumsum(normalised)
-        q95 <- values[c(which(cs > .05)[1], which(cs > .95)[1])]
-        c(q95[1], baf, q95[2])
-    }
-
     fitBinom.1dist.noswitch <- function(counts, depths)
     {
         nonas <- !is.na(counts) & !is.na(depths)
@@ -238,32 +205,6 @@ getAS_CNA <- function(res,
         cs <- cumsum(normalised)
         q95 <- values[c(which(cs>.05)[1],which(cs>.95)[1])]
         c(q95[1],baf,q95[2])
-    }
-
-    get_best_rho <- function(prof)
-    {
-	getBAF_dist <- function(prof, BAFs)
-	{
-            widths <- (prof[,"endpos"]-prof[,"startpos"])/1000000
-            NAs <- round(prof[,"total_copy_number"]*BAFs)
-            NBs <- round(prof[,"total_copy_number"]-NAs)
-            expected <- NAs/(NAs+NBs)
-            rem <- !is.na(widths) & !is.na(BAFs) & !is.na(expected)
-            dists <- sum((widths*(expected-BAFs)^2)[rem])/sum(widths[rem])
-            return(dists)
-	}
-	rhos <- gsub("BAF_rho","",colnames(prof)[grepl("BAF_rho",colnames(prof))])
-	dists <- sapply(rhos,function(rho) getBAF_dist(prof,prof[,grep(paste0("BAF_rho",rho),colnames(prof))[1]]))
-	return(as.numeric(rhos[which.min(dists)]))
-    }
-
-    get_best_overdispersion_profile <- function(prof)
-    {
-	best_rho <- get_best_rho(prof)
-	prof$nA_best_overdispersion <- round(prof$total_copy_number*prof[,paste0("BAF_rho",best_rho)])
-	prof$nB_best_overdispersion <- round(prof$total_copy_number-prof$nA_best_overdispersion)
-	return(list(prof=prof,
-                    best_rho=best_rho))
     }
 
     is_distant_enough <- function(positions, distance=1000)
@@ -285,6 +226,54 @@ getAS_CNA <- function(res,
         }
         positions%in%keep
     }
+    snp_bb_logadd <- function(a,b) {
+        m <- pmax(a,b)
+        m + log(exp(a-m) + exp(b-m))
+    }
+    snp_bb_pmf <- function(k,n,p,rho) {
+        if (rho < 1e-8) return(stats::dbinom(k,n,p,log=TRUE))
+        alpha <- p*(1-rho)/rho
+        beta <- (1-p)*(1-rho)/rho
+        lchoose(n,k) + lbeta(k+alpha,n-k+beta) - lbeta(alpha,beta)
+    }
+    snp_bb_seg_ll <- function(seg,p,rho) {
+        a <- snp_bb_pmf(seg$k,seg$n,p,rho)
+        b <- snp_bb_pmf(seg$k,seg$n,1-p,rho)
+        aa <- rowsum(a,seg$block,reorder=FALSE)[,1]
+        bb <- rowsum(b,seg$block,reorder=FALSE)[,1]
+        sum(snp_bb_logadd(aa,bb) - log(2))
+    }
+    snp_bb_fit_one <- function(seg,rho) {
+        stats::optimize(function(p) -snp_bb_seg_ll(seg,p,rho),
+                        c(0.5,0.999),tol=1e-5)$minimum
+    }
+    snp_bb_fit_cell <- function(segments,max_iterations=10L,rho_upper=0.4) {
+        idx <- which(!vapply(segments,is.null,logical(1)))
+        if(length(idx) < 2L) return(list(rho=NA_real_,baf=rep(NA_real_,length(segments)),converged=FALSE,iterations=0L))
+        rho <- 0.05
+        converged <- FALSE
+        for(iter in seq_len(max_iterations)) {
+            ps <- vapply(idx,function(j) snp_bb_fit_one(segments[[j]],rho),numeric(1))
+            updated <- stats::optimize(function(r) -sum(vapply(seq_along(idx),
+                function(i) snp_bb_seg_ll(segments[[idx[i]]],ps[i],r),numeric(1))),
+                interval=c(1e-6,rho_upper),tol=1e-4)$minimum
+            if(abs(updated-rho) < 1e-4) {rho <- updated;converged <- TRUE;break}
+            rho <- updated
+        }
+        if(!converged) warning("SNP beta-binomial rho did not converge within max_iterations")
+        baf <- rep(NA_real_,length(segments))
+        baf[idx] <- vapply(idx,function(j) snp_bb_fit_one(segments[[j]],rho),numeric(1))
+        list(rho=rho,baf=baf,converged=converged,iterations=iter)
+    }
+    snp_bb_make_seg <- function(d,steps) {
+        d <- d[order(as.numeric(d[,2])),,drop=FALSE]
+        k <- as.numeric(d[,3]); n <- as.numeric(d[,3])+as.numeric(d[,4])
+        valid <- is.finite(k) & is.finite(n) & n>0 & k>=0 & k<=n
+        k <- k[valid]; n <- n[valid]
+        if(length(k)<10L) return(NULL)
+        blocks <- as.integer(cut(seq_along(k),breaks=max(length(k)%/%steps,2L)))
+        list(k=k,n=n,block=blocks,n_snps=length(k))
+    }
     getProfile <- function(df,
                            prof,
                            purity,
@@ -292,7 +281,9 @@ getAS_CNA <- function(res,
                            purs,
                            ploidies,
                            betabinom=FALSE,
-                           steps=NULL)
+                           steps=NULL,
+                           snp_bb_min_spacing=1000L,
+                           snp_bb_include_chrX=FALSE)
     {
         nprof <- data.frame(chr=as.character(prof[,"chromosome"]),
                             startpos=as.numeric(prof[,"start"]),
@@ -309,17 +300,11 @@ getAS_CNA <- function(res,
                             BAF_noswitch=as.numeric(NA),
                             q95_noswitch=as.numeric(NA),
                             stringsAsFactors=F)
-        if(betabinom)
-        {
-            rhos <- c(seq(0.01,0.2,0.01), seq(0.22,0.5,0.02))
-            for(rho in rhos)
-            {
-                df_rho=data.frame(col1=rep(as.numeric(NA),nrow(nprof)),
-                                  col2=rep(as.numeric(NA),nrow(nprof)),
-                                  col3=rep(as.numeric(NA),nrow(nprof)))
-                colnames(df_rho)<-paste0(c("q05_rho","BAF_rho","q95_rho"),rho)
-                nprof=cbind(nprof, df_rho)
-            }
+        if(betabinom) {
+            nprof$BAF_beta_bin <- NA_real_
+            nprof$rho_beta_bin <- NA_real_
+            nprof$n_snps_beta_bin <- NA_integer_
+            snp_bb_segments <- vector("list",nrow(nprof))
         }
         nprof[nprof[,1]=="chr23",1] <- "chrX"
         nprof[nprof[,1]=="23",1] <- "X"
@@ -341,6 +326,16 @@ getAS_CNA <- function(res,
         {
             inds <- 1:nrow(df)%in%sH[qH==i]
             inds[inds] <- inds[inds] & is_distant_enough(df[inds,2])
+            if(betabinom) {
+                bb_inds <- 1:nrow(df)%in%sH[qH==i]
+                bb_inds[bb_inds] <- bb_inds[bb_inds] & is_distant_enough(df[bb_inds,2], distance=snp_bb_min_spacing)
+                chromosome <- sub("^chr","",as.character(nprof$chr[i]),ignore.case=TRUE)
+                if(chromosome %in% as.character(1:22) || (snp_bb_include_chrX && chromosome=="X")) {
+                    snp_bb_segments[[i]] <- snp_bb_make_seg(df[bb_inds,,drop=FALSE],steps)
+                    if(!is.null(snp_bb_segments[[i]]))
+                        nprof$n_snps_beta_bin[i] <- snp_bb_segments[[i]]$n_snps
+                }
+            }
             if(sum(inds)>1)
             {
                 nprof[i,c("q05","BAF","q95")] <- fitBinom.1dist(df[inds, 3],
@@ -348,17 +343,12 @@ getAS_CNA <- function(res,
                                                                 steps=steps)
                 nprof[i,c("q05_noswitch","BAF_noswitch","q95_noswitch")] <- fitBinom.1dist.noswitch(df[inds, 3],
                                                                                                     rowSums(df[inds, c(3,4)]))
-                if(betabinom)
-                {
-                    for(rho in rhos)
-                    {
-                        nprof[i,paste0(c("q05_rho","BAF_rho","q95_rho"),rho)] <- fitBetaBinom.1dist(df[inds, 3],
-                                                                                                    rowSums(df[inds, c(3,4)]),
-                                                                                                    steps=steps,
-                                                                                                    rho=rho)
-                    }
-                }
             }
+        }
+        if(betabinom) {
+            bb_fit <- snp_bb_fit_cell(snp_bb_segments)
+            nprof$BAF_beta_bin <- bb_fit$baf
+            nprof$rho_beta_bin <- bb_fit$rho
         }
         nona <- !is.na(nprof[,"BAF"])
         sG <- .searchGrid(as.numeric(nprof[nona,"BAF"]),
@@ -396,7 +386,10 @@ getAS_CNA <- function(res,
                                nA_sc=exceptNA(round(sG.fixed$profile$Nb),nona),
                                nB_sc=exceptNA(round(sG.fixed$profile$Na),nona)),
              purity.fixed=sG.fixed$purity,
-             ploidy.fixed=sG.fixed$ploidy)
+             ploidy.fixed=sG.fixed$ploidy,
+             beta_bin_fit=if(betabinom) list(rho=bb_fit$rho,
+                                              converged=bb_fit$converged,
+                                              iterations=bb_fit$iterations) else NULL)
         }
 
     getAS_CNA_sample <- function(track,
@@ -409,7 +402,9 @@ getAS_CNA <- function(res,
                                  phases=NULL,
                                  path_to_phases=NULL,
                                  steps=NULL,
-                                 betabinom=FALSE)
+                                 betabinom=FALSE,
+                                 snp_bb_min_spacing=1000L,
+                                 snp_bb_include_chrX=FALSE)
     {
         if(is.null(phases))
             phases <- readPhases(path_to_phases)
@@ -422,7 +417,9 @@ getAS_CNA <- function(res,
                            ploidy=ploidy,
                            purs=purs,
                            ploidies=ploidies,
-                           betabinom=betabinom)
+                           betabinom=betabinom,
+                           snp_bb_min_spacing=snp_bb_min_spacing,
+                           snp_bb_include_chrX=snp_bb_include_chrX)
         prof
     }
 
@@ -468,23 +465,10 @@ getAS_CNA <- function(res,
                          ploidies=ploidies[[x]],
                          path_to_phases=ph_p,
                          steps=steps,
-                         betabinom=betabinom)
+                         betabinom=betabinom,
+                         snp_bb_min_spacing=snp_bb_min_spacing,
+                         snp_bb_include_chrX=snp_bb_include_chrX)
     },mc.cores=mc.cores)
-    if(betabinom)
-    {
-        print("Estimate best overdispersion parameters per cell")
-        res$allProfiles_AS <- lapply(res$allProfiles_AS, function(x)
-        {
-            if(is.null(x) || inherits(x, "try-error")) return(NULL)
-            tmp <- get_best_overdispersion_profile(x$nprof.fixed)
-            x$nprof.fixed <- tmp$prof
-            x$overdispersion_best_fit <- tmp$best_rho
-            x
-        })
-        odps <- sapply(res$allProfiles_AS,function(x) if(!is.null(x)) x$overdispersion_best_fit else NA)
-        odps <- odps[!is.na(odps)]
-        if(length(odps)>0) print(paste("Overdispersion quantiles:",paste(quantile(odps,probs=seq(0,1,.1),na.rm=TRUE),collapse=" ")))
-    }
     print("## write to disk and plot Allele-specific Profiles")
     pdf(paste0(outdir,"/all_as_cna_profiles_",projectname,".pdf"),width=15,height=5)
     tnull <- lapply(1:length(res$allProfiles_AS), function(x)
@@ -499,18 +483,7 @@ getAS_CNA <- function(res,
                         sep="\t",col.names=T,row.names=F,quote=F,
                         file=paste0(outdir,"/as_cna_profile_",names(res$allTracks)[x],"_bam",x,".txt"))
         })
-        if(betabinom)
-        {
-            try({
-                tmp <- res$allProfiles_AS[[x]]$nprof.fixed
-                tmp$nA <- tmp$nA_best_overdispersion
-                tmp$nB <- tmp$nB_best_overdispersion
-                plot_AS_profile(tmp)
-                title(paste0(names(res$allTracks)[x]," - bam",x) ,cex=.5)
-            })
-        }
     })
     dev.off()
     res
 }
-
