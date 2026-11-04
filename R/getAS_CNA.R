@@ -331,7 +331,7 @@ getAS_CNA <- function(res,
                 bb_inds[bb_inds] <- bb_inds[bb_inds] & is_distant_enough(df[bb_inds,2], distance=snp_bb_min_spacing)
                 chromosome <- sub("^chr","",as.character(nprof$chr[i]),ignore.case=TRUE)
                 if(chromosome %in% as.character(1:22) || (snp_bb_include_chrX && chromosome=="X")) {
-                    snp_bb_segments[[i]] <- snp_bb_make_seg(df[bb_inds,,drop=FALSE],steps)
+                    snp_bb_segments[i] <- list(snp_bb_make_seg(df[bb_inds,,drop=FALSE],steps))
                     if(!is.null(snp_bb_segments[[i]]))
                         nprof$n_snps_beta_bin[i] <- snp_bb_segments[[i]]$n_snps
                 }
