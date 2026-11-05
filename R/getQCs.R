@@ -42,7 +42,7 @@ getQCs <- function(res)
         cor(v[-length(v)], v[-1], use = "complete.obs")
       })
       weighted.mean(per_chr,
-                    weights = sapply(split_vals, length),
+                    w = sapply(split_vals, length),
                     na.rm = TRUE)
     }
     extra_qc <- lapply(seq_along(res$allProfiles), function(i)
