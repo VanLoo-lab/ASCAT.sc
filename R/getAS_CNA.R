@@ -349,6 +349,8 @@ getAS_CNA <- function(res,
             bb_fit <- snp_bb_fit_cell(snp_bb_segments)
             nprof$BAF_beta_bin <- bb_fit$baf
             nprof$rho_beta_bin <- bb_fit$rho
+            nprof$nA_best_overdispersion <- round(nprof$total_copy_number * nprof$BAF_beta_bin)
+            nprof$nB_best_overdispersion <- round(nprof$total_copy_number - nprof$nA_best_overdispersion)
         }
         nona <- !is.na(nprof[,"BAF"])
         sG <- .searchGrid(as.numeric(nprof[nona,"BAF"]),
